@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Hanken+Grotesk:wght@700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed": "#390c00",
+                    "error": "#ba1a1a",
+                    "on-secondary-container": "#526772",
+                    "tertiary-container": "#5c1800",
+                    "surface": "#fbf8ff",
+                    "surface-container-highest": "#e4e1ea",
+                    "outline-variant": "#c6c5d4",
+                    "error-container": "#ffdad6",
+                    "on-error": "#ffffff",
+                    "on-tertiary-fixed-variant": "#7b2e12",
+                    "secondary": "#4c616c",
+                    "surface-container-high": "#eae7ef",
+                    "surface-dim": "#dbd9e1",
+                    "on-error-container": "#93000a",
+                    "surface-variant": "#e4e1ea",
+                    "on-background": "#1b1b21",
+                    "tertiary-fixed-dim": "#ffb59d",
+                    "surface-container": "#efecf5",
+                    "primary-container": "#1a237e",
+                    "tertiary": "#380b00",
+                    "surface-bright": "#fbf8ff",
+                    "secondary-fixed-dim": "#b4cad6",
+                    "primary": "#000666",
+                    "surface-container-lowest": "#ffffff",
+                    "outline": "#767683",
+                    "primary-fixed-dim": "#bdc2ff",
+                    "on-secondary-fixed": "#071e27",
+                    "on-tertiary-container": "#e17c5a",
+                    "on-primary-container": "#8690ee",
+                    "surface-container-low": "#f5f2fb",
+                    "background": "#fbf8ff",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed": "#000767",
+                    "tertiary-fixed": "#ffdbd0",
+                    "on-surface-variant": "#454652",
+                    "primary-fixed": "#e0e0ff",
+                    "inverse-surface": "#303036",
+                    "inverse-on-surface": "#f2eff8",
+                    "secondary-fixed": "#cfe6f2",
+                    "on-surface": "#1b1b21",
+                    "on-primary": "#ffffff",
+                    "secondary-container": "#cfe6f2",
+                    "surface-tint": "#4c56af",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-fixed-variant": "#354a53",
+                    "inverse-primary": "#bdc2ff",
+                    "on-primary-fixed-variant": "#343d96"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "md": "16px",
+                    "xl": "32px",
+                    "container-margin": "16px",
+                    "touch-target": "48px",
+                    "xs": "4px",
+                    "lg": "24px",
+                    "base": "8px",
+                    "sm": "12px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Hanken Grotesk"],
+                    "body-md": ["Inter"],
+                    "headline-lg": ["Hanken Grotesk"],
+                    "headline-xl": ["Hanken Grotesk"],
+                    "data-tabular": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-bold": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "headline-xl": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "data-tabular": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "label-bold": ["14px", {"lineHeight": "20px", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #E0E0E0;
+            border-radius: 10px;
+        }
+        body {
+          min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col font-body-md text-body-md overflow-x-hidden">
+<!-- Top AppBar -->
+<header class="bg-surface dark:bg-on-background w-full top-0 sticky z-40 border-b-[1.5px] border-outline-variant dark:border-outline flex items-center justify-between px-md h-touch-target">
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined text-primary dark:text-inverse-primary active:scale-95 transition-transform">menu</button>
+<h1 class="font-headline-xl text-headline-xl text-primary dark:text-inverse-primary">Delivery Pro</h1>
+</div>
+<div class="flex items-center gap-sm">
+<button class="material-symbols-outlined text-primary dark:text-inverse-primary active:scale-95 transition-transform">sync</button>
+</div>
+</header>
+<!-- Main Content Layout -->
+<div class="flex flex-1 relative">
+<!-- Navigation Drawer (Desktop Only) -->
+<aside class="hidden md:flex flex-col py-lg bg-surface dark:bg-on-background h-full w-[280px] border-r-[1.5px] border-outline-variant shadow-md">
+<div class="px-md mb-lg">
+<span class="font-headline-lg text-headline-lg text-primary">Sales Tracker</span>
+</div>
+<nav class="flex flex-col">
+<a class="text-on-surface-variant dark:text-outline mx-base my-xs px-md py-sm hover:bg-surface-container-highest transition-colors flex items-center gap-md" href="#">
+<span class="material-symbols-outlined">edit_calendar</span>
+<span class="font-body-lg text-body-lg">Daily Setup</span>
+</a>
+<a class="text-on-surface-variant dark:text-outline mx-base my-xs px-md py-sm hover:bg-surface-container-highest transition-colors flex items-center gap-md" href="#">
+<span class="material-symbols-outlined">add_shopping_cart</span>
+<span class="font-body-lg text-body-lg">Sales Entry</span>
+</a>
+<a class="bg-primary-container text-on-primary-container font-label-bold rounded-full mx-base my-xs px-md py-sm flex items-center gap-md" href="#">
+<span class="material-symbols-outlined">person_add</span>
+<span class="font-body-lg text-body-lg">Customer List</span>
+</a>
+<a class="text-on-surface-variant dark:text-outline mx-base my-xs px-md py-sm hover:bg-surface-container-highest transition-colors flex items-center gap-md" href="#">
+<span class="material-symbols-outlined">cloud_upload</span>
+<span class="font-body-lg text-body-lg">Daily Summary</span>
+</a>
+<div class="mt-xl pt-xl border-t border-outline-variant">
+<a class="text-on-surface-variant dark:text-outline mx-base my-xs px-md py-sm hover:bg-surface-container-highest transition-colors flex items-center gap-md" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-lg text-body-lg">Settings</span>
+</a>
+</div>
+</nav>
+</aside>
+<!-- Main Canvas -->
+<main class="flex-1 px-container-margin py-md flex flex-col gap-lg max-w-5xl mx-auto w-full pb-[120px]">
+<!-- Search & Actions Bar -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-md">
+<div class="flex-1">
+<label class="font-label-bold text-label-bold text-on-surface-variant mb-xs block" for="customer-search">Search Customers</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full h-touch-target pl-[48px] pr-md bg-surface border-[1.5px] border-outline-variant rounded-lg focus:border-primary focus:ring-0 focus:bg-[#F0F2FF] transition-all font-body-md" id="customer-search" placeholder="Find shop, mart, or store name..." type="text"/>
+</div>
+</div>
+<button class="hidden md:flex items-center justify-center gap-sm bg-primary text-on-primary px-lg h-[52px] font-label-bold rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] active:scale-95 transition-all">
+<span class="material-symbols-outlined">person_add</span>
+                ADD NEW CUSTOMER
+            </button>
+</section>
+<!-- Stats Grid -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-md">
+<div class="bg-surface-container-lowest border-[1.5px] border-outline-variant p-md flex flex-col gap-xs rounded-xl">
+<span class="text-label-sm font-label-sm text-outline">Total Clients</span>
+<span class="text-headline-xl font-headline-xl text-primary">12</span>
+</div>
+<div class="bg-surface-container-lowest border-[1.5px] border-outline-variant p-md flex flex-col gap-xs rounded-xl">
+<span class="text-label-sm font-label-sm text-outline">New Clients (Month)</span>
+<span class="text-headline-xl font-headline-xl text-on-tertiary-container">12</span>
+</div>
+<div class="bg-surface-container-lowest border-[1.5px] border-outline-variant p-md flex flex-col gap-xs rounded-xl">
+<span class="text-label-sm font-label-sm text-outline">Active Clients</span>
+<span class="text-headline-xl font-headline-xl text-secondary">12</span>
+</div>
+<div class="bg-surface-container-lowest border-[1.5px] border-outline-variant p-md flex flex-col gap-xs rounded-xl">
+<span class="text-label-sm font-label-sm text-outline">Total Pending</span>
+<span class="text-headline-xl font-headline-xl text-error">$2,450</span>
+</div></section>
+<!-- Customer List -->
+<section class="flex flex-col gap-base">
+<div class="flex items-center justify-between px-sm py-xs">
+<h2 class="font-label-bold text-label-bold text-outline">Active Customers</h2>
+<span class="text-label-sm font-label-sm text-outline">Sorted by: Recent</span>
+</div>
+<!-- Customer Cards Container -->
+<div class="flex flex-col gap-base" id="customer-list">
+<!-- Ramchandra -->
+<div class="bg-surface-container-lowest border-[1.5px] border-outline-variant rounded-xl overflow-hidden hover:border-primary transition-colors cursor-pointer group active:opacity-90 p-md">
+<div class="flex items-center gap-md">
+<div class="w-14 h-14 bg-primary-fixed-dim rounded-lg flex items-center justify-center text-primary-fixed shrink-0">
+<span class="material-symbols-outlined text-[32px]">person</span>
+</div>
+<div class="flex-1"><div class="flex items-center gap-sm">
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Ramchandra</h3>
+</div>
+<div class="flex items-center gap-sm mt-xs">
+<span class="px-base py-[2px] bg-secondary-container text-on-secondary-fixed-variant rounded-full text-label-sm font-label-bold">RETAIL</span>
+<span class="text-on-surface-variant text-label-sm">Downtown</span>
+</div></div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</div>
+<!-- Lachy -->
+<div class="bg-surface-container-lowest border-[1.5px] border-outline-variant rounded-xl overflow-hidden hover:border-primary transition-colors cursor-pointer group active:opacity-90 p-md">
+<div class="flex items-center gap-md">
+<div class="w-14 h-14 bg-tertiary-fixed-dim rounded-lg flex items-center justify-center text-on-tertiary-fixed shrink-0">
+<span class="material-symbols-outlined text-[32px]">person</span>
+</div>
+<div class="flex-1">
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Lachy</h3>
+<div class="flex items-center gap-sm mt-xs">
+<span class="px-base py-[2px] bg-secondary-container text-on-secondary-fixed-variant rounded-full text-label-sm font-label-bold">WHOLESALE</span>
+<span class="text-on-surface-variant text-label-sm">Westside</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</div>
+<!-- Bava -->
+<div class="bg-surface-container-lowest border-[1.5px] border-outline-variant rounded-xl overflow-hidden hover:border-primary transition-colors cursor-pointer group active:opacity-90 p-md">
+<div class="flex items-center gap-md">
+<div class="w-14 h-14 bg-surface-container-highest rounded-lg flex items-center justify-center text-outline shrink-0">
+<span class="material-symbols-outlined text-[32px]">person</span>
+</div>
+<div class="flex-1"><div class="flex items-center gap-sm">
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Bava</h3>
+</div>
+<div class="flex items-center gap-sm mt-xs">
+<span class="px-base py-[2px] bg-secondary-container text-on-secondary-fixed-variant rounded-full text-label-sm font-label-bold">RETAIL</span>
+<span class="text-on-surface-variant text-label-sm">Market Square</span>
+</div></div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</div>
+<!-- Santosh -->
+<div class="bg-surface-container-lowest border-[1.5px] border-outline-variant rounded-xl overflow-hidden hover:border-primary transition-colors cursor-pointer group active:opacity-90 p-md">
+<div class="flex items-center gap-md">
+<div class="w-14 h-14 bg-primary-fixed-dim rounded-lg flex items-center justify-center text-primary-fixed shrink-0">
+<span class="material-symbols-outlined text-[32px]">person</span>
+</div>
+<div class="flex-1">
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Santosh</h3>
+<div class="flex items-center gap-sm mt-xs">
+<span class="px-base py-[2px] bg-secondary-container text-on-secondary-fixed-variant rounded-full text-label-sm font-label-bold">CORPORATE</span>
+<span class="text-on-surface-variant text-label-sm">Block 4</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</div>
+<!-- Murali pes -->
+<div class="bg-surface-container-lowest border-[1.5px] border-outline-variant rounded-xl overflow-hidden hover:border-primary transition-colors cursor-pointer group active:opacity-90 p-md">
+<div class="flex items-center gap-md">
+<div class="w-14 h-14 bg-tertiary-fixed-dim rounded-lg flex items-center justify-center text-on-tertiary-fixed shrink-0">
+<span class="material-symbols-outlined text-[32px]">store</span>
+</div>
+<div class="flex-1"><div class="flex items-center gap-sm">
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Murali pes</h3>
+</div>
+<div class="flex items-center gap-sm mt-xs">
+<span class="px-base py-[2px] bg-secondary-container text-on-secondary-fixed-variant rounded-full text-label-sm font-label-bold">MINI-MART</span>
+<span class="text-on-surface-variant text-label-sm">East Side</span>
+</div></div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</div>
+<!-- Supermarket pes -->
+<div class="bg-surface-container-lowest border-[1.5px] border-outline-variant rounded-xl overflow-hidden hover:border-primary transition-colors cursor-pointer group active:opacity-90 p-md">
+<div class="flex items-center gap-md">
+<div class="w-14 h-14 bg-surface-container-highest rounded-lg flex items-center justify-center text-outline shrink-0">
+<span class="material-symbols-outlined text-[32px]">shopping_cart</span>
+</div>
+<div class="flex-1">
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Supermarket pes</h3>
+<div class="flex items-center gap-sm mt-xs">
+<span class="px-base py-[2px] bg-secondary-container text-on-secondary-fixed-variant rounded-full text-label-sm font-label-bold">WHOLESALE</span>
+<span class="text-on-surface-variant text-label-sm">City Center</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</div>
+<!-- Bakery pes -->
+<div class="bg-surface-container-lowest border-[1.5px] border-outline-variant rounded-xl overflow-hidden hover:border-primary transition-colors cursor-pointer group active:opacity-90 p-md">
+<div class="flex items-center gap-md">
+<div class="w-14 h-14 bg-primary-fixed-dim rounded-lg flex items-center justify-center text-primary-fixed shrink-0">
+<span class="material-symbols-outlined text-[32px]">bakery_dining</span>
+</div>
+<div class="flex-1">
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Bakery pes</h3>
+<div class="flex items-center gap-sm mt-xs">
+<span class="px-base py-[2px] bg-secondary-container text-on-secondary-fixed-variant rounded-full text-label-sm font-label-bold">RETAIL</span>
+<span class="text-on-surface-variant text-label-sm">High Street</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</div>
+<!-- Down shop pes -->
+<div class="bg-surface-container-lowest border-[1.5px] border-outline-variant rounded-xl overflow-hidden hover:border-primary transition-colors cursor-pointer group active:opacity-90 p-md">
+<div class="flex items-center gap-md">
+<div class="w-14 h-14 bg-tertiary-fixed-dim rounded-lg flex items-center justify-center text-on-tertiary-fixed shrink-0">
+<span class="material-symbols-outlined text-[32px]">storefront</span>
+</div>
+<div class="flex-1">
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Down shop pes</h3>
+<div class="flex items-center gap-sm mt-xs">
+<span class="px-base py-[2px] bg-secondary-container text-on-secondary-fixed-variant rounded-full text-label-sm font-label-bold">MINI-MART</span>
+<span class="text-on-surface-variant text-label-sm">South Gate</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</div>
+<!-- Milk -->
+<div class="bg-surface-container-lowest border-[1.5px] border-outline-variant rounded-xl overflow-hidden hover:border-primary transition-colors cursor-pointer group active:opacity-90 p-md">
+<div class="flex items-center gap-md">
+<div class="w-14 h-14 bg-surface-container-highest rounded-lg flex items-center justify-center text-outline shrink-0">
+<span class="material-symbols-outlined text-[32px]">local_drink</span>
+</div>
+<div class="flex-1">
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Milk</h3>
+<div class="flex items-center gap-sm mt-xs">
+<span class="px-base py-[2px] bg-secondary-container text-on-secondary-fixed-variant rounded-full text-label-sm font-label-bold">DISTRIBUTION</span>
+<span class="text-on-surface-variant text-label-sm">Dairy Hub</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</div>
+<!-- Lakshmi puram -->
+<div class="bg-surface-container-lowest border-[1.5px] border-outline-variant rounded-xl overflow-hidden hover:border-primary transition-colors cursor-pointer group active:opacity-90 p-md">
+<div class="flex items-center gap-md">
+<div class="w-14 h-14 bg-primary-fixed-dim rounded-lg flex items-center justify-center text-primary-fixed shrink-0">
+<span class="material-symbols-outlined text-[32px]">location_on</span>
+</div>
+<div class="flex-1">
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Lakshmi puram</h3>
+<div class="flex items-center gap-sm mt-xs">
+<span class="px-base py-[2px] bg-secondary-container text-on-secondary-fixed-variant rounded-full text-label-sm font-label-bold">AREA AGENT</span>
+<span class="text-on-surface-variant text-label-sm">Lakshmi District</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</div>
+<!-- showkath -->
+<div class="bg-surface-container-lowest border-[1.5px] border-outline-variant rounded-xl overflow-hidden hover:border-primary transition-colors cursor-pointer group active:opacity-90 p-md">
+<div class="flex items-center gap-md">
+<div class="w-14 h-14 bg-tertiary-fixed-dim rounded-lg flex items-center justify-center text-on-tertiary-fixed shrink-0">
+<span class="material-symbols-outlined text-[32px]">person</span>
+</div>
+<div class="flex-1">
+<h3 class="font-headline-lg text-headline-lg text-on-surface">showkath</h3>
+<div class="flex items-center gap-sm mt-xs">
+<span class="px-base py-[2px] bg-secondary-container text-on-secondary-fixed-variant rounded-full text-label-sm font-label-bold">RETAIL</span>
+<span class="text-on-surface-variant text-label-sm">West Hub</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</div>
+<!-- Factory -->
+<div class="bg-surface-container-lowest border-[1.5px] border-outline-variant rounded-xl overflow-hidden hover:border-primary transition-colors cursor-pointer group active:opacity-90 p-md">
+<div class="flex items-center gap-md">
+<div class="w-14 h-14 bg-primary-container rounded-lg flex items-center justify-center text-on-primary-container shrink-0">
+<span class="material-symbols-outlined text-[32px]">factory</span>
+</div>
+<div class="flex-1">
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Factory</h3>
+<div class="flex items-center gap-sm mt-xs">
+<span class="px-base py-[2px] bg-secondary-container text-on-secondary-fixed-variant rounded-full text-label-sm font-label-bold">MANUFACTURING</span>
+<span class="text-on-surface-variant text-label-sm">Industrial Zone</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+</div>
+<!-- Floating Action Button (Mobile Only) -->
+<button class="md:hidden fixed bottom-[100px] right-md bg-primary text-on-primary w-[56px] h-[56px] rounded-full shadow-lg flex items-center justify-center z-50 active:scale-90 transition-all">
+<span class="material-symbols-outlined text-[28px]">person_add</span>
+</button>
+<!-- Bottom Navigation Bar -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 bg-surface dark:bg-on-background border-t-[1.5px] border-outline-variant dark:border-outline flex justify-around items-center h-[80px] pb-[24px] px-container-margin">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant active:scale-90 transition-all duration-150" href="#">
+<span class="material-symbols-outlined">inventory</span>
+<span class="font-label-bold text-label-bold">Setup</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant active:scale-90 transition-all duration-150" href="#">
+<span class="material-symbols-outlined">local_shipping</span>
+<span class="font-label-bold text-label-bold">Sales</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-sm py-xs active:scale-90 transition-all duration-150" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-label-bold text-label-bold">Clients</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant active:scale-90 transition-all duration-150" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-bold text-label-bold">Summary</span>
+</a>
+</nav>
+<script>
+    // Simple search filter interaction
+    const searchInput = document.getElementById('customer-search');
+    const customerList = document.getElementById('customer-list');
+    const customerCards = customerList.querySelectorAll('.bg-surface-container-lowest');
+
+    searchInput.addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        customerCards.forEach(card => {
+            const text = card.textContent.toLowerCase();
+            if (text.includes(term)) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+
+    // Add visual feedback for clicks
+    document.querySelectorAll('button, a, .cursor-pointer').forEach(el => {
+        el.addEventListener('click', () => {
+            // Minimal feedback
+        });
+    });
+</script>
+</body></html>

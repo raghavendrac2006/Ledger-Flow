@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Delivery Pro - Daily Setup</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-container": "#8690ee",
+                    "on-primary": "#ffffff",
+                    "on-secondary-container": "#526772",
+                    "on-secondary": "#ffffff",
+                    "error": "#ba1a1a",
+                    "error-container": "#ffdad6",
+                    "inverse-surface": "#303036",
+                    "surface-container-high": "#eae7ef",
+                    "on-secondary-fixed": "#071e27",
+                    "primary-fixed": "#e0e0ff",
+                    "primary": "#000666",
+                    "surface-container-highest": "#e4e1ea",
+                    "on-secondary-fixed-variant": "#354a53",
+                    "primary-container": "#1a237e",
+                    "on-primary-fixed-variant": "#343d96",
+                    "surface-container": "#efecf5",
+                    "on-primary-fixed": "#000767",
+                    "surface-container-low": "#f5f2fb",
+                    "on-error": "#ffffff",
+                    "background": "#fbf8ff",
+                    "tertiary-fixed": "#ffdbd0",
+                    "tertiary-container": "#5c1800",
+                    "outline-variant": "#c6c5d4",
+                    "on-tertiary-container": "#e17c5a",
+                    "secondary-fixed-dim": "#b4cad6",
+                    "on-surface-variant": "#454652",
+                    "inverse-on-surface": "#f2eff8",
+                    "inverse-primary": "#bdc2ff",
+                    "on-surface": "#1b1b21",
+                    "on-error-container": "#93000a",
+                    "secondary": "#4c616c",
+                    "on-tertiary-fixed-variant": "#7b2e12",
+                    "tertiary": "#380b00",
+                    "tertiary-fixed-dim": "#ffb59d",
+                    "surface-tint": "#4c56af",
+                    "primary-fixed-dim": "#bdc2ff",
+                    "secondary-fixed": "#cfe6f2",
+                    "surface-bright": "#fbf8ff",
+                    "on-tertiary-fixed": "#390c00",
+                    "surface-variant": "#e4e1ea",
+                    "surface-container-lowest": "#ffffff",
+                    "on-background": "#1b1b21",
+                    "secondary-container": "#cfe6f2",
+                    "outline": "#767683",
+                    "surface-dim": "#dbd9e1",
+                    "surface": "#fbf8ff",
+                    "on-tertiary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "touch-target": "48px",
+                    "md": "16px",
+                    "lg": "24px",
+                    "container-margin": "16px",
+                    "xl": "32px",
+                    "sm": "12px",
+                    "base": "8px",
+                    "xs": "4px"
+            },
+            "fontFamily": {
+                    "headline-xl": ["Hanken Grotesk"],
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "headline-md": ["Hanken Grotesk"],
+                    "data-tabular": ["Inter"],
+                    "label-bold": ["Inter"],
+                    "headline-lg": ["Hanken Grotesk"]
+            },
+            "fontSize": {
+                    "headline-xl": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "700"}],
+                    "data-tabular": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "label-bold": ["14px", {"lineHeight": "20px", "fontWeight": "700"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .item-card.active {
+            border-color: #000666 !important;
+            background-color: #e0e0ff !important;
+            box-shadow: 0 4px 0 0 #000666;
+            transform: translateY(-2px);
+        }
+        .item-card.active .check-icon {
+            font-variation-settings: 'FILL' 1;
+            color: #000666;
+        }
+        body {
+            background-color: #fbf8ff;
+            min-height: 100dvh;
+        }
+    </style>
+</head>
+<body class="font-body-md text-on-surface">
+<!-- TopAppBar -->
+<header class="bg-surface w-full top-0 sticky flex items-center justify-between px-md h-touch-target border-b-[1.5px] border-outline-variant z-40">
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined text-primary active:scale-95 transition-transform" data-icon="menu">menu</button>
+<h1 class="font-headline-lg text-headline-lg text-primary">Delivery Setup</h1>
+</div>
+<button class="material-symbols-outlined text-primary active:scale-95 transition-transform" data-icon="sync">sync</button>
+</header>
+<main class="px-container-margin pb-[140px] pt-md max-w-2xl mx-auto">
+<!-- Prominent Date Selector -->
+<section class="mb-xl">
+<label class="font-label-bold text-label-bold text-on-surface-variant block mb-base uppercase tracking-wider">Today's Delivery Date</label>
+<div class="relative">
+<input class="w-full h-[64px] px-md border-2 border-outline rounded-xl bg-white text-headline-md font-bold focus:border-primary focus:ring-0 transition-all appearance-none" id="date-picker" type="date"/>
+<span class="material-symbols-outlined absolute right-md top-1/2 -translate-y-1/2 text-primary pointer-events-none" data-icon="calendar_today">calendar_today</span>
+</div>
+</section>
+<!-- Large Selection Buttons -->
+<section class="mb-xl">
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-md">Select Items to Sell</h2>
+<div class="flex flex-col gap-md">
+<!-- Item Card 1 -->
+<div class="item-card cursor-pointer flex items-center p-lg bg-white border-2 border-outline-variant rounded-xl transition-all active:scale-[0.98]" onclick="toggleSelection(this)">
+<div class="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center mr-md">
+<span class="material-symbols-outlined text-primary text-[40px]" data-icon="cookie">cookie</span>
+</div>
+<div class="flex-1">
+<h3 class="font-headline-xl text-headline-xl leading-tight">2 ₹ Chakli</h3>
+<p class="font-body-lg text-on-surface-variant">Standard Bag</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant text-[48px] check-icon" data-icon="check_circle">check_circle</span>
+</div>
+<!-- Item Card 2 -->
+<div class="item-card cursor-pointer flex items-center p-lg bg-white border-2 border-outline-variant rounded-xl transition-all active:scale-[0.98]" onclick="toggleSelection(this)">
+<div class="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center mr-md">
+<span class="material-symbols-outlined text-primary text-[40px]" data-icon="bakery_dining">bakery_dining</span>
+</div>
+<div class="flex-1">
+<h3 class="font-headline-xl text-headline-xl leading-tight">₹5 Chakli</h3>
+<p class="font-body-lg text-on-surface-variant">Large Bag</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant text-[48px] check-icon" data-icon="check_circle">check_circle</span>
+</div>
+<!-- Item Card 3 -->
+<div class="item-card cursor-pointer flex items-center p-lg bg-white border-2 border-outline-variant rounded-xl transition-all active:scale-[0.98]" onclick="toggleSelection(this)">
+<div class="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center mr-md">
+<span class="material-symbols-outlined text-primary text-[40px]" data-icon="shopping_basket">shopping_basket</span>
+</div>
+<div class="flex-1">
+<h3 class="font-headline-xl text-headline-xl leading-tight">Nippat</h3>
+<p class="font-body-lg text-on-surface-variant">Crispy Snack</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant text-[48px] check-icon" data-icon="check_circle">check_circle</span>
+</div>
+</div>
+</section>
+<!-- Info Hint -->
+<div class="bg-primary-fixed text-on-primary-fixed p-md rounded-xl flex gap-md items-center mb-xl border border-primary-container/20">
+<span class="material-symbols-outlined text-primary" data-icon="info">info</span>
+<p class="font-body-md font-medium">Select the items you have in your vehicle today.</p>
+</div>
+<!-- Big Start Button -->
+<div class="fixed bottom-[80px] left-0 w-full px-container-margin pb-lg bg-gradient-to-t from-surface via-surface to-transparent pt-lg z-30">
+<button class="w-full h-[72px] bg-primary text-on-primary rounded-xl font-headline-md flex items-center justify-center gap-md active:scale-95 transition-all shadow-[0px_6px_0px_0px_#1a237e] disabled:opacity-40 disabled:shadow-none disabled:translate-y-[2px]" disabled="" id="start-btn" onclick="startRounds()">
+<span class="material-symbols-outlined text-[32px]" data-icon="local_shipping">local_shipping</span>
+                START ROUNDS
+            </button>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 bg-white border-t-2 border-outline-variant flex justify-around items-center h-[80px] pb-[24px] px-container-margin">
+<a class="flex flex-col items-center justify-center text-primary" href="#">
+<span class="material-symbols-outlined text-[28px]" data-icon="settings" style="font-variation-settings: 'FILL' 1">settings</span>
+<span class="font-label-bold text-label-bold">Setup</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60" href="#">
+<span class="material-symbols-outlined text-[28px]" data-icon="local_shipping">local_shipping</span>
+<span class="font-label-bold text-label-bold">Sales</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60" href="#">
+<span class="material-symbols-outlined text-[28px]" data-icon="groups">groups</span>
+<span class="font-label-bold text-label-bold">Clients</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60" href="#">
+<span class="material-symbols-outlined text-[28px]" data-icon="analytics">analytics</span>
+<span class="font-label-bold text-label-bold">Summary</span>
+</a>
+</nav>
+<script>
+        // Set default date to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('date-picker').value = today;
+
+        // Card Selection Toggle Logic
+        function toggleSelection(element) {
+            element.classList.toggle('active');
+            validateSelection();
+        }
+
+        function validateSelection() {
+            const selectedCount = document.querySelectorAll('.item-card.active').length;
+            const startBtn = document.getElementById('start-btn');
+            
+            if (selectedCount > 0) {
+                startBtn.disabled = false;
+            } else {
+                startBtn.disabled = true;
+            }
+        }
+
+        function startRounds() {
+            const btn = document.getElementById('start-btn');
+            const originalContent = btn.innerHTML;
+            
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin" data-icon="sync">sync</span> GENERATING ROUTE...';
+            btn.classList.add('bg-on-tertiary-fixed-variant');
+            
+            setTimeout(() => {
+                alert('Route Generated! Opening Sales Entry.');
+                btn.innerHTML = originalContent;
+                btn.classList.remove('bg-on-tertiary-fixed-variant');
+            }, 1000);
+        }
+    </script>
+</body></html>

@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sales Entry - Delivery Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hard-shadow {
+            box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+        }
+        .active-chip {
+            background-color: #000666 !important;
+            color: #ffffff !important;
+            border-color: #000666 !important;
+            transform: scale(0.98);
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        :focus-visible {
+            outline: 4px solid #000666 !important;
+            outline-offset: 2px;
+        }
+
+        /* Toast animation */
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide-up {
+            animation: slideUp 0.3s ease-out forwards;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary-container": "#8690ee",
+                      "on-primary": "#ffffff",
+                      "on-secondary-container": "#526772",
+                      "on-secondary": "#ffffff",
+                      "error": "#ba1a1a",
+                      "error-container": "#ffdad6",
+                      "inverse-surface": "#303036",
+                      "surface-container-high": "#eae7ef",
+                      "on-secondary-fixed": "#071e27",
+                      "primary-fixed": "#e0e0ff",
+                      "primary": "#000666",
+                      "surface-container-highest": "#e4e1ea",
+                      "on-secondary-fixed-variant": "#354a53",
+                      "primary-container": "#1a237e",
+                      "on-primary-fixed-variant": "#343d96",
+                      "surface-container": "#efecf5",
+                      "on-primary-fixed": "#000767",
+                      "surface-container-low": "#f5f2fb",
+                      "on-error": "#ffffff",
+                      "background": "#fbf8ff",
+                      "tertiary-fixed": "#ffdbd0",
+                      "tertiary-container": "#5c1800",
+                      "outline-variant": "#c6c5d4",
+                      "on-tertiary-container": "#e17c5a",
+                      "secondary-fixed-dim": "#b4cad6",
+                      "on-surface-variant": "#454652",
+                      "inverse-on-surface": "#f2eff8",
+                      "inverse-primary": "#bdc2ff",
+                      "on-surface": "#1b1b21",
+                      "on-error-container": "#93000a",
+                      "secondary": "#4c616c",
+                      "on-tertiary-fixed-variant": "#7b2e12",
+                      "tertiary": "#380b00",
+                      "tertiary-fixed-dim": "#ffb59d",
+                      "surface-tint": "#4c56af",
+                      "primary-fixed-dim": "#bdc2ff",
+                      "secondary-fixed": "#cfe6f2",
+                      "surface-bright": "#fbf8ff",
+                      "on-tertiary-fixed": "#390c00",
+                      "surface-variant": "#e4e1ea",
+                      "surface-container-lowest": "#ffffff",
+                      "on-background": "#1b1b21",
+                      "secondary-container": "#cfe6f2",
+                      "outline": "#1b1b21",
+                      "surface-dim": "#dbd9e1",
+                      "surface": "#fbf8ff",
+                      "on-tertiary": "#ffffff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0px",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "touch-target": "56px",
+                      "md": "16px",
+                      "lg": "24px",
+                      "container-margin": "16px",
+                      "xl": "32px",
+                      "sm": "12px",
+                      "base": "8px",
+                      "xs": "4px"
+              },
+              "fontFamily": {
+                      "headline-xl": ["Hanken Grotesk"],
+                      "body-md": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "headline-md": ["Hanken Grotesk"],
+                      "data-tabular": ["Inter"],
+                      "label-bold": ["Inter"],
+                      "headline-lg": ["Hanken Grotesk"]
+              },
+              "fontSize": {
+                      "headline-xl": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "800"}],
+                      "body-md": ["18px", {"lineHeight": "26px", "fontWeight": "500"}],
+                      "body-lg": ["20px", {"lineHeight": "30px", "fontWeight": "500"}],
+                      "label-sm": ["14px", {"lineHeight": "18px", "fontWeight": "600"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                      "data-tabular": ["20px", {"lineHeight": "28px", "fontWeight": "700"}],
+                      "label-bold": ["16px", {"lineHeight": "24px", "fontWeight": "800"}],
+                      "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "700"}]
+              }
+            },
+          },
+        }
+      </script>
+</head>
+<body class="bg-background text-on-surface min-h-screen pb-[160px]">
+<!-- TopAppBar -->
+<header class="bg-primary text-white w-full top-0 sticky border-b-4 border-black z-50">
+<div class="flex items-center justify-between px-md h-[64px] w-full">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-white text-[32px] cursor-pointer" data-icon="menu">menu</span>
+<h1 class="font-headline-lg text-headline-lg text-white">Delivery Pro</h1>
+</div>
+<span class="material-symbols-outlined text-white text-[32px] cursor-pointer" data-icon="sync">sync</span>
+</div>
+</header>
+<main class="px-container-margin py-md space-y-lg max-w-2xl mx-auto">
+<!-- Daily Setup Context -->
+<section class="flex flex-col gap-sm">
+<div class="flex justify-between items-center bg-surface-container border-b-4 border-black p-xs px-sm">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="calendar_today">calendar_today</span>
+<span class="font-label-bold text-label-sm uppercase">Oct 24, 2023</span>
+</div>
+<button class="flex items-center gap-xs text-primary font-label-bold uppercase text-label-sm border-2 border-primary px-2 py-1" onclick="window.location.reload()">
+                    Switch Item <span class="material-symbols-outlined text-[16px]" data-icon="swap_horiz">swap_horiz</span>
+</button>
+</div>
+<div class="bg-primary text-white p-md border-4 border-black hard-shadow">
+<p class="font-label-bold text-label-bold uppercase tracking-widest text-on-primary-container mb-xs">Currently Logging</p>
+<div class="flex justify-between items-center">
+<h2 class="font-headline-xl text-headline-xl">₹5 Chakli</h2>
+<div class="w-16 h-16 bg-white border-2 border-black flex items-center justify-center overflow-hidden">
+<img alt="₹5 Chakli" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3kw79Gz4ocJwl9l8ArCuU-Pll4-hU6aUIH_AfrsD9IkT4CvCSPUJDh1gHegUs_SER7BH3W2i6EEFLlHlI-zbwnbZJ-PMmV1n-xWPDV_7rv5lAFA-qIDz2LsZ_w5iOh1E3Cowtu-IVPQbpfYnuMcXm6kBo_RxX-LA0DSn3U_kiW84DQ-9gGABouSYB3zzAFVuKTCgyfdLdenXhc8zUuWilHaZCYs_KQLhiuECulAMR62rYy2_EHDNlzA5baA4iTFaDQyAKnDIStSYS"/>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between border-b-4 border-black py-base">
+<span class="font-label-bold text-label-bold text-on-surface uppercase">Serial No.</span>
+<span class="font-headline-xl text-primary" id="serial-number">1082</span>
+</div>
+</section>
+<!-- Sales Entry Form Area -->
+<div class="space-y-xl">
+<!-- Customer Name -->
+<div class="space-y-xs relative">
+<label class="font-label-bold text-label-bold text-on-surface text-[20px]" for="customer-search">Customer Shop Name</label>
+<div class="relative">
+<input class="w-full h-[64px] px-md border-4 border-black focus:bg-primary-container/10 outline-none transition-all font-body-lg text-body-lg placeholder:text-outline/50" id="customer-search" placeholder="Type shop name..." type="text"/>
+<span class="material-symbols-outlined absolute right-md top-1/2 -translate-y-1/2 text-black text-[32px]" data-icon="search">search</span>
+</div>
+<!-- Search Suggestions -->
+<div class="hidden absolute top-full left-0 w-full bg-white border-4 border-black z-10 hard-shadow" id="suggestions"><div class="px-md py-md hover:bg-primary hover:text-white cursor-pointer font-data-tabular border-b-2 border-black" onclick="selectCustomer('Ramchandra')">Ramchandra</div><div class="px-md py-md hover:bg-primary hover:text-white cursor-pointer font-data-tabular border-b-2 border-black" onclick="selectCustomer('Lachy')">Lachy</div><div class="px-md py-md hover:bg-primary hover:text-white cursor-pointer font-data-tabular border-b-2 border-black" onclick="selectCustomer('Bava')">Bava</div><div class="px-md py-md hover:bg-primary hover:text-white cursor-pointer font-data-tabular border-b-2 border-black" onclick="selectCustomer('Santosh')">Santosh</div><div class="px-md py-md hover:bg-primary hover:text-white cursor-pointer font-data-tabular border-b-2 border-black" onclick="selectCustomer('Murali pes')">Murali pes</div><div class="px-md py-md hover:bg-primary hover:text-white cursor-pointer font-data-tabular border-b-2 border-black" onclick="selectCustomer('Supermarket pes')">Supermarket pes</div><div class="px-md py-md hover:bg-primary hover:text-white cursor-pointer font-data-tabular border-b-2 border-black" onclick="selectCustomer('Bakery pes')">Bakery pes</div><div class="px-md py-md hover:bg-primary hover:text-white cursor-pointer font-data-tabular border-b-2 border-black" onclick="selectCustomer('Down shop pes')">Down shop pes</div><div class="px-md py-md hover:bg-primary hover:text-white cursor-pointer font-data-tabular border-b-2 border-black" onclick="selectCustomer('Milk')">Milk</div><div class="px-md py-md hover:bg-primary hover:text-white cursor-pointer font-data-tabular border-b-2 border-black" onclick="selectCustomer('Lakshmi puram')">Lakshmi puram</div><div class="px-md py-md hover:bg-primary hover:text-white cursor-pointer font-data-tabular border-b-2 border-black" onclick="selectCustomer('showkath')">showkath</div><div class="px-md py-md hover:bg-primary hover:text-white cursor-pointer font-data-tabular" onclick="selectCustomer('Factory')">Factory</div></div>
+</div>
+<!-- Amount Selection Grid -->
+<div class="space-y-md">
+<div class="flex justify-between items-end border-b-2 border-outline-variant pb-xs">
+<label class="font-label-bold text-label-bold text-on-surface text-[20px]">Select Amount</label>
+<span class="font-headline-xl text-primary" id="selected-amount-display">450</span>
+</div>
+<div class="grid grid-cols-3 gap-md">
+<button class="amount-chip h-[72px] border-4 border-black font-data-tabular text-headline-md hard-shadow active:translate-y-1 active:shadow-none transition-all" onclick="selectAmount(100, this)">100</button>
+<button class="amount-chip h-[72px] border-4 border-black font-data-tabular text-headline-md hard-shadow active:translate-y-1 active:shadow-none transition-all" onclick="selectAmount(150, this)">150</button>
+<button class="amount-chip h-[72px] border-4 border-black font-data-tabular text-headline-md hard-shadow active:translate-y-1 active:shadow-none transition-all" onclick="selectAmount(200, this)">200</button>
+<button class="amount-chip h-[72px] border-4 border-black font-data-tabular text-headline-md hard-shadow active:translate-y-1 active:shadow-none transition-all" onclick="selectAmount(250, this)">250</button>
+<button class="amount-chip h-[72px] border-4 border-black font-data-tabular text-headline-md hard-shadow active:translate-y-1 active:shadow-none transition-all" onclick="selectAmount(400, this)">300</button>
+<button class="amount-chip h-[72px] border-4 border-black font-data-tabular text-headline-md hard-shadow active:translate-y-1 active:shadow-none transition-all" onclick="selectAmount(500, this)">500</button>
+<button class="amount-chip h-[72px] border-4 border-black font-data-tabular text-headline-md hard-shadow active:translate-y-1 active:shadow-none transition-all" onclick="selectAmount(800, this)">800</button>
+<button class="amount-chip h-[72px] border-4 border-black font-data-tabular text-headline-md hard-shadow active:translate-y-1 active:shadow-none transition-all" onclick="selectAmount(1000, this)">1000</button>
+</div>
+<div class="pt-md">
+<div class="relative">
+<input class="w-full h-[64px] px-md border-4 border-black focus:bg-primary-container/10 outline-none transition-all font-body-lg text-body-lg" id="custom-amount-input" oninput="updateDisplay(this.value)" placeholder="Other amount..." type="number"/>
+<span class="material-symbols-outlined absolute right-md top-1/2 -translate-y-1/2 text-outline" data-icon="edit">edit</span>
+</div>
+</div><div class="space-y-md mt-lg">
+<label class="font-label-bold text-label-bold text-on-surface text-[20px]">Payment Status</label>
+<div class="grid grid-cols-2 gap-md">
+<button class="h-[72px] bg-[#2e7d32] text-white font-headline-md border-4 border-black hard-shadow active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-xs" id="status-paid" onclick="this.parentElement.querySelectorAll('button').forEach(b =&gt; b.style.opacity = '0.5'); this.style.opacity = '1';">
+<span class="material-symbols-outlined">check_circle</span>
+            PAID
+        </button>
+<button class="h-[72px] bg-[#c62828] text-white font-headline-md border-4 border-black hard-shadow active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-xs" id="status-not-paid" onclick="this.parentElement.querySelectorAll('button').forEach(b =&gt; b.style.opacity = '0.5'); this.style.opacity = '1';">
+<span class="material-symbols-outlined">cancel</span>
+            NOT PAID
+        </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Success Toast -->
+<div class="fixed bottom-[160px] left-1/2 -translate-x-1/2 z-[60] hidden" id="toast">
+<div class="bg-[#2e7d32] text-white px-lg py-sm border-4 border-black hard-shadow flex items-center gap-sm animate-slide-up">
+<span class="material-symbols-outlined" data-icon="check_circle">check_circle</span>
+<span class="font-label-bold uppercase">Updated Successfully</span>
+</div>
+</div>
+<!-- Floating Action Bar -->
+<div class="fixed bottom-[80px] left-0 w-full px-container-margin py-md bg-white border-t-4 border-black z-40">
+<button class="w-full h-[72px] bg-primary text-white font-headline-md rounded-none border-4 border-black hard-shadow flex items-center justify-center gap-md active:translate-y-1 active:shadow-none transition-all" id="submit-delivery">
+<span class="material-symbols-outlined text-[32px]" data-icon="add_circle">add_circle</span>
+            ADD DELIVERY
+        </button>
+</div>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 bg-white border-t-4 border-black h-[80px] pb-safe px-container-margin flex justify-around items-center">
+<div class="flex flex-col items-center justify-center text-on-surface-variant cursor-pointer opacity-50">
+<span class="material-symbols-outlined text-[28px]" data-icon="inventory">inventory</span>
+<span class="font-label-bold text-[12px]">Setup</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-primary text-white px-md py-xs border-2 border-black hard-shadow cursor-pointer">
+<span class="material-symbols-outlined text-[28px]" data-icon="local_shipping" style='font-variation-settings: "FILL" 1;'>local_shipping</span>
+<span class="font-label-bold text-[12px]">Sales</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant cursor-pointer opacity-50">
+<span class="material-symbols-outlined text-[28px]" data-icon="groups">groups</span>
+<span class="font-label-bold text-[12px]">Clients</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant cursor-pointer opacity-50">
+<span class="material-symbols-outlined text-[28px]" data-icon="analytics">analytics</span>
+<span class="font-label-bold text-[12px]">Summary</span>
+</div>
+</nav>
+<script>
+        let currentAmount = 0;
+        const searchInput = document.getElementById('customer-search');
+        const suggestions = document.getElementById('suggestions');
+        const toast = document.getElementById('toast');
+
+        function selectAmount(val, btn) {
+            currentAmount = val;
+            document.getElementById('selected-amount-display').innerText = val;
+            document.getElementById('custom-amount-input').value = '';
+            
+            document.querySelectorAll('.amount-chip').forEach(c => c.classList.remove('active-chip'));
+            btn.classList.add('active-chip');
+
+            if (window.navigator && window.navigator.vibrate) {
+                window.navigator.vibrate(10);
+            }
+        }
+
+        function updateDisplay(val) {
+            currentAmount = val || 0;
+            document.getElementById('selected-amount-display').innerText = currentAmount;
+            document.querySelectorAll('.amount-chip').forEach(c => c.classList.remove('active-chip'));
+        }
+
+        function selectCustomer(name) {
+            searchInput.value = name;
+            suggestions.classList.add('hidden');
+        }
+
+        searchInput.addEventListener('input', (e) => {
+            if (e.target.value.length > 0) {
+                suggestions.classList.remove('hidden');
+            } else {
+                suggestions.classList.add('hidden');
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !suggestions.contains(e.target)) {
+                suggestions.classList.add('hidden');
+            }
+        });
+
+        function showToast() {
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 2000);
+        }
+
+        document.getElementById('submit-delivery').addEventListener('click', function() {
+            if (!searchInput.value || currentAmount <= 0) {
+                alert('Please enter customer and amount');
+                return;
+            }
+
+            const btn = this;
+            const originalHTML = btn.innerHTML;
+            
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin" data-icon="sync">sync</span> SAVING...';
+            btn.classList.replace('bg-primary', 'bg-secondary');
+
+            setTimeout(() => {
+                btn.innerHTML = '<span class="material-symbols-outlined" data-icon="check_circle">check_circle</span> SUCCESS';
+                btn.classList.replace('bg-secondary', 'bg-[#1b5e20]'); 
+                
+                showToast();
+
+                const sn = document.getElementById('serial-number');
+                sn.innerText = parseInt(sn.innerText) + 1;
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.classList.remove('bg-[#1b5e20]');
+                    btn.classList.add('bg-primary');
+                    
+                    searchInput.value = '';
+                    document.getElementById('custom-amount-input').value = '';
+                    document.getElementById('selected-amount-display').innerText = '0';
+                    document.querySelectorAll('.amount-chip').forEach(c => c.classList.remove('active-chip'));
+                    currentAmount = 0;
+                    
+                    searchInput.focus();
+
+                    if (window.navigator && window.navigator.vibrate) {
+                        window.navigator.vibrate([20, 50, 20]);
+                    }
+                }, 600);
+            }, 400);
+        });
+    </script>
+</body></html>
