@@ -1,6 +1,6 @@
 {
-    "name": "stitch_daily_delivery_ledger",
-    "short_name": "stitch_daily_delivery_ledger",
+    "name": "Sales Tracking",
+    "short_name": "Sales Tracking",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

@@ -5,6 +5,7 @@ import '../core/app_theme.dart';
 import '../core/app_state.dart';
 import '../core/pdf_service.dart';
 import '../widgets/bento_card.dart';
+import '../widgets/custom_toast.dart';
 
 class SummaryScreen extends StatefulWidget {
   const SummaryScreen({super.key});
@@ -21,14 +22,20 @@ class _SummaryScreenState extends State<SummaryScreen> {
     end: DateTime.now(),
   );
 
-  final List<Map<String, dynamic>> _chartData = [
-    {"month": "JUN", "sales": 0.0, "color": AppTheme.primary},
-    {"month": "JUL", "sales": 0.0, "color": AppTheme.primary},
-    {"month": "AUG", "sales": 0.0, "color": AppTheme.primary},
-    {"month": "SEP", "sales": 0.0, "color": AppTheme.primary},
-    {"month": "OCT", "sales": 0.0, "color": AppTheme.primary},
-    {"month": "NOV", "sales": 0.0, "color": AppTheme.primary},
-  ];
+  late TextEditingController _sheetsUrlController;
+
+  @override
+  void initState() {
+    super.initState();
+    final state = Provider.of<LedgerState>(context, listen: false);
+    _sheetsUrlController = TextEditingController(text: state.googleSheetsUrl);
+  }
+
+  @override
+  void dispose() {
+    _sheetsUrlController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +44,8 @@ class _SummaryScreenState extends State<SummaryScreen> {
     final totalDeliveries = state.todayDeliveriesCount;
     final totalReturns = state.todayReturnsCount;
 
-    final selectedMonthData = _chartData[_selectedBarIndex];
+    final chartData = state.getChartData();
+    final selectedMonthData = chartData[_selectedBarIndex];
     final selectedMonthName = selectedMonthData["month"] as String;
     final selectedMonthSales = selectedMonthData["sales"] as double;
 
@@ -50,6 +58,95 @@ class _SummaryScreenState extends State<SummaryScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Rice Flour Bag Yields
+                  Text(
+                    "RICE FLOUR BAG YIELDS",
+                    style: AppTheme.labelBold.copyWith(
+                      fontSize: 11.0,
+                      color: AppTheme.onSurfaceVariant,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 12.0),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: BentoCard(
+                          padding: const EdgeInsets.all(16.0),
+                          backgroundColor: AppTheme.surface,
+                          shadowStyle: ShadowStyle.light,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "CURRENT BAG EARNINGS",
+                                style: AppTheme.labelSm.copyWith(
+                                  fontSize: 8.5,
+                                  color: AppTheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8.0),
+                              Text(
+                                "₹${NumberFormat('#,##,###.00').format(state.currentBagEarnings)}",
+                                style: AppTheme.headlineMd.copyWith(
+                                  fontSize: 18.0,
+                                  color: AppTheme.primary,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              const SizedBox(height: 4.0),
+                              Text(
+                                state.activeRiceBag != null 
+                                    ? "Remaining: ${state.activeRiceBag!.remainingKg.toStringAsFixed(1)} KG"
+                                    : "No Active Bag",
+                                style: AppTheme.labelSm.copyWith(fontSize: 9.5),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16.0),
+                      Expanded(
+                        child: BentoCard(
+                          padding: const EdgeInsets.all(16.0),
+                          backgroundColor: AppTheme.surface,
+                          shadowStyle: ShadowStyle.light,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "PREVIOUS BAG EARNINGS",
+                                style: AppTheme.labelSm.copyWith(
+                                  fontSize: 8.5,
+                                  color: AppTheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8.0),
+                              Text(
+                                "₹${NumberFormat('#,##,###.00').format(state.previousBagEarnings)}",
+                                style: AppTheme.headlineMd.copyWith(
+                                  fontSize: 18.0,
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              const SizedBox(height: 4.0),
+                              Text(
+                                state.previousCompletedRiceBag != null 
+                                    ? "Size: ${state.previousCompletedRiceBag!.totalKg.toStringAsFixed(0)} KG"
+                                    : "No Prev Bag",
+                                style: AppTheme.labelSm.copyWith(fontSize: 9.5),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 28.0),
+
                   // Hero Header Summary
                   BentoCard(
                     padding: const EdgeInsets.all(20.0),
@@ -193,8 +290,8 @@ class _SummaryScreenState extends State<SummaryScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             crossAxisAlignment: CrossAxisAlignment.end,
-                            children: List.generate(_chartData.length, (index) {
-                              final data = _chartData[index];
+                            children: List.generate(chartData.length, (index) {
+                              final data = chartData[index];
                               final sales = data["sales"] as double;
                               final month = data["month"] as String;
 
@@ -315,6 +412,9 @@ class _SummaryScreenState extends State<SummaryScreen> {
                               final log = state.deliveryLogs[index];
                               return ListTile(
                                 dense: true,
+                                onLongPress: () {
+                                  _showEditDeleteDialog(context, state, log);
+                                },
                                 title: Row(
                                   children: [
                                     Text(
@@ -610,6 +710,123 @@ class _SummaryScreenState extends State<SummaryScreen> {
                     ),
                   ),
 
+                  const SizedBox(height: 32.0),
+
+                  // Google Sheets Deployed Web App Sync URL Bento Box
+                  Text(
+                    "GOOGLE SHEETS SYNC SETTINGS",
+                    style: AppTheme.labelBold.copyWith(
+                      fontSize: 11.0,
+                      color: AppTheme.onSurfaceVariant,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 12.0),
+
+                  BentoCard(
+                    padding: const EdgeInsets.all(18.0),
+                    backgroundColor: AppTheme.surface,
+                    shadowStyle: ShadowStyle.light,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "DEPLOYED WEB APP URL",
+                          style: AppTheme.labelBold.copyWith(fontSize: 9.5, color: AppTheme.outline),
+                        ),
+                        const SizedBox(height: 6.0),
+                        TextField(
+                          controller: _sheetsUrlController,
+                          onChanged: (val) {
+                            state.setGoogleSheetsUrl(val);
+                          },
+                          decoration: InputDecoration(
+                            hintText: "https://script.google.com/macros/s/.../exec",
+                            hintStyle: AppTheme.bodyMd.copyWith(color: AppTheme.outline),
+                            filled: true,
+                            fillColor: AppTheme.surfaceContainerHighest,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                              borderSide: const BorderSide(color: Colors.black, width: 1.5),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                              borderSide: const BorderSide(color: Colors.black, width: 1.5),
+                            ),
+                          ),
+                          style: AppTheme.bodyMd,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 32.0),
+
+                  // Start New Bag Action Button Card
+                  Text(
+                    "INVENTORY CYCLE OPERATIONS",
+                    style: AppTheme.labelBold.copyWith(
+                      fontSize: 11.0,
+                      color: AppTheme.onSurfaceVariant,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 12.0),
+
+                  BentoCard(
+                    padding: const EdgeInsets.all(18.0),
+                    backgroundColor: AppTheme.surface,
+                    shadowStyle: ShadowStyle.light,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "FLOUR BAG OPERATIONS",
+                          style: AppTheme.labelBold.copyWith(fontSize: 10.0, color: Colors.black),
+                        ),
+                        const SizedBox(height: 6.0),
+                        const Text(
+                          "Close out your active flour tracking bag and start a fresh custom-sized production cycle instantly.",
+                          style: TextStyle(fontSize: 12.0, color: AppTheme.onSurfaceVariant),
+                        ),
+                        const SizedBox(height: 16.0),
+                        InkWell(
+                          onTap: () => _showStartNewBagDialog(context, state),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 12.0),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                              border: Border.all(color: Colors.black, width: 2.0),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black,
+                                  offset: Offset(2, 2),
+                                  blurRadius: 0,
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.scale, color: Colors.black, size: 18.0),
+                                const SizedBox(width: 8.0),
+                                Text(
+                                  "START NEW BAG CYCLE",
+                                  style: AppTheme.labelBold.copyWith(
+                                    fontSize: 12.0,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                   const SizedBox(height: 40.0),
 
                   // BIG SYNC LOCKOUT BUTTON
@@ -785,6 +1002,268 @@ class _SummaryScreenState extends State<SummaryScreen> {
             ),
         ],
       ),
+    );
+  }
+
+  void _showStartNewBagDialog(BuildContext context, LedgerState state) {
+    final TextEditingController kgCont = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+            side: const BorderSide(color: Colors.black, width: 2.5),
+          ),
+          backgroundColor: Colors.white,
+          title: Row(
+            children: [
+              const Icon(Icons.scale, color: AppTheme.primary),
+              const SizedBox(width: 8.0),
+              Text(
+                "START NEW BAG CYCLE",
+                style: AppTheme.headlineMd.copyWith(fontSize: 18.0),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "This will close the current active bag cycle and start a fresh one. You can enter any custom weight size.",
+                style: TextStyle(fontSize: 13.0, color: AppTheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 16.0),
+              TextField(
+                controller: kgCont,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: "NEW BAG CAPACITY (KG)",
+                  labelStyle: AppTheme.labelBold.copyWith(fontSize: 10, color: AppTheme.outline),
+                  hintText: "e.g., 30, 45, 60...",
+                  suffixText: "KG",
+                  suffixStyle: AppTheme.labelBold.copyWith(color: Colors.black),
+                ),
+                style: AppTheme.bodyLg,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                "CANCEL",
+                style: AppTheme.labelBold.copyWith(color: AppTheme.outline),
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                border: Border.all(color: Colors.black, width: 1.5),
+              ),
+              child: TextButton(
+                onPressed: () {
+                  final kg = double.tryParse(kgCont.text.trim());
+                  if (kg != null && kg > 0.0) {
+                    final dateStr = DateFormat('dd MMMM yyyy').format(DateTime.now());
+                    state.closeAndStartNewBag(totalKg: kg, date: dateStr);
+                    Navigator.pop(context);
+                    CustomToast.showSuccess(context, "NEW BAG CYCLE STARTED: $kg KG");
+                  }
+                },
+                child: Text(
+                  "START BAG",
+                  style: AppTheme.labelBold.copyWith(color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showEditDeleteDialog(BuildContext context, LedgerState state, DeliveryLog log) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+            side: const BorderSide(color: Colors.black, width: 2.5),
+          ),
+          backgroundColor: Colors.white,
+          title: Text(
+            "TRANSACTION ACTION",
+            style: AppTheme.headlineMd.copyWith(fontSize: 18.0),
+          ),
+          content: Text(
+            "Select an action for transaction #${log.serialNo} of ₹${log.amount.toStringAsFixed(0)} for ${log.customerName}.",
+            style: AppTheme.bodyMd,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                "CANCEL",
+                style: AppTheme.labelBold.copyWith(color: AppTheme.outline),
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: AppTheme.error,
+                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                border: Border.all(color: Colors.black, width: 1.5),
+              ),
+              child: TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _showDeleteConfirmDialog(context, state, log);
+                },
+                child: Text(
+                  "DELETE",
+                  style: AppTheme.labelBold.copyWith(color: Colors.white),
+                ),
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                border: Border.all(color: Colors.black, width: 1.5),
+              ),
+              child: TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _showEditTransactionDialog(context, state, log);
+                },
+                child: Text(
+                  "EDIT",
+                  style: AppTheme.labelBold.copyWith(color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showDeleteConfirmDialog(BuildContext context, LedgerState state, DeliveryLog log) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+            side: const BorderSide(color: Colors.black, width: 2.5),
+          ),
+          backgroundColor: Colors.white,
+          title: Text(
+            "CONFIRM DELETE",
+            style: AppTheme.headlineMd.copyWith(fontSize: 18.0),
+          ),
+          content: Text(
+            "Are you sure you want to permanently delete transaction #${log.serialNo} for ${log.customerName}? This will adjust outstanding balance if unpaid.",
+            style: AppTheme.bodyMd,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                "NO",
+                style: AppTheme.labelBold.copyWith(color: AppTheme.outline),
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: AppTheme.error,
+                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                border: Border.all(color: Colors.black, width: 1.5),
+              ),
+              child: TextButton(
+                onPressed: () {
+                  state.deleteTransactionBySerialNo(log.serialNo);
+                  Navigator.pop(context);
+                  CustomToast.showSuccess(context, "TRANSACTION #${log.serialNo} DELETED");
+                },
+                child: Text(
+                  "YES, DELETE",
+                  style: AppTheme.labelBold.copyWith(color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showEditTransactionDialog(BuildContext context, LedgerState state, DeliveryLog log) {
+    final detailsCont = TextEditingController(text: log.itemName);
+    final amountCont = TextEditingController(text: log.amount.toStringAsFixed(0));
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+            side: const BorderSide(color: Colors.black, width: 2.5),
+          ),
+          backgroundColor: Colors.white,
+          title: Text(
+            "EDIT TRANSACTION #${log.serialNo}",
+            style: AppTheme.headlineMd.copyWith(fontSize: 18.0),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: detailsCont,
+                decoration: const InputDecoration(labelText: "ITEM DETAILS"),
+              ),
+              const SizedBox(height: 12.0),
+              TextField(
+                controller: amountCont,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: "AMOUNT (₹)"),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                "CANCEL",
+                style: AppTheme.labelBold.copyWith(color: AppTheme.outline),
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                border: Border.all(color: Colors.black, width: 1.5),
+              ),
+              child: TextButton(
+                onPressed: () {
+                  final newAmt = double.tryParse(amountCont.text.trim()) ?? log.amount;
+                  state.editTransactionBySerialNo(log.serialNo, detailsCont.text.trim(), newAmt);
+                  Navigator.pop(context);
+                  CustomToast.showSuccess(context, "TRANSACTION #${log.serialNo} UPDATED");
+                },
+                child: Text(
+                  "SAVE CHANGES",
+                  style: AppTheme.labelBold.copyWith(color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

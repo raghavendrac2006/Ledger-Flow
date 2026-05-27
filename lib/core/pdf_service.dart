@@ -85,7 +85,7 @@ class PdfService {
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
                       pw.Text(
-                        "KINETIC LEDGER",
+                        "SALES TRACKING",
                         style: pw.TextStyle(
                           fontSize: 22.0,
                           fontWeight: pw.FontWeight.bold,
@@ -343,7 +343,7 @@ class PdfService {
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
                       pw.Text("Report Generated On:", style: pw.TextStyle(fontSize: 7.5, color: PdfColors.grey600)),
-                      pw.Text("Generated on: $generatedOn (Kinetic Ledger)", style: pw.TextStyle(fontSize: 7.5, color: PdfColors.grey600)),
+                      pw.Text("Generated on: $generatedOn (Sales Tracking)", style: pw.TextStyle(fontSize: 7.5, color: PdfColors.grey600)),
                     ],
                   ),
                 ],

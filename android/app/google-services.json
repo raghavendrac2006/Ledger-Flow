@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "517214893199",
+    "project_id": "daily-sales-record-5d41b",
+    "storage_bucket": "daily-sales-record-5d41b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:517214893199:android:55a11f587be40625a26cfa",
+        "android_client_info": {
+          "package_name": "com.antigravity.deliverypro.stitch_daily_delivery_ledger"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvSpfT5fGttO1661PL1A1o8By5OGFDpxs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -258,27 +258,6 @@ class _ClientListScreenState extends State<ClientListScreen> {
                                     customer.name,
                                     style: AppTheme.labelBold.copyWith(fontSize: 15.0),
                                   ),
-                                  subtitle: Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
-                                        decoration: BoxDecoration(
-                                          color: AppTheme.surfaceContainerHighest,
-                                          borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                                          border: Border.all(color: Colors.black, width: 0.5),
-                                        ),
-                                        child: Text(
-                                          customer.type,
-                                          style: AppTheme.labelBold.copyWith(fontSize: 8.0, color: Colors.black),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8.0),
-                                      Text(
-                                        customer.area,
-                                        style: AppTheme.labelSm.copyWith(fontSize: 11.0),
-                                      ),
-                                    ],
-                                  ),
                                   trailing: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [

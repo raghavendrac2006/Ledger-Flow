@@ -18,8 +18,42 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   final TextEditingController _amountController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
 
-  String _selectedCategory = "RICE";
+  String _selectedCategory = "Cylinders"; // Default to Cylinders
   bool _isSaving = false;
+
+  // Search/Autocomplete Overlay controllers for standard expenses
+  final FocusNode _itemFocusNode = FocusNode();
+  final FocusNode _amountFocusNode = FocusNode();
+  final LayerLink _expenseLayerLink = LayerLink();
+  bool _showSuggestions = false;
+  String _itemSearchQuery = "";
+
+  final List<String> _expenseItemsList = [
+    "Gas Cylinder Commercial",
+    "Gas Cylinder Domestic",
+    "Petrol for Scooter",
+    "Diesel for Auto",
+    "Salt bag",
+    "Vehicle Repair",
+    "Delivery Box Roll",
+    "Thread pack",
+  ];
+
+
+
+  // Separate Rice Flour Bag weight capacity inputs (Box 2)
+  final TextEditingController _riceFlourKgController = TextEditingController();
+  DateTime _riceFlourBagSelectedDate = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _itemController.addListener(() {
+      setState(() {
+        _itemSearchQuery = _itemController.text;
+      });
+    });
+  }
 
   void _showAddCategoryDialog(BuildContext context, LedgerState state) {
     final TextEditingController catCont = TextEditingController();
@@ -123,7 +157,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     setState(() {
                       _selectedCategory = state.expenseCategories.isNotEmpty
                           ? state.expenseCategories.first
-                          : "RICE";
+                          : "Cylinders";
                     });
                   }
                   Navigator.pop(context);
@@ -145,6 +179,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   void dispose() {
     _itemController.dispose();
     _amountController.dispose();
+    _riceFlourKgController.dispose();
+    _itemFocusNode.dispose();
+    _amountFocusNode.dispose();
     super.dispose();
   }
 
@@ -179,8 +216,12 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     _amountController.clear();
     setState(() {
       _selectedDate = DateTime.now();
-      _selectedCategory = "RICE";
+      _selectedCategory = "Cylinders";
+      _showSuggestions = false;
+      _itemSearchQuery = "";
     });
+    _itemFocusNode.unfocus();
+    _amountFocusNode.unfocus();
   }
 
   void _submitExpense(LedgerState state) {
@@ -202,6 +243,71 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       return;
     }
 
+    final bool itemExists = _expenseItemsList.any((i) => i.toLowerCase() == item.toLowerCase());
+    if (!itemExists) {
+      _showAddExpenseItemDialog(context, state, item, amount);
+      return;
+    }
+
+    _submitExpenseConfirmed(state, item, amount);
+  }
+
+  void _showAddExpenseItemDialog(BuildContext context, LedgerState state, String itemName, double amount) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+            side: const BorderSide(color: Colors.black, width: 2.5),
+          ),
+          backgroundColor: Colors.white,
+          title: Text(
+            "ADD TO EXPENSE LIST?",
+            style: AppTheme.headlineMd.copyWith(fontSize: 18.0),
+          ),
+          content: Text(
+            "'$itemName' is not in your expense quick list. Would you like to add it permanently?",
+            style: AppTheme.bodyMd,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _submitExpenseConfirmed(state, itemName, amount);
+              },
+              child: Text(
+                "NO",
+                style: AppTheme.labelBold.copyWith(color: AppTheme.outline),
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                border: Border.all(color: Colors.black, width: 1.5),
+              ),
+              child: TextButton(
+                onPressed: () {
+                  setState(() {
+                    _expenseItemsList.add(itemName);
+                  });
+                  Navigator.pop(context);
+                  _submitExpenseConfirmed(state, itemName, amount);
+                },
+                child: Text(
+                  "YES",
+                  style: AppTheme.labelBold.copyWith(color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _submitExpenseConfirmed(LedgerState state, String item, double amount) {
     setState(() {
       _isSaving = true;
     });
@@ -238,6 +344,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         return AppTheme.secondary;
       case "Transportation":
         return AppTheme.tertiary;
+      case "Rice Flour":
+        return const Color(0xFF6B4E3D);
       default:
         return AppTheme.onSurfaceVariant;
     }
@@ -251,6 +359,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         return Icons.propane_tank;
       case "Transportation":
         return Icons.local_shipping;
+      case "Rice Flour":
+        return Icons.scale;
       default:
         return Icons.payment;
     }
@@ -264,6 +374,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     final cyl = state.cylindersExpenditure;
     final trans = state.transportExpenditure;
 
+    final filteredItems = _expenseItemsList
+        .where((item) => item.toLowerCase().contains(_itemSearchQuery.toLowerCase()))
+        .toList();
+
     // Calculate percentage ratios for the custom bar progress meter
     final rawPercent = total > 0 ? raw / total : 0.0;
     final cylPercent = total > 0 ? cyl / total : 0.0;
@@ -271,13 +385,15 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Hero Balance Header Bento Card
-              BentoCard(
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Hero Balance Header Bento Card
+                  BentoCard(
                 padding: const EdgeInsets.all(20.0),
                 backgroundColor: AppTheme.surface,
                 shadowStyle: ShadowStyle.heavy,
@@ -317,7 +433,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             if (rawPercent > 0)
                               Expanded(
                                 flex: (rawPercent * 100).toInt(),
-                                child: Container(color: AppTheme.primary),
+                                child: Container(color: const Color(0xFF6B4E3D)),
                               ),
                             if (cylPercent > 0)
                               Expanded(
@@ -339,7 +455,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildCategoryLegend("RICE", raw, AppTheme.primary),
+                        _buildCategoryLegend("Rice Flour", raw, const Color(0xFF6B4E3D)),
                         _buildCategoryLegend("Cylinders", cyl, AppTheme.secondary),
                         _buildCategoryLegend("Transport", trans, AppTheme.tertiary),
                       ],
@@ -373,7 +489,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: [
-                          ...state.expenseCategories.map((cat) {
+                          ...state.expenseCategories
+                              .where((cat) => !cat.toLowerCase().contains("rice"))
+                              .map((cat) {
                             final isSelected = _selectedCategory == cat;
                             return Padding(
                               padding: const EdgeInsets.only(right: 8.0),
@@ -457,24 +575,44 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     ),
                     const SizedBox(height: 16.0),
 
-                    // Item Description text field
-                    TextField(
-                      controller: _itemController,
-                      decoration: InputDecoration(
-                        labelText: "EXPENSE DETAILS / ITEM NAME",
-                        labelStyle: AppTheme.labelBold.copyWith(fontSize: 10, color: AppTheme.outline),
-                        hintText: "e.g., Gas Cylinder Commercial...",
-                        hintStyle: AppTheme.bodyMd.copyWith(color: AppTheme.outline),
-                        filled: true,
-                        fillColor: AppTheme.surface,
-                        enabledBorder: const UnderlineInputBorder(
-                          borderSide: BorderSide(color: AppTheme.outlineVariant, width: 1.5),
+                    // Item Description text field wrapped with Autocomplete link target
+                    CompositedTransformTarget(
+                      link: _expenseLayerLink,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          boxShadow: _itemFocusNode.hasFocus ? AppTheme.hardShadowLight : null,
+                          borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                         ),
-                        focusedBorder: const UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.black, width: 2.0),
+                        child: TextField(
+                          controller: _itemController,
+                          focusNode: _itemFocusNode,
+                          onTap: () {
+                            setState(() {
+                              _showSuggestions = true;
+                            });
+                          },
+                          onChanged: (text) {
+                            setState(() {
+                              _showSuggestions = true;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            labelText: "EXPENSE DETAILS / ITEM NAME",
+                            labelStyle: AppTheme.labelBold.copyWith(fontSize: 10, color: AppTheme.outline),
+                            hintText: "e.g., Gas Cylinder Commercial...",
+                            hintStyle: AppTheme.bodyMd.copyWith(color: AppTheme.outline),
+                            filled: true,
+                            fillColor: AppTheme.surface,
+                            enabledBorder: const UnderlineInputBorder(
+                              borderSide: BorderSide(color: AppTheme.outlineVariant, width: 1.5),
+                            ),
+                            focusedBorder: const UnderlineInputBorder(
+                              borderSide: BorderSide(color: Colors.black, width: 2.0),
+                            ),
+                          ),
+                          style: AppTheme.bodyLg,
                         ),
                       ),
-                      style: AppTheme.bodyLg,
                     ),
                     const SizedBox(height: 16.0),
 
@@ -512,9 +650,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     ),
                     const SizedBox(height: 16.0),
 
-                    // Amount text field
+                    // Amount spent input field
                     TextField(
                       controller: _amountController,
+                      focusNode: _amountFocusNode,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         labelText: "AMOUNT SPENT (₹)",
@@ -557,6 +696,120 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                                 )
                               : Text(
                                   "LOG EXPENDITURE",
+                                  style: AppTheme.labelBold.copyWith(
+                                    color: Colors.white,
+                                    letterSpacing: 1.0,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+
+
+              const SizedBox(height: 32.0),
+
+              // RICE FLOUR BAG INTAKE (BOX 2)
+              Text(
+                "RECORD RICE FLOUR BAG WEIGHT (KG)",
+                style: AppTheme.labelBold.copyWith(
+                  fontSize: 11.0,
+                  color: AppTheme.onSurfaceVariant,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 12.0),
+
+              BentoCard(
+                padding: const EdgeInsets.all(18.0),
+                backgroundColor: AppTheme.surface,
+                shadowStyle: ShadowStyle.light,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Date selector
+                    InkWell(
+                      onTap: () => _selectRiceFlourBagDate(context),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
+                        decoration: const BoxDecoration(
+                          border: Border(bottom: BorderSide(color: AppTheme.outlineVariant, width: 1.5)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.calendar_today, color: AppTheme.primary, size: 20),
+                            const SizedBox(width: 12.0),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "DATE BAG WAS STARTED",
+                                  style: AppTheme.labelBold.copyWith(fontSize: 9, color: AppTheme.outline),
+                                ),
+                                const SizedBox(height: 2.0),
+                                Text(
+                                  DateFormat('dd MMMM yyyy').format(_riceFlourBagSelectedDate),
+                                  style: AppTheme.labelBold.copyWith(fontSize: 14.0),
+                                ),
+                              ],
+                            ),
+                            const Spacer(),
+                            const Icon(Icons.chevron_right, color: AppTheme.outline),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16.0),
+
+                    // Weight selector
+                    TextField(
+                      controller: _riceFlourKgController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(
+                        labelText: "BAG SIZE / WEIGHT CAPACITY (KG)",
+                        labelStyle: AppTheme.labelBold.copyWith(fontSize: 10, color: AppTheme.outline),
+                        hintText: "e.g., 30, 45, 60...",
+                        suffixText: "KG",
+                        suffixStyle: AppTheme.labelBold.copyWith(color: Colors.black),
+                        filled: true,
+                        fillColor: AppTheme.surface,
+                        enabledBorder: const UnderlineInputBorder(
+                          borderSide: BorderSide(color: AppTheme.outlineVariant, width: 1.5),
+                        ),
+                        focusedBorder: const UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black, width: 2.0),
+                        ),
+                      ),
+                      style: AppTheme.headlineMd.copyWith(fontSize: 20.0),
+                    ),
+                    const SizedBox(height: 24.0),
+
+                    // Start bag cycle button
+                    InkWell(
+                      onTap: _isSaving ? null : () => _submitRiceFlourWeight(state),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 14.0),
+                        decoration: BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                          border: Border.all(color: Colors.black, width: 1.5),
+                        ),
+                        child: Center(
+                          child: _isSaving
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.0,
+                                  ),
+                                )
+                              : Text(
+                                  "START NEW BAG CYCLE",
                                   style: AppTheme.labelBold.copyWith(
                                     color: Colors.white,
                                     letterSpacing: 1.0,
@@ -641,8 +894,129 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             ],
           ),
         ),
+
+            // 7. Autocomplete dropdown container overlay, placed at Stack level
+            if (_showSuggestions && _itemSearchQuery.isNotEmpty && filteredItems.isNotEmpty)
+              Positioned(
+                child: CompositedTransformFollower(
+                  link: _expenseLayerLink,
+                  showWhenUnlinked: false,
+                  offset: const Offset(0, 52.0), // Underneath the search textfield
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: Container(
+                      width: MediaQuery.of(context).size.width - 48,
+                      constraints: const BoxConstraints(maxHeight: 180),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: Colors.black, width: 2.0),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black,
+                            offset: Offset(4, 4),
+                            blurRadius: 0,
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        elevation: 0,
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                        clipBehavior: Clip.antiAlias,
+                        child: ListView.separated(
+                          shrinkWrap: true,
+                          padding: EdgeInsets.zero,
+                          itemCount: filteredItems.length,
+                          separatorBuilder: (context, i) => const Divider(height: 1, color: AppTheme.outlineVariant),
+                          itemBuilder: (context, index) {
+                            final item = filteredItems[index];
+                            return ListTile(
+                              dense: true,
+                              title: Text(
+                                item,
+                                style: AppTheme.labelBold,
+                              ),
+                              onTap: () {
+                                _itemController.text = item;
+                                _itemFocusNode.unfocus();
+                                setState(() {
+                                  _showSuggestions = false;
+                                });
+                                FocusScope.of(context).requestFocus(_amountFocusNode);
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
+  }
+
+
+
+  Future<void> _selectRiceFlourBagDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _riceFlourBagSelectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppTheme.primary,
+              onPrimary: Colors.white,
+              onSurface: AppTheme.onSurface,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _riceFlourBagSelectedDate) {
+      setState(() {
+        _riceFlourBagSelectedDate = picked;
+      });
+    }
+  }
+
+
+
+  void _submitRiceFlourWeight(LedgerState state) {
+    final kgText = _riceFlourKgController.text.trim();
+    final kg = double.tryParse(kgText);
+
+    if (kg == null || kg <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter a valid weight capacity (KG).")),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    Future.delayed(const Duration(milliseconds: 400), () {
+      if (mounted) {
+        final dateStr = DateFormat('dd MMMM yyyy').format(_riceFlourBagSelectedDate);
+
+        state.closeAndStartNewBag(totalKg: kg, date: dateStr);
+
+        CustomToast.showSuccess(context, "NEW FLOUR BAG LOADED: ${kg.toStringAsFixed(0)} KG");
+        _riceFlourKgController.clear();
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    });
   }
 
   Widget _buildCategoryLegend(String name, double value, Color color) {

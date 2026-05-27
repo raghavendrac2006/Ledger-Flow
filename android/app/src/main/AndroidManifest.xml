@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="stitch_daily_delivery_ledger"
+        android:label="Sales Tracking"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

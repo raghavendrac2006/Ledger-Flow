@@ -21,7 +21,7 @@ class CustomToast {
               return Transform.translate(
                 offset: Offset(0, 50 * (1 - value)),
                 child: Opacity(
-                  opacity: value,
+                  opacity: value.clamp(0.0, 1.0),
                   child: child,
                 ),
               );

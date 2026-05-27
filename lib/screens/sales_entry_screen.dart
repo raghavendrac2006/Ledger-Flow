@@ -711,10 +711,6 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
                                     customer.name,
                                     style: AppTheme.labelBold,
                                   ),
-                                  subtitle: Text(
-                                    "${customer.type} • ${customer.area}",
-                                    style: AppTheme.labelSm,
-                                  ),
                                   trailing: Text(
                                     customer.outstanding > 0 ? "₹${customer.outstanding.toStringAsFixed(0)}" : "CLEAN",
                                     style: AppTheme.dataTabular.copyWith(

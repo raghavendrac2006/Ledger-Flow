@@ -76,37 +76,6 @@ class CustomerProfileScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black,
-                                      borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                                    ),
-                                    child: Text(
-                                      customer.type,
-                                      style: AppTheme.labelBold.copyWith(fontSize: 8.0, color: Colors.white),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8.0),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.successContainer,
-                                      borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                                    ),
-                                    child: Text(
-                                      customer.status.toUpperCase(),
-                                      style: AppTheme.labelBold.copyWith(
-                                        fontSize: 8.0,
-                                        color: AppTheme.onSuccessContainer,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 6.0),
                               Text(
                                 customer.name,
                                 style: AppTheme.headlineLg.copyWith(fontSize: 22.0),
@@ -118,12 +87,6 @@ class CustomerProfileScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16.0),
                     const Divider(color: AppTheme.outlineVariant),
-                    const SizedBox(height: 12.0),
-
-                    // Metadata details
-                    _buildMetaRow("LOCATION/SECTOR", customer.location),
-                    const SizedBox(height: 8.0),
-                    _buildMetaRow("MARKET AREA", customer.area),
                   ],
                 ),
               ),
@@ -382,27 +345,7 @@ class CustomerProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMetaRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: AppTheme.labelSm.copyWith(
-            fontSize: 10.0,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          value,
-          style: AppTheme.labelBold.copyWith(
-            fontSize: 12.0,
-            color: Colors.black,
-          ),
-        ),
-      ],
-    );
-  }
+
 
   void _showEditDeleteTransactionDialog(
     BuildContext context,

@@ -15,6 +15,13 @@ class SetupScreen extends StatefulWidget {
 
 class _SetupScreenState extends State<SetupScreen> {
   bool _isStarting = false;
+  final TextEditingController _riceUsageController = TextEditingController();
+
+  @override
+  void dispose() {
+    _riceUsageController.dispose();
+    super.dispose();
+  }
 
   void _showAddProductDialog(BuildContext context, LedgerState state) {
     final TextEditingController nameCont = TextEditingController();
@@ -220,6 +227,105 @@ class _SetupScreenState extends State<SetupScreen> {
 
               const SizedBox(height: 32.0),
 
+              // Rice Flour Daily Usage Tracker Input
+              Text(
+                "RICE FLOUR DAILY PRODUCTION",
+                style: AppTheme.labelBold.copyWith(fontSize: 12, color: AppTheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 8.0),
+              BentoCard(
+                padding: const EdgeInsets.all(18.0),
+                backgroundColor: AppTheme.surface,
+                borderRadius: AppTheme.radiusLg,
+                shadowStyle: ShadowStyle.light,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (state.activeRiceBag == null) ...[
+                      Row(
+                        children: [
+                          const Icon(Icons.warning_amber_rounded, color: AppTheme.error, size: 24.0),
+                          const SizedBox(width: 12.0),
+                          Expanded(
+                            child: Text(
+                              "No active rice flour bag cycle started yet. Log RICE FLOUR cost in Expenses tab to initialize a bag.",
+                              style: AppTheme.labelSm.copyWith(color: AppTheme.error, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ] else ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "ACTIVE BAG STATUS",
+                            style: AppTheme.labelSm.copyWith(color: AppTheme.onSurfaceVariant, fontWeight: FontWeight.bold),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                              border: Border.all(color: AppTheme.primary, width: 1.0),
+                            ),
+                            child: Text(
+                              "ACTIVE",
+                              style: AppTheme.labelBold.copyWith(fontSize: 9.0, color: AppTheme.primary),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12.0),
+                      Row(
+                        children: [
+                          _buildBagMetric("TOTAL KG", "${state.activeRiceBag!.totalKg.toStringAsFixed(0)} KG"),
+                          _buildSeparator(),
+                          _buildBagMetric("USED", "${state.activeRiceBag!.usedKg.toStringAsFixed(1)} KG"),
+                          _buildSeparator(),
+                          _buildBagMetric("REMAINING", "${state.activeRiceBag!.remainingKg.toStringAsFixed(1)} KG", isHighlighted: true),
+                        ],
+                      ),
+                      const SizedBox(height: 20.0),
+                      const Divider(color: AppTheme.outlineVariant, height: 1),
+                      const SizedBox(height: 16.0),
+                      Text(
+                        "HOW MANY KG OF RICE FLOUR USED TODAY?",
+                        style: AppTheme.labelBold.copyWith(fontSize: 10.0, color: Colors.black),
+                      ),
+                      const SizedBox(height: 10.0),
+                      TextField(
+                        controller: _riceUsageController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(
+                          hintText: "e.g., 7.0",
+                          suffixText: "KG",
+                          suffixStyle: AppTheme.labelBold.copyWith(color: Colors.black),
+                          filled: true,
+                          fillColor: AppTheme.surfaceContainerHighest,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                            borderSide: const BorderSide(color: Colors.black, width: 1.5),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                            borderSide: const BorderSide(color: Colors.black, width: 1.5),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                            borderSide: const BorderSide(color: AppTheme.primary, width: 2.0),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
+                        ),
+                        style: AppTheme.headlineMd.copyWith(fontSize: 18.0),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 32.0),
+
               // Product Choice Section Title
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -371,20 +477,7 @@ class _SetupScreenState extends State<SetupScreen> {
               InkWell(
                 onTap: (!state.isStartRoundsEnabled || _isStarting)
                     ? null
-                    : () {
-                        setState(() {
-                          _isStarting = true;
-                        });
-                        Future.delayed(const Duration(milliseconds: 600), () {
-                          if (mounted) {
-                            state.startRounds();
-                            setState(() {
-                              _isStarting = false;
-                            });
-                            widget.onRoundsStarted?.call(); // Smoothly transition to Sales Entry tab
-                          }
-                        });
-                      },
+                    : () => _handleStartRounds(state),
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 20.0),
@@ -462,4 +555,148 @@ class _SetupScreenState extends State<SetupScreen> {
   }
 
   bool get isSelectedStyle => true;
+
+  Widget _buildBagMetric(String label, String value, {bool isHighlighted = false}) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: AppTheme.labelSm.copyWith(
+              fontSize: 9.0,
+              color: AppTheme.onSurfaceVariant,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4.0),
+          Text(
+            value,
+            style: AppTheme.headlineMd.copyWith(
+              fontSize: 16.0,
+              color: isHighlighted ? AppTheme.primary : Colors.black,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSeparator() {
+    return Container(
+      width: 1.5,
+      height: 30,
+      margin: const EdgeInsets.symmetric(horizontal: 12.0),
+      color: AppTheme.outlineVariant,
+    );
+  }
+
+  void _handleStartRounds(LedgerState state) {
+    final usageText = _riceUsageController.text.trim();
+    final double usageKg = double.tryParse(usageText) ?? 0.0;
+
+    final activeBag = state.activeRiceBag;
+
+    if (usageKg > 0.0) {
+      if (activeBag == null) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+              side: const BorderSide(color: Colors.black, width: 2.5),
+            ),
+            backgroundColor: Colors.white,
+            title: Row(
+              children: [
+                const Icon(Icons.warning_amber_rounded, color: AppTheme.error),
+                const SizedBox(width: 8.0),
+                Text("NO ACTIVE BAG", style: AppTheme.headlineMd.copyWith(fontSize: 18.0)),
+              ],
+            ),
+            content: const Text(
+              "You entered a rice flour usage, but no bag is currently active. Please register a bag in the Expenses page first.",
+              style: TextStyle(fontSize: 14.0, color: Colors.black),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("OK", style: AppTheme.labelBold.copyWith(color: Colors.black)),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+
+      if (usageKg > activeBag.remainingKg) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+              side: const BorderSide(color: Colors.black, width: 2.5),
+            ),
+            backgroundColor: Colors.white,
+            title: Row(
+              children: [
+                const Icon(Icons.warning_amber_rounded, color: AppTheme.error),
+                const SizedBox(width: 8.0),
+                Text("LIMIT EXCEEDED", style: AppTheme.headlineMd.copyWith(fontSize: 18.0)),
+              ],
+            ),
+            content: Text(
+              "Rice flour usage exceeded current bag limit.\n\nRemaining: ${activeBag.remainingKg.toStringAsFixed(1)} KG\nAttempted: ${usageKg.toStringAsFixed(1)} KG",
+              style: const TextStyle(fontSize: 14.0, color: Colors.black),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("CANCEL", style: AppTheme.labelBold.copyWith(color: AppTheme.outline)),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                ),
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _proceedWithStartRounds(state, usageKg);
+                  },
+                  child: Text("PROCEED ANYWAY", style: AppTheme.labelBold.copyWith(color: Colors.white)),
+                ),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+    }
+
+    _proceedWithStartRounds(state, usageKg);
+  }
+
+  void _proceedWithStartRounds(LedgerState state, double usageKg) {
+    setState(() {
+      _isStarting = true;
+    });
+
+    if (usageKg > 0.0) {
+      final formattedDate = DateFormat('dd MMMM yyyy').format(state.deliveryDate);
+      state.addDailyUsage(usedKg: usageKg, date: formattedDate);
+    }
+
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (mounted) {
+        state.startRounds();
+        setState(() {
+          _isStarting = false;
+        });
+        _riceUsageController.clear();
+        widget.onRoundsStarted?.call();
+      }
+    });
+  }
 }
