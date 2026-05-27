@@ -16,7 +16,7 @@ class SummaryScreen extends StatefulWidget {
 
 class _SummaryScreenState extends State<SummaryScreen> {
   int _selectedBarIndex = 4; // Defaults to October (index 4)
-  String _selectedExportItem = "2 ₹ Chakli";
+  String _selectedExportItem = "1 ₹ Chakli";
   DateTimeRange _selectedDateRange = DateTimeRange(
     start: DateTime.now().subtract(const Duration(days: 30)),
     end: DateTime.now(),
@@ -489,7 +489,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                         SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           child: Row(
-                            children: ["2 ₹ Chakli", "₹5 Chakli", "Nippat"].map((product) {
+                            children: ["1 ₹ Chakli", "₹5 Chakli", "Nippat"].map((product) {
                               final isSelected = _selectedExportItem == product;
                               return Padding(
                                 padding: const EdgeInsets.only(right: 8.0),

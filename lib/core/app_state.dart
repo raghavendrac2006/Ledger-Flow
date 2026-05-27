@@ -30,12 +30,14 @@ class Transaction {
   String details;
   double amount;
   bool isPaid;
+  bool isPayment;
 
   Transaction({
     required this.date,
     required this.details,
     required this.amount,
     required this.isPaid,
+    this.isPayment = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -43,6 +45,7 @@ class Transaction {
     "details": details,
     "amount": amount,
     "isPaid": isPaid,
+    "isPayment": isPayment,
   };
 }
 
@@ -55,6 +58,7 @@ class DeliveryLog {
   final double amount;
   final bool isPaid;
   String? associatedBagId;
+  bool isPayment;
 
   DeliveryLog({
     required this.serialNo,
@@ -65,6 +69,7 @@ class DeliveryLog {
     required this.amount,
     required this.isPaid,
     this.associatedBagId,
+    this.isPayment = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -75,6 +80,7 @@ class DeliveryLog {
     "customerName": customerName,
     "amount": amount,
     "isPaid": isPaid,
+    "isPayment": isPayment,
   };
 }
 
@@ -218,6 +224,7 @@ class LedgerState extends ChangeNotifier {
           final serialNo = data['serialNo'] as int? ?? 1001;
           final dateTime = DateTime.tryParse(data['dateTime'] ?? '') ?? DateTime.now();
           final bagId = data['associatedBagId'] as String?;
+          final isPayment = data['isPayment'] ?? false;
 
           if (serialNo > maxSerial) {
             maxSerial = serialNo;
@@ -232,6 +239,7 @@ class LedgerState extends ChangeNotifier {
             amount: amount,
             isPaid: isPaid,
             associatedBagId: bagId,
+            isPayment: isPayment,
           );
           _deliveryLogs.add(log);
         }
@@ -246,9 +254,10 @@ class LedgerState extends ChangeNotifier {
           }
           _customerTransactions[log.customerName]!.add(Transaction(
             date: log.date.toUpperCase(),
-            details: "1x ${log.itemName}",
+            details: log.isPayment ? log.itemName : "1x ${log.itemName}",
             amount: log.amount,
             isPaid: log.isPaid,
+            isPayment: log.isPayment,
           ));
         }
 
@@ -479,7 +488,7 @@ class LedgerState extends ChangeNotifier {
 
   final List<Map<String, dynamic>> _setupItems = [
     {
-      "name": "2 ₹ Chakli",
+      "name": "1 ₹ Chakli",
       "subtitle": "Standard Bag",
       "icon": Icons.cookie,
       "isSelected": false,
@@ -603,6 +612,7 @@ class LedgerState extends ChangeNotifier {
             .where('customerName', isEqualTo: customerName)
             .where('amount', isEqualTo: tx.amount)
             .where('isPaid', isEqualTo: tx.isPaid)
+            .where('isPayment', isEqualTo: tx.isPayment)
             .limit(1)
             .get();
         
@@ -610,8 +620,14 @@ class LedgerState extends ChangeNotifier {
           await query.docs.first.reference.delete();
         }
 
-        // Reduce outstanding balance if UNPAID
-        if (!tx.isPaid) {
+        // Adjust outstanding balance
+        if (tx.isPayment) {
+          // Deleting a payment increases the customer's outstanding balance
+          await _firestore.collection('customers').doc(customerName).update({
+            'outstanding': FieldValue.increment(tx.amount),
+          });
+        } else if (!tx.isPaid) {
+          // Deleting an unpaid sale reduces the customer's outstanding balance
           await _firestore.collection('customers').doc(customerName).update({
             'outstanding': FieldValue.increment(-tx.amount),
           });
@@ -638,18 +654,25 @@ class LedgerState extends ChangeNotifier {
             .where('customerName', isEqualTo: customerName)
             .where('amount', isEqualTo: oldAmount)
             .where('isPaid', isEqualTo: wasPaid)
+            .where('isPayment', isEqualTo: tx.isPayment)
             .limit(1)
             .get();
         
         if (query.docs.isNotEmpty) {
           await query.docs.first.reference.update({
-            'itemName': newDetails.replaceAll("1x ", ""),
+            'itemName': tx.isPayment ? newDetails : newDetails.replaceAll("1x ", ""),
             'amount': newAmount,
           });
         }
 
         // Recalculate outstanding balance difference
-        if (!wasPaid) {
+        if (tx.isPayment) {
+          // Editing a payment: if new payment amount is higher, outstanding balance decreases
+          final diff = oldAmount - newAmount;
+          await _firestore.collection('customers').doc(customerName).update({
+            'outstanding': FieldValue.increment(diff),
+          });
+        } else if (!wasPaid) {
           final diff = newAmount - oldAmount;
           await _firestore.collection('customers').doc(customerName).update({
             'outstanding': FieldValue.increment(diff),
@@ -714,6 +737,36 @@ class LedgerState extends ChangeNotifier {
         'outstanding': FieldValue.increment(amount),
       });
     }
+
+    _serialNumber++;
+    notifyListeners();
+  }
+
+  Future<void> recordCustomerPayment({
+    required String customerName,
+    required double amount,
+    required DateTime date,
+  }) async {
+    final docId = "PAY_${DateTime.now().millisecondsSinceEpoch}";
+    final dateStr = "${date.day} ${_getMonthName(date.month)} ${date.year}";
+
+    // 1. Save payment log to Firestore
+    await _firestore.collection('deliveryLogs').doc(docId).set({
+      'serialNo': _serialNumber,
+      'date': dateStr,
+      'dateTime': date.toIso8601String(),
+      'itemName': "Cash Collected",
+      'customerName': customerName,
+      'amount': amount,
+      'isPaid': true,
+      'isPayment': true,
+      'associatedBagId': null,
+    });
+
+    // 2. Reduce customer outstanding balance
+    await _firestore.collection('customers').doc(customerName).update({
+      'outstanding': FieldValue.increment(-amount),
+    });
 
     _serialNumber++;
     notifyListeners();
@@ -934,7 +987,7 @@ class LedgerState extends ChangeNotifier {
       final monthKey = "${date.year}-${date.month.toString().padLeft(2, '0')}";
       
       double activeSales = _deliveryLogs.where((log) {
-        return log.dateTime.year == date.year && log.dateTime.month == date.month;
+        return !log.isPayment && log.dateTime.year == date.year && log.dateTime.month == date.month;
       }).fold(0.0, (total, log) => total + log.amount);
       
       double historicalSales = _historicalMonthlySales[monthKey] ?? 0.0;
@@ -1045,15 +1098,22 @@ class LedgerState extends ChangeNotifier {
         final customerName = data['customerName'] as String?;
         final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
         final isPaid = data['isPaid'] as bool? ?? false;
+        final isPayment = data['isPayment'] as bool? ?? false;
 
         // Delete from Firestore
         await doc.reference.delete();
 
-        // If unpaid, reduce customer's outstanding balance
-        if (!isPaid && customerName != null) {
-          await _firestore.collection('customers').doc(customerName).update({
-            'outstanding': FieldValue.increment(-amount),
-          });
+        // Adjust outstanding balance
+        if (customerName != null) {
+          if (isPayment) {
+            await _firestore.collection('customers').doc(customerName).update({
+              'outstanding': FieldValue.increment(amount),
+            });
+          } else if (!isPaid) {
+            await _firestore.collection('customers').doc(customerName).update({
+              'outstanding': FieldValue.increment(-amount),
+            });
+          }
         }
       }
     } catch (e) {
@@ -1075,6 +1135,7 @@ class LedgerState extends ChangeNotifier {
         final customerName = data['customerName'] as String?;
         final oldAmount = (data['amount'] as num?)?.toDouble() ?? 0.0;
         final isPaid = data['isPaid'] as bool? ?? false;
+        final isPayment = data['isPayment'] as bool? ?? false;
 
         // Update in Firestore
         await doc.reference.update({
@@ -1082,12 +1143,19 @@ class LedgerState extends ChangeNotifier {
           'amount': newAmount,
         });
 
-        // If unpaid, adjust customer's outstanding balance difference
-        if (!isPaid && customerName != null) {
-          final diff = newAmount - oldAmount;
-          await _firestore.collection('customers').doc(customerName).update({
-            'outstanding': FieldValue.increment(diff),
-          });
+        // Adjust outstanding balance difference
+        if (customerName != null) {
+          if (isPayment) {
+            final diff = oldAmount - newAmount;
+            await _firestore.collection('customers').doc(customerName).update({
+              'outstanding': FieldValue.increment(diff),
+            });
+          } else if (!isPaid) {
+            final diff = newAmount - oldAmount;
+            await _firestore.collection('customers').doc(customerName).update({
+              'outstanding': FieldValue.increment(diff),
+            });
+          }
         }
       }
     } catch (e) {
@@ -1098,14 +1166,16 @@ class LedgerState extends ChangeNotifier {
   // Calculated Stats
   double get todaySales => _deliveryLogs.where((l) {
     final now = DateTime.now();
-    return l.dateTime.day == now.day && 
+    return !l.isPayment &&
+           l.dateTime.day == now.day && 
            l.dateTime.month == now.month && 
            l.dateTime.year == now.year;
   }).fold(0.0, (total, log) => total + log.amount);
 
   int get todayDeliveriesCount => _deliveryLogs.where((l) {
     final now = DateTime.now();
-    return l.dateTime.day == now.day && 
+    return !l.isPayment &&
+           l.dateTime.day == now.day && 
            l.dateTime.month == now.month && 
            l.dateTime.year == now.year;
   }).length;
