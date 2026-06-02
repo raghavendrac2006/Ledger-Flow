@@ -172,6 +172,7 @@ class LedgerState extends ChangeNotifier {
   StreamSubscription? _bagsSub;
   StreamSubscription? _usagesSub;
   StreamSubscription? _statsSub;
+  StreamSubscription? _settingsSub;
 
   final Map<String, double> _historicalMonthlySales = {};
 
@@ -353,6 +354,32 @@ class LedgerState extends ChangeNotifier {
         debugPrint("Firestore monthlyStats stream error: $error");
       }
     );
+
+    // 9. Listen to Settings Collection (specifically the googleSheets document)
+    _settingsSub = _firestore.collection('settings').doc('googleSheets').snapshots().listen(
+      (snapshot) async {
+        if (snapshot.exists && snapshot.data() != null) {
+          final data = snapshot.data()!;
+          final url = data['url'] as String?;
+          if (url != null && url.isNotEmpty) {
+            _googleSheetsUrl = url;
+            notifyListeners();
+          }
+        } else {
+          // Document does not exist yet. Seed it with the default URL.
+          try {
+            await _firestore.collection('settings').doc('googleSheets').set({
+              'url': _googleSheetsUrl,
+            });
+          } catch (e) {
+            debugPrint("Failed to seed default settings URL: $e");
+          }
+        }
+      },
+      onError: (error) {
+        debugPrint("Firestore settings stream error: $error");
+      }
+    );
   }
 
   // Clean default seeding data to avoid empty screens initially
@@ -474,6 +501,7 @@ class LedgerState extends ChangeNotifier {
     _bagsSub?.cancel();
     _usagesSub?.cancel();
     _statsSub?.cancel();
+    _settingsSub?.cancel();
     super.dispose();
   }
 
@@ -841,12 +869,18 @@ class LedgerState extends ChangeNotifier {
   bool _syncSuccessful = false;
   bool get syncSuccessful => _syncSuccessful;
 
-  String _googleSheetsUrl = "https://script.google.com/macros/s/AKfycbzFfKWeB7lmNtbqPTwKuz0m58DcQRqRpWaxDNbk4LQEcsLcmV_pY4l-MbHnIfOQ7CTWvA/exec";
+  String _googleSheetsUrl = "https://script.google.com/macros/s/AKfycbxvY0IoblgOGgVXTssxC7aYnTN0q5_W7-hkjtgLPI7595Ro5Ur0dmCEMQIb7DAqL9ZMYg/exec";
   String get googleSheetsUrl => _googleSheetsUrl;
 
-  void setGoogleSheetsUrl(String url) {
-    _googleSheetsUrl = url.trim();
+  Future<void> setGoogleSheetsUrl(String url) async {
+    final cleanUrl = url.trim();
+    _googleSheetsUrl = cleanUrl;
     notifyListeners();
+    try {
+      await _firestore.collection('settings').doc('googleSheets').set({'url': cleanUrl});
+    } catch (e) {
+      debugPrint("Error saving Sheets URL to Firestore: $e");
+    }
   }
 
   // Rice Flour Bag Tracking State

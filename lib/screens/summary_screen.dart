@@ -23,23 +23,34 @@ class _SummaryScreenState extends State<SummaryScreen> {
   );
 
   late TextEditingController _sheetsUrlController;
+  late FocusNode _sheetsUrlFocusNode;
 
   @override
   void initState() {
     super.initState();
     final state = Provider.of<LedgerState>(context, listen: false);
     _sheetsUrlController = TextEditingController(text: state.googleSheetsUrl);
+    _sheetsUrlFocusNode = FocusNode();
+    _sheetsUrlFocusNode.addListener(() {
+      if (!_sheetsUrlFocusNode.hasFocus) {
+        _sheetsUrlController.text = state.googleSheetsUrl;
+      }
+    });
   }
 
   @override
   void dispose() {
     _sheetsUrlController.dispose();
+    _sheetsUrlFocusNode.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final state = Provider.of<LedgerState>(context);
+    if (!_sheetsUrlFocusNode.hasFocus && _sheetsUrlController.text != state.googleSheetsUrl) {
+      _sheetsUrlController.text = state.googleSheetsUrl;
+    }
     final todaySales = state.todaySales;
     final totalDeliveries = state.todayDeliveriesCount;
     final totalReturns = state.todayReturnsCount;
@@ -737,6 +748,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                         const SizedBox(height: 6.0),
                         TextField(
                           controller: _sheetsUrlController,
+                          focusNode: _sheetsUrlFocusNode,
                           onChanged: (val) {
                             state.setGoogleSheetsUrl(val);
                           },
