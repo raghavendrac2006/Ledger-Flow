@@ -3,8 +3,11 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../core/app_theme.dart';
 import '../core/app_state.dart';
+import '../core/models/models.dart';
 import '../widgets/bento_card.dart';
 import '../widgets/custom_toast.dart';
+import '../widgets/recent_expenditures_list_widget.dart';
+import '../widgets/total_expenditure_stats_widget.dart';
 
 class ExpensesScreen extends StatefulWidget {
   const ExpensesScreen({super.key});
@@ -35,6 +38,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   ExpenseFilter _currentFilter = ExpenseFilter.today;
   DateTimeRange? _customDateRange;
 
+  String? _itemError;
+  String? _amountError;
+  String? _riceFlourKgError;
+
   @override
   void initState() {
     super.initState();
@@ -42,7 +49,60 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       setState(() {
         _itemSearchQuery = _itemController.text;
       });
+      _validateItem(_itemController.text);
     });
+    _amountController.addListener(() {
+      _validateAmount(_amountController.text);
+    });
+    _riceFlourKgController.addListener(() {
+      _validateRiceFlourKg(_riceFlourKgController.text);
+    });
+  }
+
+  void _validateItem(String value) {
+    if (value.trim().isEmpty) {
+      setState(() {
+        _itemError = "Expense details cannot be empty";
+      });
+    } else {
+      setState(() {
+        _itemError = null;
+      });
+    }
+  }
+
+  void _validateAmount(String value) {
+    final amt = double.tryParse(value.trim());
+    if (value.trim().isEmpty) {
+      setState(() {
+        _amountError = "Amount cannot be empty";
+      });
+    } else if (amt == null || amt <= 0) {
+      setState(() {
+        _amountError = "Enter a valid positive amount";
+      });
+    } else {
+      setState(() {
+        _amountError = null;
+      });
+    }
+  }
+
+  void _validateRiceFlourKg(String value) {
+    final kg = double.tryParse(value.trim());
+    if (value.trim().isEmpty) {
+      setState(() {
+        _riceFlourKgError = "Bag weight capacity cannot be empty";
+      });
+    } else if (kg == null || kg <= 0) {
+      setState(() {
+        _riceFlourKgError = "Enter a valid positive weight";
+      });
+    } else {
+      setState(() {
+        _riceFlourKgError = null;
+      });
+    }
   }
 
   @override
@@ -88,6 +148,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       _selectedDate = DateTime.now();
       _showSuggestions = false;
       _itemSearchQuery = "";
+      _itemError = null;
+      _amountError = null;
     });
     _itemFocusNode.unfocus();
     _amountFocusNode.unfocus();
@@ -97,20 +159,14 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     final item = _itemController.text.trim();
     final amountText = _amountController.text.trim();
 
-    if (item.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter expense details.")),
-      );
+    _validateItem(item);
+    _validateAmount(amountText);
+
+    if (_itemError != null || _amountError != null) {
       return;
     }
 
-    final amount = double.tryParse(amountText);
-    if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter a valid expense amount.")),
-      );
-      return;
-    }
+    final amount = double.parse(amountText);
 
     final bool itemExists = state.expenseSuggestions.any((i) => i.toLowerCase() == item.toLowerCase());
     if (!itemExists) {
@@ -205,33 +261,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     });
   }
 
-  Color _getItemColor(String name) {
-    final lower = name.toLowerCase();
-    if (lower.contains("cylinder") || lower.contains("gas") || lower.contains("lpg")) {
-      return AppTheme.secondary;
-    }
-    if (lower.contains("petrol") || lower.contains("diesel") || lower.contains("transport") || lower.contains("auto") || lower.contains("scooter") || lower.contains("vehicle")) {
-      return AppTheme.tertiary;
-    }
-    if (lower.contains("flour") || lower.contains("rice") || lower.contains("bag") || lower.contains("batch")) {
-      return const Color(0xFF6B4E3D);
-    }
-    return AppTheme.primary;
-  }
-
-  IconData _getItemIcon(String name) {
-    final lower = name.toLowerCase();
-    if (lower.contains("cylinder") || lower.contains("gas") || lower.contains("lpg")) {
-      return Icons.propane_tank;
-    }
-    if (lower.contains("petrol") || lower.contains("diesel") || lower.contains("transport") || lower.contains("auto") || lower.contains("scooter") || lower.contains("vehicle")) {
-      return Icons.local_shipping;
-    }
-    if (lower.contains("flour") || lower.contains("rice") || lower.contains("bag") || lower.contains("batch")) {
-      return Icons.shopping_bag;
-    }
-    return Icons.receipt_long;
-  }
 
   void _showEditExpenseBottomSheet(BuildContext context, ExpenseLog expense, LedgerState state) {
     final TextEditingController editItemController = TextEditingController(text: expense.itemName);
@@ -333,59 +362,23 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   // Delete Button
                   Expanded(
                     child: InkWell(
-                      onTap: () {
-                        // Confirm deletion dialog
-                        showDialog(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                              side: const BorderSide(color: Colors.black, width: 2.5),
-                            ),
-                            backgroundColor: Colors.white,
-                            title: Text(
-                              "DELETE EXPENSE?",
-                              style: AppTheme.headlineMd.copyWith(fontSize: 18.0, color: AppTheme.error),
-                            ),
-                            content: Text(
-                              "Are you sure you want to permanently delete this expense of ₹${expense.amount.toStringAsFixed(0)} for '${expense.itemName}'?",
-                              style: AppTheme.bodyMd,
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(ctx),
-                                child: Text(
-                                  "CANCEL",
-                                  style: AppTheme.labelBold.copyWith(color: AppTheme.outline),
-                                ),
-                              ),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: AppTheme.error,
-                                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                                  border: Border.all(color: Colors.black, width: 1.5),
-                                ),
-                                child: TextButton(
-                                  onPressed: () async {
-                                    Navigator.pop(ctx); // Close dialog
-                                    Navigator.pop(context); // Close sheet
-                                    await state.deleteExpense(expenseId);
-                                    if (context.mounted) {
-                                      CustomToast.showSuccess(
-                                        context,
-                                        "EXPENSE DELETED",
-                                      );
-                                    }
-                                  },
-                                  child: Text(
-                                    "DELETE",
-                                    style: AppTheme.labelBold.copyWith(color: Colors.white),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                      onTap: () async {
+                        final confirm = await CustomToast.showDestructiveConfirmation(
+                          context,
+                          title: "DELETE EXPENSE?",
+                          message: "Are you sure you want to permanently delete this expense of ₹${expense.amount.toStringAsFixed(0)} for '${expense.itemName}'?",
+                          confirmLabel: "DELETE",
                         );
+                        if (confirm && context.mounted) {
+                          Navigator.pop(context); // Close sheet
+                          await state.deleteExpense(expenseId);
+                          if (context.mounted) {
+                            CustomToast.showSuccess(
+                              context,
+                              "EXPENSE DELETED",
+                            );
+                          }
+                        }
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 14.0),
@@ -597,48 +590,22 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   Widget build(BuildContext context) {
     final state = Provider.of<LedgerState>(context);
     final filteredExpenses = _getFilteredExpenses(state.expenses);
-    final total = state.expenses.fold<double>(0.0, (sum, exp) => sum + exp.amount);
-
-    // Group expenditures by item name for breakdown
-    final Map<String, double> itemTotals = {};
-    for (var exp in state.expenses) {
-      final name = exp.itemName.trim();
-      if (name.isNotEmpty) {
-        itemTotals[name] = (itemTotals[name] ?? 0.0) + exp.amount;
-      }
-    }
-
-    // Sort item totals descending
-    final sortedItems = itemTotals.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-
-    // Get top 3 items for existing stats bar
-    final top3 = sortedItems.take(3).toList();
-
-    // Group for Top Expense Breakdown (Top 3 + Others)
-    final List<MapEntry<String, double>> breakdownCategories = [];
-    double othersSum = 0.0;
-    for (int i = 0; i < sortedItems.length; i++) {
-      if (i < 3) {
-        breakdownCategories.add(sortedItems[i]);
-      } else {
-        othersSum += sortedItems[i].value;
-      }
-    }
-    if (othersSum > 0.0) {
-      breakdownCategories.add(MapEntry("Others", othersSum));
-    }
-
-    // Color definitions for top 3 items
-    final List<Color> segmentColors = [
-      AppTheme.primary,      // Top 1
-      AppTheme.secondary,    // Top 2
-      AppTheme.tertiary,     // Top 3
-    ];
 
     final filteredItems = state.expenseSuggestions
         .where((item) => item.toLowerCase().contains(_itemSearchQuery.toLowerCase()))
         .toList();
+
+    // Sort by historical frequency in state.expenses (predictive autocomplete)
+    final Map<String, int> expenseFrequency = {};
+    for (var exp in state.expenses) {
+      final nameLower = exp.itemName.toLowerCase();
+      expenseFrequency[nameLower] = (expenseFrequency[nameLower] ?? 0) + 1;
+    }
+    filteredItems.sort((a, b) {
+      final freqA = expenseFrequency[a.toLowerCase()] ?? 0;
+      final freqB = expenseFrequency[b.toLowerCase()] ?? 0;
+      return freqB.compareTo(freqA);
+    });
 
     return Scaffold(
       body: SafeArea(
@@ -677,6 +644,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             child: TextField(
                               controller: _itemController,
                               focusNode: _itemFocusNode,
+                              textInputAction: TextInputAction.next,
+                              onSubmitted: (_) {
+                                FocusScope.of(context).requestFocus(_amountFocusNode);
+                              },
                               onTap: () {
                                 setState(() {
                                   _showSuggestions = true;
@@ -694,11 +665,18 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                                 hintStyle: AppTheme.bodyMd.copyWith(color: AppTheme.outline),
                                 filled: true,
                                 fillColor: AppTheme.surface,
+                                errorText: _itemError,
                                 enabledBorder: const UnderlineInputBorder(
                                   borderSide: BorderSide(color: AppTheme.outlineVariant, width: 1.5),
                                 ),
                                 focusedBorder: const UnderlineInputBorder(
                                   borderSide: BorderSide(color: Colors.black, width: 2.0),
+                                ),
+                                errorBorder: const UnderlineInputBorder(
+                                  borderSide: BorderSide(color: AppTheme.error, width: 1.5),
+                                ),
+                                focusedErrorBorder: const UnderlineInputBorder(
+                                  borderSide: BorderSide(color: AppTheme.error, width: 2.0),
                                 ),
                               ),
                               style: AppTheme.bodyLg,
@@ -743,7 +721,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                         TextField(
                           controller: _amountController,
                           focusNode: _amountFocusNode,
-                          keyboardType: TextInputType.number,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: false),
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _submitExpense(state),
                           decoration: InputDecoration(
                             labelText: "AMOUNT SPENT (₹)",
                             labelStyle: AppTheme.labelBold.copyWith(fontSize: 10, color: AppTheme.outline),
@@ -751,11 +731,18 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             prefixIcon: const Icon(Icons.currency_rupee, color: Colors.black),
                             filled: true,
                             fillColor: AppTheme.surface,
+                            errorText: _amountError,
                             enabledBorder: const UnderlineInputBorder(
                               borderSide: BorderSide(color: AppTheme.outlineVariant, width: 1.5),
                             ),
                             focusedBorder: const UnderlineInputBorder(
                               borderSide: BorderSide(color: Colors.black, width: 2.0),
+                            ),
+                            errorBorder: const UnderlineInputBorder(
+                              borderSide: BorderSide(color: AppTheme.error, width: 1.5),
+                            ),
+                            focusedErrorBorder: const UnderlineInputBorder(
+                              borderSide: BorderSide(color: AppTheme.error, width: 2.0),
                             ),
                           ),
                           style: AppTheme.headlineMd.copyWith(fontSize: 20.0),
@@ -850,7 +837,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
                         TextField(
                           controller: _riceFlourKgController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: false),
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _submitRiceFlourWeight(state),
                           decoration: InputDecoration(
                             labelText: "BAG SIZE / WEIGHT CAPACITY (KG)",
                             labelStyle: AppTheme.labelBold.copyWith(fontSize: 10, color: AppTheme.outline),
@@ -859,11 +848,18 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             suffixStyle: AppTheme.labelBold.copyWith(color: Colors.black),
                             filled: true,
                             fillColor: AppTheme.surface,
+                            errorText: _riceFlourKgError,
                             enabledBorder: const UnderlineInputBorder(
                               borderSide: BorderSide(color: AppTheme.outlineVariant, width: 1.5),
                             ),
                             focusedBorder: const UnderlineInputBorder(
                               borderSide: BorderSide(color: Colors.black, width: 2.0),
+                            ),
+                            errorBorder: const UnderlineInputBorder(
+                              borderSide: BorderSide(color: AppTheme.error, width: 1.5),
+                            ),
+                            focusedErrorBorder: const UnderlineInputBorder(
+                              borderSide: BorderSide(color: AppTheme.error, width: 2.0),
                             ),
                           ),
                           style: AppTheme.headlineMd.copyWith(fontSize: 20.0),
@@ -949,247 +945,14 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   ),
                   const SizedBox(height: 12.0),
 
-                  BentoCard(
-                    padding: const EdgeInsets.all(0),
-                    backgroundColor: AppTheme.surface,
-                    shadowStyle: ShadowStyle.light,
-                    child: filteredExpenses.isEmpty
-                        ? const Padding(
-                            padding: EdgeInsets.all(24.0),
-                            child: Center(child: Text("No expenses recorded for this period.")),
-                          )
-                        : ListView.separated(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: filteredExpenses.length,
-                            separatorBuilder: (context, i) => const Divider(height: 1, color: AppTheme.outlineVariant),
-                            itemBuilder: (context, index) {
-                              final expense = filteredExpenses[index];
-                              final formattedTxDate = DateFormat('dd MMM yyyy').format(DateTime.parse(expense.date));
-
-                              return ListTile(
-                                onTap: () => _showEditExpenseBottomSheet(context, expense, state),
-                                leading: Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: _getItemColor(expense.itemName).withValues(alpha: 0.1),
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: _getItemColor(expense.itemName),
-                                      width: 1.5,
-                                    ),
-                                  ),
-                                  child: Icon(
-                                    _getItemIcon(expense.itemName),
-                                    color: _getItemColor(expense.itemName),
-                                    size: 18.0,
-                                  ),
-                                ),
-                                title: Text(
-                                  expense.itemName,
-                                  style: AppTheme.labelBold.copyWith(fontSize: 14.0),
-                                ),
-                                subtitle: Text(
-                                  formattedTxDate,
-                                  style: AppTheme.labelSm.copyWith(fontSize: 10),
-                                ),
-                                trailing: Text(
-                                  "₹${expense.amount.toStringAsFixed(0)}",
-                                  style: AppTheme.dataTabular.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
+                  RecentExpendituresListWidget(
+                    expenses: filteredExpenses,
+                    onExpenseTap: (expense) => _showEditExpenseBottomSheet(context, expense, state),
                   ),
                   const SizedBox(height: 32.0),
 
-                  // 4. EXISTING STATISTICS
-                  Text(
-                    "TOTAL EXPENDITURE STATS",
-                    style: AppTheme.labelBold.copyWith(
-                      fontSize: 11.0,
-                      color: AppTheme.onSurfaceVariant,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 12.0),
-
-                  BentoCard(
-                    padding: const EdgeInsets.all(20.0),
-                    backgroundColor: AppTheme.surface,
-                    shadowStyle: ShadowStyle.heavy,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "TOTAL EXPENDITURE",
-                          style: AppTheme.labelBold.copyWith(
-                            fontSize: 11.0,
-                            color: AppTheme.onSurfaceVariant,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 6.0),
-                        Text(
-                          "₹${NumberFormat('#,##,###.00').format(total)}",
-                          style: AppTheme.headlineXl.copyWith(
-                            fontSize: 28.0,
-                            color: Colors.black,
-                          ),
-                        ),
-                        const SizedBox(height: 20.0),
-
-                        Container(
-                          height: 12.0,
-                          decoration: BoxDecoration(
-                            color: AppTheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                            border: Border.all(color: Colors.black, width: 1.5),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(2.0),
-                            child: Row(
-                              children: [
-                                if (total > 0 && top3.isEmpty)
-                                  Expanded(
-                                    child: Container(color: AppTheme.outlineVariant),
-                                  ),
-                                ...top3.asMap().entries.map((entry) {
-                                  final idx = entry.key;
-                                  final val = entry.value.value;
-                                  final pct = val / total;
-                                  if (pct <= 0) return const SizedBox.shrink();
-                                  return Expanded(
-                                    flex: (pct * 100).round().clamp(1, 100),
-                                    child: Container(color: segmentColors[idx % segmentColors.length]),
-                                  );
-                                }),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16.0),
-
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            if (top3.isEmpty)
-                              Expanded(
-                                child: Center(
-                                  child: Text(
-                                    "No expenditures recorded yet",
-                                    style: AppTheme.labelSm.copyWith(color: AppTheme.onSurfaceVariant),
-                                  ),
-                                ),
-                              )
-                            else
-                              ...top3.asMap().entries.map((entry) {
-                                final idx = entry.key;
-                                final name = entry.value.key;
-                                final val = entry.value.value;
-                                return Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(right: 4.0),
-                                    child: _buildCategoryLegend(
-                                      name.length > 15 ? "${name.substring(0, 13)}.." : name,
-                                      val,
-                                      segmentColors[idx % segmentColors.length],
-                                    ),
-                                  ),
-                                );
-                              }),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 32.0),
-
-                  // 5. TOP EXPENSE BREAKDOWN (NEW SECTION)
-                  Text(
-                    "TOP EXPENSES BREAKDOWN",
-                    style: AppTheme.labelBold.copyWith(
-                      fontSize: 11.0,
-                      color: AppTheme.onSurfaceVariant,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 12.0),
-
-                  BentoCard(
-                    padding: const EdgeInsets.all(18.0),
-                    backgroundColor: AppTheme.surface,
-                    shadowStyle: ShadowStyle.light,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (breakdownCategories.isEmpty)
-                          const Center(
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(vertical: 24.0),
-                              child: Text(
-                                "No expenses recorded for this period.",
-                                style: TextStyle(color: AppTheme.outline),
-                              ),
-                            ),
-                          )
-                        else
-                          ...breakdownCategories.map((entry) {
-                            final pct = total > 0 ? (entry.value / total) : 0.0;
-                            final pctString = "${(pct * 100).toStringAsFixed(0)}%";
-
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 16.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        entry.key,
-                                        style: AppTheme.labelBold.copyWith(fontSize: 14.0),
-                                      ),
-                                      Text(
-                                        "₹${entry.value.toStringAsFixed(0)} ($pctString)",
-                                        style: AppTheme.dataTabular.copyWith(
-                                          fontSize: 14.0,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 6.0),
-                                  Container(
-                                    height: 8.0,
-                                    width: double.infinity,
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.surfaceContainerHighest,
-                                      borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                                    ),
-                                    child: FractionallySizedBox(
-                                      alignment: Alignment.centerLeft,
-                                      widthFactor: pct,
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: entry.key == "Others"
-                                              ? AppTheme.outline
-                                              : _getItemColor(entry.key),
-                                          borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }),
-                      ],
-                    ),
+                  TotalExpenditureStatsWidget(
+                    expenses: state.expenses,
                   ),
                 ],
               ),
@@ -1287,14 +1050,13 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
   void _submitRiceFlourWeight(LedgerState state) {
     final kgText = _riceFlourKgController.text.trim();
-    final kg = double.tryParse(kgText);
+    _validateRiceFlourKg(kgText);
 
-    if (kg == null || kg <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter a valid weight capacity (KG).")),
-      );
+    if (_riceFlourKgError != null) {
       return;
     }
+
+    final kg = double.parse(kgText);
 
     setState(() {
       _isSaving = true;
@@ -1315,38 +1077,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     });
   }
 
-  Widget _buildCategoryLegend(String name, double value, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 6.0),
-            Text(
-              name,
-              style: AppTheme.labelSm.copyWith(fontSize: 11.0),
-            ),
-          ],
-        ),
-        const SizedBox(height: 2.0),
-        Text(
-          "₹${value >= 1000 ? '${(value / 1000).toStringAsFixed(1)}k' : value.toStringAsFixed(0)}",
-          style: AppTheme.dataTabular.copyWith(
-            fontWeight: FontWeight.bold,
-            fontSize: 13.0,
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 enum ExpenseFilter { all, today, thisWeek, thisMonth, custom }

@@ -24,6 +24,9 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
   String _searchQuery = "";
   bool _showSuggestions = false;
 
+  String? _customerError;
+  String? _amountError;
+
   final List<double> _quickAmounts = [100, 150, 200, 250, 300, 500, 800, 1000];
 
   @override
@@ -33,7 +36,40 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
       setState(() {
         _searchQuery = _customerController.text;
       });
+      _validateCustomer(_customerController.text);
     });
+    _amountController.addListener(() {
+      _validateAmount(_amountController.text);
+    });
+  }
+
+  void _validateCustomer(String value) {
+    if (value.trim().isEmpty) {
+      setState(() {
+        _customerError = "Shop name cannot be empty";
+      });
+    } else {
+      setState(() {
+        _customerError = null;
+      });
+    }
+  }
+
+  void _validateAmount(String value) {
+    final amt = double.tryParse(value.trim());
+    if (value.trim().isEmpty) {
+      setState(() {
+        _amountError = "Amount cannot be empty";
+      });
+    } else if (amt == null || amt <= 0) {
+      setState(() {
+        _amountError = "Enter a valid positive amount";
+      });
+    } else {
+      setState(() {
+        _amountError = null;
+      });
+    }
   }
 
   @override
@@ -52,6 +88,8 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
       _isPaid = true;
       _searchQuery = "";
       _showSuggestions = false;
+      _customerError = null;
+      _amountError = null;
     });
     _customerFocusNode.unfocus();
     _amountFocusNode.unfocus();
@@ -61,20 +99,14 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
     final customer = _customerController.text.trim();
     final amountText = _amountController.text.trim();
 
-    if (customer.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select or type a shop name.")),
-      );
+    _validateCustomer(customer);
+    _validateAmount(amountText);
+
+    if (_customerError != null || _amountError != null) {
       return;
     }
 
-    final amount = double.tryParse(amountText);
-    if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter a valid amount.")),
-      );
-      return;
-    }
+    final amount = double.parse(amountText);
 
     final bool customerExists = state.customers.any((c) => c.name.toLowerCase() == customer.toLowerCase());
     if (!customerExists) {
@@ -253,11 +285,21 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
       );
     }
 
-    // Filter customers based on search query
+    // Filter customers based on search query (only filter by customer name)
     final filteredCustomers = state.customers.where((c) {
-      return c.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          c.area.toLowerCase().contains(_searchQuery.toLowerCase());
+      return c.name.toLowerCase().contains(_searchQuery.toLowerCase());
     }).toList();
+
+    // Sort by historical frequency in deliveryLogs (predictive autocomplete)
+    final Map<String, int> customerFrequency = {};
+    for (var log in state.deliveryLogs) {
+      customerFrequency[log.customerName] = (customerFrequency[log.customerName] ?? 0) + 1;
+    }
+    filteredCustomers.sort((a, b) {
+      final freqA = customerFrequency[a.name] ?? 0;
+      final freqB = customerFrequency[b.name] ?? 0;
+      return freqB.compareTo(freqA);
+    });
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -346,6 +388,10 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
                         child: TextField(
                           controller: _customerController,
                           focusNode: _customerFocusNode,
+                          textInputAction: TextInputAction.next,
+                          onSubmitted: (_) {
+                            FocusScope.of(context).requestFocus(_amountFocusNode);
+                          },
                           onTap: () {
                             setState(() {
                               _showSuggestions = true;
@@ -362,12 +408,21 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
                             prefixIcon: const Icon(Icons.search, color: AppTheme.primary),
                             filled: true,
                             fillColor: AppTheme.surface,
+                            errorText: _customerError,
                             enabledBorder: OutlineInputBorder(
                               borderSide: const BorderSide(color: AppTheme.outlineVariant, width: 1.5),
                               borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderSide: const BorderSide(color: Colors.black, width: 2.0),
+                              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: AppTheme.error, width: 1.5),
+                              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: AppTheme.error, width: 2.0),
                               borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                             ),
                           ),
@@ -392,19 +447,30 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
                       child: TextField(
                         controller: _amountController,
                         focusNode: _amountFocusNode,
-                        keyboardType: TextInputType.number,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: false),
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _submitDelivery(state),
                         decoration: InputDecoration(
                           hintText: "Enter manual amount...",
                           hintStyle: AppTheme.bodyMd.copyWith(color: AppTheme.outline),
                           prefixIcon: const Icon(Icons.currency_rupee, color: AppTheme.primary),
                           filled: true,
                           fillColor: AppTheme.surface,
+                          errorText: _amountError,
                           enabledBorder: OutlineInputBorder(
                             borderSide: const BorderSide(color: AppTheme.outlineVariant, width: 1.5),
                             borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderSide: const BorderSide(color: Colors.black, width: 2.0),
+                            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(color: AppTheme.error, width: 1.5),
+                            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(color: AppTheme.error, width: 2.0),
                             borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                           ),
                         ),

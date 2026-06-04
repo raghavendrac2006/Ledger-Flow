@@ -143,4 +143,78 @@ class CustomToast {
       entry.remove();
     });
   }
+
+  static Future<bool> showDestructiveConfirmation(
+    BuildContext context, {
+    required String title,
+    required String message,
+    String confirmLabel = "CONFIRM",
+  }) async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+            side: const BorderSide(color: Colors.black, width: 3.0),
+          ),
+          backgroundColor: AppTheme.errorContainer,
+          title: Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Colors.black, size: 28.0),
+              const SizedBox(width: 12.0),
+              Expanded(
+                child: Text(
+                  title.toUpperCase(),
+                  style: AppTheme.headlineMd.copyWith(
+                    fontSize: 18.0,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            message,
+            style: AppTheme.bodyMd.copyWith(
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(
+                "CANCEL",
+                style: AppTheme.labelBold.copyWith(
+                  color: Colors.black54,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                border: Border.all(color: Colors.black, width: 1.5),
+              ),
+              child: TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(
+                  confirmLabel.toUpperCase(),
+                  style: AppTheme.labelBold.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    return result ?? false;
+  }
 }

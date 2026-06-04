@@ -3,9 +3,13 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../core/app_theme.dart';
 import '../core/app_state.dart';
+import '../core/models/models.dart';
 import '../core/pdf_service.dart';
 import '../widgets/bento_card.dart';
 import '../widgets/custom_toast.dart';
+import '../widgets/current_bag_performance_widget.dart';
+import '../widgets/overall_business_overview_widget.dart';
+import '../widgets/batch_history_widget.dart';
 
 class SummaryScreen extends StatefulWidget {
   const SummaryScreen({super.key});
@@ -79,40 +83,11 @@ class _SummaryScreenState extends State<SummaryScreen> {
                     ),
                   ),
                   const SizedBox(height: 12.0),
-                  Row(
-                    children: [
-                      _buildCurrentBagCard(
-                        "REVENUE",
-                        state.currentBagRevenue,
-                        isCurrency: true,
-                        valueColor: AppTheme.primary,
-                      ),
-                      const SizedBox(width: 16.0),
-                      _buildCurrentBagCard(
-                        "EXPENSES",
-                        state.currentBagExpenses,
-                        isCurrency: true,
-                        valueColor: Colors.black,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16.0),
-                  Row(
-                    children: [
-                      _buildCurrentBagCard(
-                        "PROFIT",
-                        state.currentBagProfit,
-                        isCurrency: true,
-                        valueColor: Colors.green,
-                      ),
-                      const SizedBox(width: 16.0),
-                      _buildCurrentBagCard(
-                        "PROFIT MARGIN",
-                        state.currentBagProfitMargin,
-                        isPercent: true,
-                        valueColor: Colors.green,
-                      ),
-                    ],
+                  CurrentBagPerformanceWidget(
+                    revenue: state.currentBagRevenue,
+                    expenses: state.currentBagExpenses,
+                    profit: state.currentBagProfit,
+                    profitMargin: state.currentBagProfitMargin,
                   ),
                   const SizedBox(height: 28.0),
 
@@ -126,21 +101,11 @@ class _SummaryScreenState extends State<SummaryScreen> {
                     ),
                   ),
                   const SizedBox(height: 12.0),
-                  BentoCard(
-                    padding: const EdgeInsets.symmetric(vertical: 18.0, horizontal: 12.0),
-                    backgroundColor: AppTheme.surface,
-                    shadowStyle: ShadowStyle.light,
-                    child: Row(
-                      children: [
-                        _buildOverallMetric("OVERALL REVENUE", state.overallRevenue, isCurrency: true),
-                        _buildVerticalDivider(),
-                        _buildOverallMetric("OVERALL EXPENSES", state.overallExpenses, isCurrency: true, isNegative: true),
-                        _buildVerticalDivider(),
-                        _buildOverallMetric("OVERALL PROFIT", state.overallProfit, isCurrency: true, isProfit: true),
-                        _buildVerticalDivider(),
-                        _buildOverallMetric("OVERALL MARGIN", state.overallProfitMargin, isPercent: true),
-                      ],
-                    ),
+                  OverallBusinessOverviewWidget(
+                    overallRevenue: state.overallRevenue,
+                    overallExpenses: state.overallExpenses,
+                    overallProfit: state.overallProfit,
+                    overallProfitMargin: state.overallProfitMargin,
                   ),
                   const SizedBox(height: 28.0),
 
@@ -154,100 +119,13 @@ class _SummaryScreenState extends State<SummaryScreen> {
                     ),
                   ),
                   const SizedBox(height: 12.0),
-                  BentoCard(
-                    padding: const EdgeInsets.all(0),
-                    backgroundColor: AppTheme.surface,
-                    shadowStyle: ShadowStyle.light,
-                    child: Builder(
-                      builder: (context) {
-                        final completedBags = state.riceBags.where((b) => b.status == "Completed").toList();
-                        if (completedBags.isEmpty) {
-                          return const Padding(
-                            padding: EdgeInsets.all(24.0),
-                            child: Center(
-                              child: Text(
-                                "No completed batches found.",
-                                style: TextStyle(color: AppTheme.outline),
-                              ),
-                            ),
-                          );
-                        }
-                        return ListView.separated(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: completedBags.length,
-                          separatorBuilder: (context, i) =>
-                              const Divider(height: 1, color: AppTheme.outlineVariant),
-                          itemBuilder: (context, index) {
-                            final bag = completedBags[index];
-                            final bagNum = state.getBagNumber(bag);
-                            final profit = state.getBagProfit(bag);
-                            final endDateStr = bag.endDate ?? "N/A";
-
-                            return ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: AppTheme.primaryContainer.withValues(alpha: 0.1),
-                                radius: 20.0,
-                                child: const Icon(
-                                  Icons.shopping_bag,
-                                  color: AppTheme.primary,
-                                  size: 20.0,
-                                ),
-                              ),
-                              title: Text(
-                                "Batch #$bagNum",
-                                style: AppTheme.labelBold.copyWith(fontSize: 15.0),
-                              ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "${bag.totalKg.toStringAsFixed(0)} KG",
-                                    style: AppTheme.labelSm.copyWith(color: AppTheme.outline),
-                                  ),
-                                  Text(
-                                    "Completed: $endDateStr",
-                                    style: AppTheme.labelSm.copyWith(color: AppTheme.outline),
-                                  ),
-                                ],
-                              ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        "₹${profit.toStringAsFixed(0)}",
-                                        style: AppTheme.dataTabular.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14.0,
-                                          color: profit >= 0 ? AppTheme.success : AppTheme.error,
-                                        ),
-                                      ),
-                                      Text(
-                                        "PROFIT",
-                                        style: AppTheme.labelSm.copyWith(
-                                          fontSize: 8.0,
-                                          color: profit >= 0 ? AppTheme.success : AppTheme.error,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(width: 8.0),
-                                  const Icon(Icons.chevron_right, color: AppTheme.outline, size: 20.0),
-                                ],
-                              ),
-                              onTap: () {
-                                _showBatchDetailsBottomSheet(context, bag, bagNum, state);
-                              },
-                            );
-                          },
-                        );
-                      }
-                    ),
+                  BatchHistoryWidget(
+                    completedBags: state.riceBags.where((b) => b.status == "Completed").toList(),
+                    getBagNumber: state.getBagNumber,
+                    getBagProfit: state.getBagProfit,
+                    onBagTap: (bag, bagNum) {
+                      _showBatchDetailsBottomSheet(context, bag, bagNum, state);
+                    },
                   ),
                   const SizedBox(height: 28.0),
 
@@ -605,8 +483,8 @@ class _SummaryScreenState extends State<SummaryScreen> {
                               final log = state.deliveryLogs[index];
                               return ListTile(
                                 dense: true,
-                                onLongPress: () {
-                                  _showEditDeleteDialog(context, state, log);
+                                onTap: () {
+                                  _showEditDeleteBottomSheet(context, state, log);
                                 },
                                 title: Row(
                                   children: [
@@ -1280,291 +1158,169 @@ class _SummaryScreenState extends State<SummaryScreen> {
     );
   }
 
-  void _showEditDeleteDialog(BuildContext context, LedgerState state, DeliveryLog log) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-            side: const BorderSide(color: Colors.black, width: 2.5),
-          ),
-          backgroundColor: Colors.white,
-          title: Text(
-            "TRANSACTION ACTION",
-            style: AppTheme.headlineMd.copyWith(fontSize: 18.0),
-          ),
-          content: Text(
-            "Select an action for transaction #${log.serialNo} of ₹${log.amount.toStringAsFixed(0)} for ${log.customerName}.",
-            style: AppTheme.bodyMd,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                "CANCEL",
-                style: AppTheme.labelBold.copyWith(color: AppTheme.outline),
-              ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                color: AppTheme.error,
-                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                border: Border.all(color: Colors.black, width: 1.5),
-              ),
-              child: TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _showDeleteConfirmDialog(context, state, log);
-                },
-                child: Text(
-                  "DELETE",
-                  style: AppTheme.labelBold.copyWith(color: Colors.white),
-                ),
-              ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                border: Border.all(color: Colors.black, width: 1.5),
-              ),
-              child: TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _showEditTransactionDialog(context, state, log);
-                },
-                child: Text(
-                  "EDIT",
-                  style: AppTheme.labelBold.copyWith(color: Colors.white),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showDeleteConfirmDialog(BuildContext context, LedgerState state, DeliveryLog log) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-            side: const BorderSide(color: Colors.black, width: 2.5),
-          ),
-          backgroundColor: Colors.white,
-          title: Text(
-            "CONFIRM DELETE",
-            style: AppTheme.headlineMd.copyWith(fontSize: 18.0),
-          ),
-          content: Text(
-            "Are you sure you want to permanently delete transaction #${log.serialNo} for ${log.customerName}? This will adjust outstanding balance if unpaid.",
-            style: AppTheme.bodyMd,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                "NO",
-                style: AppTheme.labelBold.copyWith(color: AppTheme.outline),
-              ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                color: AppTheme.error,
-                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                border: Border.all(color: Colors.black, width: 1.5),
-              ),
-              child: TextButton(
-                onPressed: () {
-                  state.deleteTransactionBySerialNo(log.serialNo);
-                  Navigator.pop(context);
-                  CustomToast.showSuccess(context, "TRANSACTION #${log.serialNo} DELETED");
-                },
-                child: Text(
-                  "YES, DELETE",
-                  style: AppTheme.labelBold.copyWith(color: Colors.white),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showEditTransactionDialog(BuildContext context, LedgerState state, DeliveryLog log) {
+  void _showEditDeleteBottomSheet(BuildContext context, LedgerState state, DeliveryLog log) {
     final detailsCont = TextEditingController(text: log.itemName);
     final amountCont = TextEditingController(text: log.amount.toStringAsFixed(0));
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusLg)),
+      ),
       builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-            side: const BorderSide(color: Colors.black, width: 2.5),
+        return SingleChildScrollView(
+          padding: EdgeInsets.only(
+            left: 24.0,
+            right: 24.0,
+            top: 16.0,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24.0,
           ),
-          backgroundColor: Colors.white,
-          title: Text(
-            "EDIT TRANSACTION #${log.serialNo}",
-            style: AppTheme.headlineMd.copyWith(fontSize: 18.0),
-          ),
-          content: Column(
+          child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextField(
-                controller: detailsCont,
-                decoration: const InputDecoration(labelText: "ITEM DETAILS"),
+              Center(
+                child: Container(
+                  width: 40.0,
+                  height: 5.0,
+                  decoration: BoxDecoration(
+                    color: AppTheme.outlineVariant,
+                    borderRadius: BorderRadius.circular(2.5),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24.0),
+
+              Text(
+                "EDIT TRANSACTION #${log.serialNo}",
+                style: AppTheme.headlineMd.copyWith(
+                  color: AppTheme.primary,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: 12.0),
+              Text(
+                "Customer: ${log.customerName} • Date: ${log.date}",
+                style: AppTheme.labelSm.copyWith(color: AppTheme.outline),
+              ),
+              const SizedBox(height: 20.0),
+
+              TextField(
+                controller: detailsCont,
+                decoration: InputDecoration(
+                  labelText: "ITEM DETAILS",
+                  labelStyle: AppTheme.labelBold.copyWith(fontSize: 10, color: AppTheme.outline),
+                  filled: true,
+                  fillColor: AppTheme.surface,
+                  enabledBorder: const UnderlineInputBorder(
+                    borderSide: BorderSide(color: AppTheme.outlineVariant, width: 1.5),
+                  ),
+                  focusedBorder: const UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black, width: 2.0),
+                  ),
+                ),
+                style: AppTheme.bodyLg,
+              ),
+              const SizedBox(height: 16.0),
+
               TextField(
                 controller: amountCont,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: "AMOUNT (₹)"),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: false),
+                decoration: InputDecoration(
+                  labelText: "AMOUNT (₹)",
+                  labelStyle: AppTheme.labelBold.copyWith(fontSize: 10, color: AppTheme.outline),
+                  prefixIcon: const Icon(Icons.currency_rupee, color: Colors.black),
+                  filled: true,
+                  fillColor: AppTheme.surface,
+                  enabledBorder: const UnderlineInputBorder(
+                    borderSide: BorderSide(color: AppTheme.outlineVariant, width: 1.5),
+                  ),
+                  focusedBorder: const UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black, width: 2.0),
+                  ),
+                ),
+                style: AppTheme.headlineMd.copyWith(fontSize: 20.0),
+              ),
+              const SizedBox(height: 24.0),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () async {
+                        final confirm = await CustomToast.showDestructiveConfirmation(
+                          context,
+                          title: "DELETE TRANSACTION?",
+                          message: "Are you sure you want to permanently delete transaction #${log.serialNo} of ₹${log.amount.toStringAsFixed(0)} for ${log.customerName}?",
+                          confirmLabel: "DELETE",
+                        );
+                        if (confirm && context.mounted) {
+                          Navigator.pop(context);
+                          state.deleteTransactionBySerialNo(log.serialNo);
+                          if (context.mounted) {
+                            CustomToast.showSuccess(context, "TRANSACTION #${log.serialNo} DELETED");
+                          }
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14.0),
+                        decoration: BoxDecoration(
+                          color: AppTheme.error,
+                          borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                          border: Border.all(color: Colors.black, width: 1.5),
+                        ),
+                        child: Center(
+                          child: Text(
+                            "DELETE",
+                            style: AppTheme.labelBold.copyWith(
+                              color: Colors.white,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16.0),
+
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        final newAmt = double.tryParse(amountCont.text.trim()) ?? log.amount;
+                        Navigator.pop(context);
+                        state.editTransactionBySerialNo(log.serialNo, detailsCont.text.trim(), newAmt);
+                        CustomToast.showSuccess(context, "TRANSACTION #${log.serialNo} UPDATED");
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14.0),
+                        decoration: BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                          border: Border.all(color: Colors.black, width: 1.5),
+                        ),
+                        child: Center(
+                          child: Text(
+                            "SAVE CHANGES",
+                            style: AppTheme.labelBold.copyWith(
+                              color: Colors.white,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                "CANCEL",
-                style: AppTheme.labelBold.copyWith(color: AppTheme.outline),
-              ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                border: Border.all(color: Colors.black, width: 1.5),
-              ),
-              child: TextButton(
-                onPressed: () {
-                  final newAmt = double.tryParse(amountCont.text.trim()) ?? log.amount;
-                  state.editTransactionBySerialNo(log.serialNo, detailsCont.text.trim(), newAmt);
-                  Navigator.pop(context);
-                  CustomToast.showSuccess(context, "TRANSACTION #${log.serialNo} UPDATED");
-                },
-                child: Text(
-                  "SAVE CHANGES",
-                  style: AppTheme.labelBold.copyWith(color: Colors.white),
-                ),
-              ),
-            ),
-          ],
         );
       },
     );
   }
 
-  Widget _buildCurrentBagCard(
-    String label,
-    double value, {
-    bool isCurrency = false,
-    bool isPercent = false,
-    required Color valueColor,
-  }) {
-    String formattedValue = "";
-    if (isCurrency) {
-      formattedValue = "₹${NumberFormat('#,##,###.00').format(value)}";
-    } else if (isPercent) {
-      formattedValue = "${value.toStringAsFixed(1)}%";
-    }
-
-    return Expanded(
-      child: BentoCard(
-        padding: const EdgeInsets.all(16.0),
-        backgroundColor: AppTheme.surface,
-        shadowStyle: ShadowStyle.light,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: AppTheme.labelSm.copyWith(
-                fontSize: 8.5,
-                color: AppTheme.onSurfaceVariant,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8.0),
-            Text(
-              formattedValue,
-              style: AppTheme.headlineMd.copyWith(
-                fontSize: 18.0,
-                color: valueColor,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOverallMetric(
-    String label,
-    double value, {
-    bool isCurrency = false,
-    bool isPercent = false,
-    bool isNegative = false,
-    bool isProfit = false,
-  }) {
-    String formattedValue = "";
-    if (isCurrency) {
-      formattedValue = "₹${NumberFormat('#,##,###').format(value)}";
-    } else if (isPercent) {
-      formattedValue = "${value.toStringAsFixed(1)}%";
-    }
-
-    Color valueColor = Colors.black;
-    if (isProfit && value > 0) {
-      valueColor = Colors.green;
-    } else if (isProfit && value < 0) {
-      valueColor = Colors.red;
-    } else if (isNegative && value > 0) {
-      valueColor = Colors.red;
-    }
-
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            label,
-            style: AppTheme.labelSm.copyWith(
-              fontSize: 8.0,
-              color: AppTheme.onSurfaceVariant,
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 6.0),
-          Text(
-            formattedValue,
-            style: AppTheme.headlineMd.copyWith(
-              fontSize: 13.0,
-              fontWeight: FontWeight.w900,
-              color: valueColor,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVerticalDivider() {
-    return Container(
-      width: 1.5,
-      height: 32,
-      color: AppTheme.outlineVariant,
-    );
-  }
 
   void _showBatchDetailsBottomSheet(BuildContext context, RiceBag bag, int bagNum, LedgerState state) {
     final revenue = state.getBagRevenue(bag);

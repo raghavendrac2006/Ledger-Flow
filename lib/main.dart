@@ -4,6 +4,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'core/app_theme.dart';
 import 'core/app_state.dart';
+import 'core/repositories/firestore/firestore_customer_repository.dart';
+import 'core/repositories/firestore/firestore_delivery_log_repository.dart';
+import 'core/repositories/firestore/firestore_expense_repository.dart';
+import 'core/repositories/firestore/firestore_rice_bag_repository.dart';
+import 'core/repositories/firestore/firestore_settings_repository.dart';
 import 'screens/home_shell.dart';
 
 void main() async {
@@ -21,7 +26,15 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => LedgerState()),
+        ChangeNotifierProvider(
+          create: (_) => LedgerState(
+            customerRepository: FirestoreCustomerRepository(),
+            deliveryLogRepository: FirestoreDeliveryLogRepository(),
+            expenseRepository: FirestoreExpenseRepository(),
+            riceBagRepository: FirestoreRiceBagRepository(),
+            settingsRepository: FirestoreSettingsRepository(),
+          ),
+        ),
       ],
       child: MaterialApp(
         title: 'Sales Tracking',

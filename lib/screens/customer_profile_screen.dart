@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/app_theme.dart';
 import '../core/app_state.dart';
+import '../core/models/models.dart';
 import '../widgets/bento_card.dart';
 import '../widgets/custom_toast.dart';
 
@@ -277,8 +278,8 @@ class CustomerProfileScreen extends StatelessWidget {
                           return Material(
                             color: Colors.transparent,
                             child: InkWell(
-                              onLongPress: () {
-                                _showEditDeleteTransactionDialog(context, state, customer.name, index, tx);
+                              onTap: () {
+                                _showEditDeleteBottomSheet(context, state, customer.name, index, tx);
                               },
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
@@ -407,218 +408,184 @@ class CustomerProfileScreen extends StatelessWidget {
 
 
 
-  void _showEditDeleteTransactionDialog(
+  void _showEditDeleteBottomSheet(
     BuildContext context,
     LedgerState state,
     String customerName,
     int index,
     Transaction tx,
   ) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-            side: const BorderSide(color: Colors.black, width: 2.5),
-          ),
-          backgroundColor: Colors.white,
-          title: Text(
-            "TRANSACTION ACTION",
-            style: AppTheme.headlineMd.copyWith(fontSize: 18.0),
-          ),
-          content: Text(
-            "Select an action for the transaction of ₹${tx.amount.toStringAsFixed(0)} on ${tx.date}.",
-            style: AppTheme.bodyMd,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                "CANCEL",
-                style: AppTheme.labelBold.copyWith(color: AppTheme.outline),
-              ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                color: AppTheme.error,
-                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                border: Border.all(color: Colors.black, width: 1.5),
-              ),
-              child: TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _showDeleteConfirmDialog(context, state, customerName, index, tx);
-                },
-                child: Text(
-                  "DELETE",
-                  style: AppTheme.labelBold.copyWith(color: Colors.white),
-                ),
-              ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                border: Border.all(color: Colors.black, width: 1.5),
-              ),
-              child: TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _showEditTransactionDialog(context, state, customerName, index, tx);
-                },
-                child: Text(
-                  "EDIT",
-                  style: AppTheme.labelBold.copyWith(color: Colors.white),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
+    final detailsCont = TextEditingController(text: tx.details);
+    final amountCont = TextEditingController(text: tx.amount.toStringAsFixed(2));
 
-  void _showDeleteConfirmDialog(
-    BuildContext context,
-    LedgerState state,
-    String customerName,
-    int index,
-    Transaction tx,
-  ) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusLg)),
+      ),
       builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-            side: const BorderSide(color: Colors.black, width: 2.5),
+        return SingleChildScrollView(
+          padding: EdgeInsets.only(
+            left: 24.0,
+            right: 24.0,
+            top: 16.0,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24.0,
           ),
-          backgroundColor: Colors.white,
-          title: Text(
-            "PERMANENTLY DELETE?",
-            style: AppTheme.headlineMd.copyWith(fontSize: 18.0, color: AppTheme.error),
-          ),
-          content: Text(
-            "Are you sure you want to permanently delete this transaction for ₹${tx.amount.toStringAsFixed(0)}? This will adjust the customer outstanding balance and cannot be undone.",
-            style: AppTheme.bodyMd,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                "CANCEL",
-                style: AppTheme.labelBold.copyWith(color: AppTheme.outline),
-              ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                color: AppTheme.error,
-                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                border: Border.all(color: Colors.black, width: 1.5),
-              ),
-              child: TextButton(
-                onPressed: () {
-                  state.deleteTransaction(customerName, index);
-                  Navigator.pop(context);
-                  CustomToast.showSuccess(context, "DELETED TRANSACTION");
-                },
-                child: Text(
-                  "DELETE",
-                  style: AppTheme.labelBold.copyWith(color: Colors.white),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showEditTransactionDialog(
-    BuildContext context,
-    LedgerState state,
-    String customerName,
-    int index,
-    Transaction tx,
-  ) {
-    final TextEditingController detailsCont = TextEditingController(text: tx.details);
-    final TextEditingController amountCont = TextEditingController(text: tx.amount.toStringAsFixed(2));
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-            side: const BorderSide(color: Colors.black, width: 2.5),
-          ),
-          backgroundColor: Colors.white,
-          title: Text(
-            "EDIT TRANSACTION",
-            style: AppTheme.headlineMd.copyWith(fontSize: 18.0),
-          ),
-          content: Column(
+          child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Center(
+                child: Container(
+                  width: 40.0,
+                  height: 5.0,
+                  decoration: BoxDecoration(
+                    color: AppTheme.outlineVariant,
+                    borderRadius: BorderRadius.circular(2.5),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24.0),
+
+              Text(
+                "EDIT TRANSACTION",
+                style: AppTheme.headlineMd.copyWith(
+                  color: AppTheme.primary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 12.0),
+              Text(
+                "Customer: $customerName • Date: ${tx.date}",
+                style: AppTheme.labelSm.copyWith(color: AppTheme.outline),
+              ),
+              const SizedBox(height: 20.0),
+
               TextField(
                 controller: detailsCont,
                 decoration: InputDecoration(
                   labelText: "TRANSACTION DETAILS",
                   labelStyle: AppTheme.labelBold.copyWith(fontSize: 10, color: AppTheme.outline),
-                  hintText: "e.g., 1x Nippat...",
+                  filled: true,
+                  fillColor: AppTheme.surface,
+                  enabledBorder: const UnderlineInputBorder(
+                    borderSide: BorderSide(color: AppTheme.outlineVariant, width: 1.5),
+                  ),
+                  focusedBorder: const UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black, width: 2.0),
+                  ),
                 ),
                 style: AppTheme.bodyLg,
               ),
               const SizedBox(height: 16.0),
+
               TextField(
                 controller: amountCont,
-                keyboardType: TextInputType.number,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: false),
                 decoration: InputDecoration(
                   labelText: "AMOUNT (₹)",
                   labelStyle: AppTheme.labelBold.copyWith(fontSize: 10, color: AppTheme.outline),
-                  hintText: "0.00",
+                  prefixIcon: const Icon(Icons.currency_rupee, color: Colors.black),
+                  filled: true,
+                  fillColor: AppTheme.surface,
+                  enabledBorder: const UnderlineInputBorder(
+                    borderSide: BorderSide(color: AppTheme.outlineVariant, width: 1.5),
+                  ),
+                  focusedBorder: const UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black, width: 2.0),
+                  ),
                 ),
-                style: AppTheme.bodyLg,
+                style: AppTheme.headlineMd.copyWith(fontSize: 20.0),
+              ),
+              const SizedBox(height: 24.0),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () async {
+                        final confirm = await CustomToast.showDestructiveConfirmation(
+                          context,
+                          title: "DELETE TRANSACTION?",
+                          message: "Are you sure you want to permanently delete this transaction for ₹${tx.amount.toStringAsFixed(0)}? This will adjust the customer's outstanding balance and cannot be undone.",
+                          confirmLabel: "DELETE",
+                        );
+                        if (confirm && context.mounted) {
+                          Navigator.pop(context);
+                          await state.deleteTransaction(customerName, index);
+                          if (context.mounted) {
+                            CustomToast.showSuccess(context, "DELETED TRANSACTION");
+                          }
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14.0),
+                        decoration: BoxDecoration(
+                          color: AppTheme.error,
+                          borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                          border: Border.all(color: Colors.black, width: 1.5),
+                        ),
+                        child: Center(
+                          child: Text(
+                            "DELETE",
+                            style: AppTheme.labelBold.copyWith(
+                              color: Colors.white,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16.0),
+
+                  Expanded(
+                    child: InkWell(
+                      onTap: () async {
+                        final details = detailsCont.text.trim();
+                        final amount = double.tryParse(amountCont.text.trim());
+                        if (details.isNotEmpty && amount != null && amount >= 0) {
+                          if (context.mounted) {
+                            Navigator.pop(context);
+                          }
+                          await state.editTransaction(
+                            customerName: customerName,
+                            index: index,
+                            newDetails: details,
+                            newAmount: amount,
+                          );
+                          if (context.mounted) {
+                            CustomToast.showSuccess(context, "UPDATED TRANSACTION");
+                          }
+                        } else {
+                          CustomToast.showError(context, "Please check all fields are valid");
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14.0),
+                        decoration: BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                          border: Border.all(color: Colors.black, width: 1.5),
+                        ),
+                        child: Center(
+                          child: Text(
+                            "SAVE CHANGES",
+                            style: AppTheme.labelBold.copyWith(
+                              color: Colors.white,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                "CANCEL",
-                style: AppTheme.labelBold.copyWith(color: AppTheme.outline),
-              ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                border: Border.all(color: Colors.black, width: 1.5),
-              ),
-              child: TextButton(
-                onPressed: () {
-                  final details = detailsCont.text.trim();
-                  final amount = double.tryParse(amountCont.text.trim());
-                  if (details.isNotEmpty && amount != null && amount >= 0) {
-                    state.editTransaction(
-                      customerName: customerName,
-                      index: index,
-                      newDetails: details,
-                      newAmount: amount,
-                    );
-                    Navigator.pop(context);
-                    CustomToast.showSuccess(context, "UPDATED TRANSACTION");
-                  }
-                },
-                child: Text(
-                  "SAVE CHANGES",
-                  style: AppTheme.labelBold.copyWith(color: Colors.white),
-                ),
-              ),
-            ),
-          ],
         );
       },
     );

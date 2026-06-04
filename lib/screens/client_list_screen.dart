@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/app_theme.dart';
 import '../core/app_state.dart';
+import '../core/models/models.dart';
 import '../widgets/bento_card.dart';
 import 'customer_profile_screen.dart';
 
@@ -16,10 +17,71 @@ class _ClientListScreenState extends State<ClientListScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
 
+  String _balanceFilter = "All Balances";
+  String _statusFilter = "All Status";
+  String _alphabetFilter = "All A-Z";
+
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Widget _buildFilterChip(
+    String label,
+    String activeVal,
+    ValueChanged<String> onSelected,
+    List<String> options,
+  ) {
+    final isSelected = activeVal != options.first;
+    return PopupMenuButton<String>(
+      initialValue: activeVal,
+      onSelected: onSelected,
+      itemBuilder: (context) {
+        return options.map((opt) {
+          return PopupMenuItem<String>(
+            value: opt,
+            child: Text(
+              opt,
+              style: AppTheme.labelBold.copyWith(
+                fontSize: 12.0,
+                color: activeVal == opt ? AppTheme.primary : Colors.black,
+              ),
+            ),
+          );
+        }).toList();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.black : AppTheme.surface,
+          borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+          border: Border.all(
+            color: isSelected ? Colors.black : AppTheme.outlineVariant,
+            width: 1.5,
+          ),
+          boxShadow: isSelected ? AppTheme.hardShadowLight : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              activeVal,
+              style: AppTheme.labelBold.copyWith(
+                fontSize: 12.0,
+                color: isSelected ? Colors.white : AppTheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(width: 4.0),
+            Icon(
+              Icons.arrow_drop_down,
+              size: 16.0,
+              color: isSelected ? Colors.white : AppTheme.onSurfaceVariant,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -36,195 +98,260 @@ class _ClientListScreenState extends State<ClientListScreen> {
     // Filter customers
     final filteredCustomers = customers.where((c) {
       final nameMatch = c.name.toLowerCase().contains(_searchQuery.toLowerCase());
-      final areaMatch = c.area.toLowerCase().contains(_searchQuery.toLowerCase());
-      final typeMatch = c.type.toLowerCase().contains(_searchQuery.toLowerCase());
-      return nameMatch || areaMatch || typeMatch;
+      if (!nameMatch) return false;
+
+      if (_balanceFilter == "Pending (> ₹0)" && c.outstanding <= 0) {
+        return false;
+      }
+      if (_balanceFilter == "High (> ₹5k)" && c.outstanding <= 5000) {
+        return false;
+      }
+
+      if (_statusFilter == "Active Client" && c.outstanding > 0) {
+        return false;
+      }
+      if (_statusFilter == "Inactive" && c.outstanding == 0) {
+        return false;
+      }
+
+      if (_alphabetFilter == "A - M") {
+        final firstLetter = c.name.trim().isEmpty ? "" : c.name.trim()[0].toUpperCase();
+        if (firstLetter.compareTo("A") < 0 || firstLetter.compareTo("M") > 0) {
+          return false;
+        }
+      }
+      if (_alphabetFilter == "N - Z") {
+        final firstLetter = c.name.trim().isEmpty ? "" : c.name.trim()[0].toUpperCase();
+        if (firstLetter.compareTo("N") < 0 || firstLetter.compareTo("Z") > 0) {
+          return false;
+        }
+      }
+
+      return true;
     }).toList();
 
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Bento Stats Grid (2x2 Layout)
-                    Row(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: NestedScrollView(
+            headerSliverBuilder: (context, innerBoxIsScrolled) {
+              return [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: BentoCard(
-                            padding: const EdgeInsets.all(12.0),
-                            backgroundColor: AppTheme.surface,
-                            shadowStyle: ShadowStyle.light,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "TOTAL CLIENTS",
-                                  style: AppTheme.labelSm.copyWith(fontSize: 10.0, fontWeight: FontWeight.bold),
+                        // Bento Stats Grid (2x2 Layout)
+                        Row(
+                          children: [
+                            Expanded(
+                              child: BentoCard(
+                                padding: const EdgeInsets.all(12.0),
+                                backgroundColor: AppTheme.surface,
+                                shadowStyle: ShadowStyle.light,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "TOTAL CLIENTS",
+                                      style: AppTheme.labelSm.copyWith(fontSize: 10.0, fontWeight: FontWeight.bold),
+                                    ),
+                                    const SizedBox(height: 4.0),
+                                    Text(
+                                      "$totalClients",
+                                      style: AppTheme.headlineLg.copyWith(fontSize: 20.0),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 4.0),
-                                Text(
-                                  "$totalClients",
-                                  style: AppTheme.headlineLg.copyWith(fontSize: 20.0),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 12.0),
-                        Expanded(
-                          child: BentoCard(
-                            padding: const EdgeInsets.all(12.0),
-                            backgroundColor: AppTheme.surface,
-                            shadowStyle: ShadowStyle.light,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "ACTIVE RUN",
-                                  style: AppTheme.labelSm.copyWith(fontSize: 10.0, fontWeight: FontWeight.bold),
+                            const SizedBox(width: 12.0),
+                            Expanded(
+                              child: BentoCard(
+                                padding: const EdgeInsets.all(12.0),
+                                backgroundColor: AppTheme.surface,
+                                shadowStyle: ShadowStyle.light,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "ACTIVE RUN",
+                                      style: AppTheme.labelSm.copyWith(fontSize: 10.0, fontWeight: FontWeight.bold),
+                                    ),
+                                    const SizedBox(height: 4.0),
+                                    Text(
+                                      "$activeCount",
+                                      style: AppTheme.headlineLg.copyWith(fontSize: 20.0, color: AppTheme.success),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 4.0),
-                                Text(
-                                  "$activeCount",
-                                  style: AppTheme.headlineLg.copyWith(fontSize: 20.0, color: AppTheme.success),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
+                          ],
                         ),
+                        const SizedBox(height: 12.0),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: BentoCard(
+                                padding: const EdgeInsets.all(12.0),
+                                backgroundColor: AppTheme.surface,
+                                shadowStyle: ShadowStyle.light,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "DEBT ENTRIES",
+                                      style: AppTheme.labelSm.copyWith(fontSize: 10.0, fontWeight: FontWeight.bold),
+                                    ),
+                                    const SizedBox(height: 4.0),
+                                    Text(
+                                      "$pendingCount",
+                                      style: AppTheme.headlineLg.copyWith(fontSize: 20.0, color: AppTheme.error),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12.0),
+                            Expanded(
+                              child: BentoCard(
+                                onTap: () {
+                                  _showOutstandingCollectionsBottomSheet(context);
+                                },
+                                padding: const EdgeInsets.all(12.0),
+                                backgroundColor: AppTheme.surface,
+                                shadowStyle: ShadowStyle.light,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "TOTAL PENDING",
+                                      style: AppTheme.labelSm.copyWith(fontSize: 10.0, fontWeight: FontWeight.bold),
+                                    ),
+                                    const SizedBox(height: 4.0),
+                                    Text(
+                                      "₹${totalOutstanding.toStringAsFixed(0)}",
+                                      style: AppTheme.dataTabular.copyWith(fontSize: 18.0, fontWeight: FontWeight.w800),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24.0),
                       ],
                     ),
-                    const SizedBox(height: 12.0),
-                    Row(
+                  ),
+                ),
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _StickyHeaderDelegate(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: BentoCard(
-                            padding: const EdgeInsets.all(12.0),
-                            backgroundColor: AppTheme.surface,
-                            shadowStyle: ShadowStyle.light,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "DEBT ENTRIES",
-                                  style: AppTheme.labelSm.copyWith(fontSize: 10.0, fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 4.0),
-                                Text(
-                                  "$pendingCount",
-                                  style: AppTheme.headlineLg.copyWith(fontSize: 20.0, color: AppTheme.error),
-                                ),
-                              ],
-                            ),
+                        // Search input bar
+                        Container(
+                          decoration: const BoxDecoration(
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0x0A000000),
+                                offset: Offset(2, 2),
+                                blurRadius: 0,
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(width: 12.0),
-                        Expanded(
-                          child: BentoCard(
-                            onTap: () {
-                              _showOutstandingCollectionsBottomSheet(context);
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: (val) {
+                              setState(() {
+                                _searchQuery = val;
+                              });
                             },
-                            padding: const EdgeInsets.all(12.0),
-                            backgroundColor: AppTheme.surface,
-                            shadowStyle: ShadowStyle.light,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "TOTAL PENDING",
-                                  style: AppTheme.labelSm.copyWith(fontSize: 10.0, fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 4.0),
-                                Text(
-                                  "₹${totalOutstanding.toStringAsFixed(0)}",
-                                  style: AppTheme.dataTabular.copyWith(fontSize: 18.0, fontWeight: FontWeight.w800),
-                                ),
-                              ],
+                            decoration: InputDecoration(
+                              hintText: "Search shop name...",
+                              hintStyle: AppTheme.bodyMd.copyWith(color: AppTheme.outline),
+                              prefixIcon: const Icon(Icons.search, color: AppTheme.primary),
+                              suffixIcon: _searchQuery.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.clear),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        setState(() {
+                                          _searchQuery = "";
+                                        });
+                                      },
+                                    )
+                                  : null,
+                              filled: true,
+                              fillColor: AppTheme.surface,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 12.0),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: const BorderSide(color: AppTheme.outlineVariant, width: 1.5),
+                                borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: const BorderSide(color: Colors.black, width: 2.0),
+                                borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                              ),
                             ),
+                            style: AppTheme.bodyLg,
+                          ),
+                        ),
+                        const SizedBox(height: 8.0),
+                        // Filter Chips Row
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              _buildFilterChip("All Balances", _balanceFilter, (val) {
+                                setState(() => _balanceFilter = val);
+                              }, ["All Balances", "Pending (> ₹0)", "High (> ₹5k)"]),
+                              const SizedBox(width: 8.0),
+                              _buildFilterChip("All Status", _statusFilter, (val) {
+                                setState(() => _statusFilter = val);
+                              }, ["All Status", "Active Client", "Inactive"]),
+                              const SizedBox(width: 8.0),
+                              _buildFilterChip("All A-Z", _alphabetFilter, (val) {
+                                setState(() => _alphabetFilter = val);
+                              }, ["All A-Z", "A - M", "N - Z"]),
+                            ],
                           ),
                         ),
                       ],
                     ),
-
-                    const SizedBox(height: 28.0),
-
-                    // Search input bar
-                    Container(
-                      decoration: const BoxDecoration(
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0x0A000000),
-                            offset: Offset(2, 2),
-                            blurRadius: 0,
-                          ),
-                        ],
-                      ),
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: (val) {
-                          setState(() {
-                            _searchQuery = val;
-                          });
-                        },
-                        decoration: InputDecoration(
-                          hintText: "Search shop name, area, wholesale...",
-                          hintStyle: AppTheme.bodyMd.copyWith(color: AppTheme.outline),
-                          prefixIcon: const Icon(Icons.search, color: AppTheme.primary),
-                          suffixIcon: _searchQuery.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.clear),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    setState(() {
-                                      _searchQuery = "";
-                                    });
-                                  },
-                                )
-                              : null,
-                          filled: true,
-                          fillColor: AppTheme.surface,
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(color: AppTheme.outlineVariant, width: 1.5),
-                            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(color: Colors.black, width: 2.0),
-                            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                          ),
-                        ),
-                        style: AppTheme.bodyLg,
+                  ),
+                ),
+              ];
+            },
+            body: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 16.0),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "CLIENTS DIRECTORY",
+                      style: AppTheme.labelBold.copyWith(
+                        fontSize: 11.0,
+                        color: AppTheme.onSurfaceVariant,
+                        letterSpacing: 1.5,
                       ),
                     ),
-
-                    const SizedBox(height: 20.0),
-
-                    // Customers List header
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "CLIENTS DIRECTORY",
-                          style: AppTheme.labelBold.copyWith(
-                            fontSize: 11.0,
-                            color: AppTheme.onSurfaceVariant,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                        Text(
-                          "${filteredCustomers.length} FOUND",
-                          style: AppTheme.labelBold.copyWith(fontSize: 10.0, color: AppTheme.outline),
-                        ),
-                      ],
+                    Text(
+                      "${filteredCustomers.length} FOUND",
+                      style: AppTheme.labelBold.copyWith(fontSize: 10.0, color: AppTheme.outline),
                     ),
-                    const SizedBox(height: 12.0),
-
-                    // Customer directory list
-                    BentoCard(
+                  ],
+                ),
+                const SizedBox(height: 12.0),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: BentoCard(
                       padding: const EdgeInsets.all(0),
                       backgroundColor: AppTheme.surface,
                       shadowStyle: ShadowStyle.light,
@@ -305,11 +432,11 @@ class _ClientListScreenState extends State<ClientListScreen> {
                               },
                             ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -662,6 +789,30 @@ class _OutstandingCollectionsSheetState extends State<OutstandingCollectionsShee
         },
       ),
     );
+  }
+}
+
+class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  _StickyHeaderDelegate({required this.child});
+
+  @override
+  double get minExtent => 110.0;
+  @override
+  double get maxExtent => 110.0;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: child,
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _StickyHeaderDelegate oldDelegate) {
+    return true;
   }
 }
 

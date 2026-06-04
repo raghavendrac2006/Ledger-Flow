@@ -3,8 +3,20 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+
+import 'models/customer.dart';
+import 'models/transaction.dart';
+import 'models/delivery_log.dart';
+import 'models/expense_log.dart';
+import 'models/rice_bag.dart';
+import 'models/daily_usage.dart';
+
+import 'repositories/customer_repository.dart';
+import 'repositories/delivery_log_repository.dart';
+import 'repositories/expense_repository.dart';
+import 'repositories/rice_bag_repository.dart';
+import 'repositories/settings_repository.dart';
 
 String toSentenceCase(String text) {
   final trimmed = text.trim();
@@ -13,188 +25,25 @@ String toSentenceCase(String text) {
   return trimmed[0].toUpperCase() + trimmed.substring(1).toLowerCase();
 }
 
-class Customer {
-  final String name;
-  final String type;
-  final String area;
-  double outstanding;
-  final IconData icon;
-  final String location;
-  final String status;
-
-  Customer({
-    required this.name,
-    required this.type,
-    required this.area,
-    required this.outstanding,
-    required this.icon,
-    this.location = "Downtown Market",
-    this.status = "Active Client",
-  });
-}
-
-class Transaction {
-  final String date;
-  String details;
-  double amount;
-  bool isPaid;
-  bool isPayment;
-
-  Transaction({
-    required this.date,
-    required this.details,
-    required this.amount,
-    required this.isPaid,
-    this.isPayment = false,
-  });
-
-  Map<String, dynamic> toJson() => {
-    "date": date,
-    "details": details,
-    "amount": amount,
-    "isPaid": isPaid,
-    "isPayment": isPayment,
-  };
-}
-
-class DeliveryLog {
-  final int serialNo;
-  final String date;
-  final DateTime dateTime;
-  final String itemName;
-  final String customerName;
-  final double amount;
-  final bool isPaid;
-  String? associatedBagId;
-  bool isPayment;
-
-  DeliveryLog({
-    required this.serialNo,
-    required this.date,
-    required this.dateTime,
-    required this.itemName,
-    required this.customerName,
-    required this.amount,
-    required this.isPaid,
-    this.associatedBagId,
-    this.isPayment = false,
-  });
-
-  Map<String, dynamic> toJson() => {
-    "serialNo": serialNo,
-    "date": date,
-    "dateTime": dateTime.toIso8601String(),
-    "itemName": itemName,
-    "customerName": customerName,
-    "amount": amount,
-    "isPaid": isPaid,
-    "isPayment": isPayment,
-  };
-}
-
-class ExpenseLog {
-  final String? expenseId;
-  final String itemName;
-  final String category; // RICE, Cylinders, Transportation
-  final double amount;
-  final String date;
-  final String? associatedBagId;
-
-  ExpenseLog({
-    this.expenseId,
-    required this.itemName,
-    required this.category,
-    required this.amount,
-    required this.date,
-    this.associatedBagId,
-  });
-
-  Map<String, dynamic> toJson() => {
-    "itemName": itemName,
-    "category": category,
-    "amount": amount,
-    "date": date,
-    "associatedBagId": associatedBagId,
-  };
-}
-
-class RiceBag {
-  final String bagId;
-  final double totalKg;
-  double usedKg;
-  double remainingKg;
-  final String startDate;
-  String? endDate;
-  String status; // "Active" | "Completed"
-  final double cost;
-  final int? bagNumber;
-  final double? revenue;
-  final double? expenses;
-  final double? profit;
-  final double? profitMargin;
-
-  RiceBag({
-    required this.bagId,
-    required this.totalKg,
-    this.usedKg = 0.0,
-    required this.remainingKg,
-    required this.startDate,
-    this.endDate,
-    this.status = "Active",
-    required this.cost,
-    this.bagNumber,
-    this.revenue,
-    this.expenses,
-    this.profit,
-    this.profitMargin,
-  });
-
-  Map<String, dynamic> toJson() => {
-    "bagId": bagId,
-    "totalKg": totalKg,
-    "usedKg": usedKg,
-    "remainingKg": remainingKg,
-    "startDate": startDate,
-    "endDate": endDate,
-    "status": status,
-    "cost": cost,
-    "bagNumber": bagNumber,
-    "revenue": revenue,
-    "expenses": expenses,
-    "profit": profit,
-    "profitMargin": profitMargin,
-  };
-}
-
-class DailyUsage {
-  final String usageId;
-  final String bagId;
-  final String date;
-  final double usedKg;
-
-  DailyUsage({
-    required this.usageId,
-    required this.bagId,
-    required this.date,
-    required this.usedKg,
-  });
-
-  Map<String, dynamic> toJson() => {
-    "usageId": usageId,
-    "bagId": bagId,
-    "date": date,
-    "usedKg": usedKg,
-  };
-}
-
 class LedgerState extends ChangeNotifier {
-  LedgerState() {
+  final CustomerRepository customerRepository;
+  final DeliveryLogRepository deliveryLogRepository;
+  final ExpenseRepository expenseRepository;
+  final RiceBagRepository riceBagRepository;
+  final SettingsRepository settingsRepository;
+
+  LedgerState({
+    required this.customerRepository,
+    required this.deliveryLogRepository,
+    required this.expenseRepository,
+    required this.riceBagRepository,
+    required this.settingsRepository,
+  }) {
     _initFirestore();
     runSentenceCaseMigration();
   }
 
-  // Firestore instances & stream subscriptions
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  // Firestore stream subscriptions
   StreamSubscription? _customersSub;
   StreamSubscription? _logsSub;
   StreamSubscription? _expensesSub;
@@ -216,20 +65,10 @@ class LedgerState extends ChangeNotifier {
     runAutoPurge();
 
     // 3. Listen to Customers Collection
-    _customersSub = _firestore.collection('customers').snapshots().listen(
+    _customersSub = customerRepository.getCustomersStream(_getCustomerIcon).listen(
       (snapshot) {
         _customers.clear();
-        for (var doc in snapshot.docs) {
-          final data = doc.data();
-          _customers.add(Customer(
-            name: data['name'] ?? doc.id,
-            type: data['type'] ?? 'RETAIL',
-            area: data['area'] ?? '',
-            outstanding: (data['outstanding'] as num?)?.toDouble() ?? 0.0,
-            icon: _getCustomerIcon(data['type']),
-            location: data['location'] ?? '',
-          ));
-        }
+        _customers.addAll(snapshot);
         notifyListeners();
       },
       onError: (error) {
@@ -238,40 +77,17 @@ class LedgerState extends ChangeNotifier {
     );
 
     // 4. Listen to Delivery Logs Collection (Sorted locally in memory)
-    _logsSub = _firestore.collection('deliveryLogs').snapshots().listen(
+    _logsSub = deliveryLogRepository.getDeliveryLogsStream().listen(
       (snapshot) {
         _deliveryLogs.clear();
         _customerTransactions.clear();
 
         int maxSerial = 1000;
 
-        for (var doc in snapshot.docs) {
-          final data = doc.data();
-          final dateStr = data['date'] ?? '';
-          final customerName = data['customerName'] ?? '';
-          final itemName = data['itemName'] ?? '';
-          final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
-          final isPaid = data['isPaid'] ?? false;
-          final serialNo = data['serialNo'] as int? ?? 1001;
-          final dateTime = DateTime.tryParse(data['dateTime'] ?? '') ?? DateTime.now();
-          final bagId = data['associatedBagId'] as String?;
-          final isPayment = data['isPayment'] ?? false;
-
-          if (serialNo > maxSerial) {
-            maxSerial = serialNo;
+        for (var log in snapshot) {
+          if (log.serialNo > maxSerial) {
+            maxSerial = log.serialNo;
           }
-
-          final log = DeliveryLog(
-            serialNo: serialNo,
-            date: dateStr,
-            dateTime: dateTime,
-            itemName: itemName,
-            customerName: customerName,
-            amount: amount,
-            isPaid: isPaid,
-            associatedBagId: bagId,
-            isPayment: isPayment,
-          );
           _deliveryLogs.add(log);
         }
 
@@ -302,20 +118,10 @@ class LedgerState extends ChangeNotifier {
     );
 
     // 5. Listen to Expenses Collection (Sorted locally in memory)
-    _expensesSub = _firestore.collection('expenses').snapshots().listen(
+    _expensesSub = expenseRepository.getExpensesStream().listen(
       (snapshot) {
         _expenses.clear();
-        for (var doc in snapshot.docs) {
-          final data = doc.data();
-          _expenses.add(ExpenseLog(
-            expenseId: doc.id,
-            itemName: data['itemName'] ?? '',
-            category: data['category'] ?? '',
-            amount: (data['amount'] as num?)?.toDouble() ?? 0.0,
-            date: data['date'] ?? '',
-            associatedBagId: data['associatedBagId'] as String?,
-          ));
-        }
+        _expenses.addAll(snapshot);
         // Sort in memory by date descending
         _expenses.sort((a, b) => b.date.compareTo(a.date));
         notifyListeners();
@@ -326,27 +132,10 @@ class LedgerState extends ChangeNotifier {
     );
 
     // 6. Listen to Rice Bags Collection (Sorted locally in memory)
-    _bagsSub = _firestore.collection('riceBags').snapshots().listen(
+    _bagsSub = riceBagRepository.getRiceBagsStream().listen(
       (snapshot) {
         _riceBags.clear();
-        for (var doc in snapshot.docs) {
-          final data = doc.data();
-          _riceBags.add(RiceBag(
-            bagId: doc.id,
-            totalKg: (data['totalKg'] as num?)?.toDouble() ?? 0.0,
-            usedKg: (data['usedKg'] as num?)?.toDouble() ?? 0.0,
-            remainingKg: (data['remainingKg'] as num?)?.toDouble() ?? 0.0,
-            startDate: data['startDate'] ?? '',
-            endDate: data['endDate'],
-            status: data['status'] ?? 'Active',
-            cost: (data['cost'] as num?)?.toDouble() ?? 0.0,
-            bagNumber: data['bagNumber'] as int?,
-            revenue: (data['revenue'] as num?)?.toDouble(),
-            expenses: (data['expenses'] as num?)?.toDouble(),
-            profit: (data['profit'] as num?)?.toDouble(),
-            profitMargin: (data['profitMargin'] as num?)?.toDouble(),
-          ));
-        }
+        _riceBags.addAll(snapshot);
         // Sort in memory by startDate descending
         _riceBags.sort((a, b) => b.startDate.compareTo(a.startDate));
         notifyListeners();
@@ -357,18 +146,10 @@ class LedgerState extends ChangeNotifier {
     );
 
     // 7. Listen to Daily Usages Collection
-    _usagesSub = _firestore.collection('dailyUsages').snapshots().listen(
+    _usagesSub = riceBagRepository.getDailyUsagesStream().listen(
       (snapshot) {
         _dailyUsages.clear();
-        for (var doc in snapshot.docs) {
-          final data = doc.data();
-          _dailyUsages.add(DailyUsage(
-            usageId: doc.id,
-            bagId: data['bagId'] ?? '',
-            date: data['date'] ?? '',
-            usedKg: (data['usedKg'] as num?)?.toDouble() ?? 0.0,
-          ));
-        }
+        _dailyUsages.addAll(snapshot);
         notifyListeners();
       },
       onError: (error) {
@@ -377,14 +158,10 @@ class LedgerState extends ChangeNotifier {
     );
 
     // 8. Listen to Historical Monthly Sales aggregates
-    _statsSub = _firestore.collection('monthlyStats').snapshots().listen(
+    _statsSub = deliveryLogRepository.getMonthlyStatsStream().listen(
       (snapshot) {
         _historicalMonthlySales.clear();
-        for (var doc in snapshot.docs) {
-          final data = doc.data();
-          final sales = (data['sales'] as num?)?.toDouble() ?? 0.0;
-          _historicalMonthlySales[doc.id] = sales;
-        }
+        _historicalMonthlySales.addAll(snapshot);
         notifyListeners();
       },
       onError: (error) {
@@ -393,21 +170,15 @@ class LedgerState extends ChangeNotifier {
     );
 
     // 9. Listen to Settings Collection (specifically the googleSheets document)
-    _settingsSub = _firestore.collection('settings').doc('googleSheets').snapshots().listen(
-      (snapshot) async {
-        if (snapshot.exists && snapshot.data() != null) {
-          final data = snapshot.data()!;
-          final url = data['url'] as String?;
-          if (url != null && url.isNotEmpty) {
-            _googleSheetsUrl = url;
-            notifyListeners();
-          }
+    _settingsSub = settingsRepository.getGoogleSheetsUrlStream().listen(
+      (url) async {
+        if (url.isNotEmpty) {
+          _googleSheetsUrl = url;
+          notifyListeners();
         } else {
           // Document does not exist yet. Seed it with the default URL.
           try {
-            await _firestore.collection('settings').doc('googleSheets').set({
-              'url': _googleSheetsUrl,
-            });
+            await settingsRepository.updateGoogleSheetsUrl(_googleSheetsUrl);
           } catch (e) {
             debugPrint("Failed to seed default settings URL: $e");
           }
@@ -419,11 +190,9 @@ class LedgerState extends ChangeNotifier {
     );
 
     // 10. Listen to Expense Suggestions list document
-    _expenseSuggestionsSub = _firestore.collection('settings').doc('expenseItems').snapshots().listen(
-      (snapshot) async {
-        if (snapshot.exists && snapshot.data() != null) {
-          final data = snapshot.data()!;
-          final list = List<String>.from(data['items'] ?? []);
+    _expenseSuggestionsSub = settingsRepository.getExpenseSuggestionsStream().listen(
+      (list) async {
+        if (list.isNotEmpty) {
           _expenseSuggestions = list;
           notifyListeners();
         } else {
@@ -439,9 +208,7 @@ class LedgerState extends ChangeNotifier {
             "Thread pack",
           ];
           try {
-            await _firestore.collection('settings').doc('expenseItems').set({
-              'items': defaultItems,
-            });
+            await settingsRepository.updateExpenseSuggestions(defaultItems);
           } catch (e) {
             debugPrint("Failed to seed default expense items: $e");
           }
@@ -453,149 +220,10 @@ class LedgerState extends ChangeNotifier {
     );
   }
 
-  Future<void> runSentenceCaseMigration() async {
-    debugPrint("--- STARTING DATABASE SENTENCE CASE MIGRATION ---");
-    try {
-      // 1. Migrate settings/expenseItems suggestions
-      final suggestionsDoc = await _firestore.collection('settings').doc('expenseItems').get();
-      if (suggestionsDoc.exists && suggestionsDoc.data() != null) {
-        final data = suggestionsDoc.data()!;
-        final rawItems = List<String>.from(data['items'] ?? []);
-        final migratedSuggestions = rawItems
-            .map((item) => toSentenceCase(item))
-            .where((item) => item.isNotEmpty)
-            .toSet()
-            .toList();
-        await _firestore.collection('settings').doc('expenseItems').set({
-          'items': migratedSuggestions,
-        });
-        debugPrint("Migrated expense suggestions: $migratedSuggestions");
-      }
-
-      // 2. Migrate customers collection (and consolidate duplicates)
-      final customersSnapshot = await _firestore.collection('customers').get();
-      final Map<String, List<DocumentSnapshot>> groupedCustomers = {};
-      for (var doc in customersSnapshot.docs) {
-        final name = doc.data()['name'] as String? ?? doc.id;
-        final casedName = toSentenceCase(name);
-        if (casedName.isNotEmpty) {
-          if (!groupedCustomers.containsKey(casedName)) {
-            groupedCustomers[casedName] = [];
-          }
-          groupedCustomers[casedName]!.add(doc);
-        }
-      }
-
-      for (var entry in groupedCustomers.entries) {
-        final casedName = entry.key;
-        final docs = entry.value;
-
-        // Sum outstanding balance
-        double totalOutstanding = 0.0;
-        for (var doc in docs) {
-          totalOutstanding += (doc.data() as Map<String, dynamic>?)?['outstanding'] as num? ?? 0.0;
-        }
-
-        // Get template fields from first document
-        final firstData = docs.first.data() as Map<String, dynamic>;
-        final type = firstData['type'] ?? 'RETAIL';
-        final area = firstData['area'] ?? '';
-        final location = firstData['location'] ?? '';
-
-        // Write the consolidated sentence-cased customer
-        await _firestore.collection('customers').doc(casedName).set({
-          'name': casedName,
-          'type': type,
-          'area': area,
-          'outstanding': totalOutstanding,
-          'location': location,
-        });
-
-        // Delete old customer docs if they were cased differently, and update their logs
-        for (var doc in docs) {
-          if (doc.id != casedName) {
-            // Find and update delivery logs
-            final logsSnapshot = await _firestore.collection('deliveryLogs')
-                .where('customerName', isEqualTo: doc.id)
-                .get();
-            
-            final batch = _firestore.batch();
-            for (var logDoc in logsSnapshot.docs) {
-              batch.update(logDoc.reference, {'customerName': casedName});
-            }
-            await batch.commit();
-
-            // Delete old customer doc
-            await doc.reference.delete();
-          }
-        }
-      }
-      debugPrint("Migrated customers collection successfully.");
-
-      // 3. Migrate deliveryLogs (itemName & customerName case correction)
-      final logsSnapshot = await _firestore.collection('deliveryLogs').get();
-      final logsBatch = _firestore.batch();
-      int logsBatchCount = 0;
-      for (var doc in logsSnapshot.docs) {
-        final data = doc.data();
-        final currentCustomerName = data['customerName'] as String? ?? '';
-        final currentItemName = data['itemName'] as String? ?? '';
-        
-        final casedCustomer = toSentenceCase(currentCustomerName);
-        final casedItem = (currentItemName.toLowerCase() == "cash collected") 
-            ? "Cash Collected" 
-            : toSentenceCase(currentItemName);
-
-        if (casedCustomer != currentCustomerName || casedItem != currentItemName) {
-          logsBatch.update(doc.reference, {
-            'customerName': casedCustomer,
-            'itemName': casedItem,
-          });
-          logsBatchCount++;
-          if (logsBatchCount >= 400) {
-            await logsBatch.commit();
-            logsBatchCount = 0;
-          }
-        }
-      }
-      if (logsBatchCount > 0) {
-        await logsBatch.commit();
-      }
-      debugPrint("Migrated delivery logs successfully.");
-
-      // 4. Migrate expenses collection (itemName case correction)
-      final expensesSnapshot = await _firestore.collection('expenses').get();
-      final expensesBatch = _firestore.batch();
-      int expensesBatchCount = 0;
-      for (var doc in expensesSnapshot.docs) {
-        final data = doc.data();
-        final currentItemName = data['itemName'] as String? ?? '';
-        final casedItemName = toSentenceCase(currentItemName);
-        if (casedItemName != currentItemName) {
-          expensesBatch.update(doc.reference, {
-            'itemName': casedItemName,
-          });
-          expensesBatchCount++;
-          if (expensesBatchCount >= 400) {
-            await expensesBatch.commit();
-            expensesBatchCount = 0;
-          }
-        }
-      }
-      if (expensesBatchCount > 0) {
-        await expensesBatch.commit();
-      }
-      debugPrint("Migrated expenses successfully.");
-
-    } catch (e) {
-      debugPrint("Error running sentence case migration: $e");
-    }
-  }
-
   // Clean default seeding data to avoid empty screens initially
   Future<void> _seedDefaultCustomers() async {
-    final snapshot = await _firestore.collection('customers').limit(1).get();
-    if (snapshot.docs.isEmpty) {
+    final list = await customerRepository.getAllCustomers(_getCustomerIcon);
+    if (list.isEmpty) {
       debugPrint("Database empty. Seeding default customers...");
       final defaultList = [
         {"name": "Ramchandra", "type": "", "area": "", "outstanding": 0.0, "location": ""},
@@ -613,71 +241,23 @@ class LedgerState extends ChangeNotifier {
       ];
 
       for (var c in defaultList) {
-        await _firestore.collection('customers').doc(c['name'] as String).set({
-          'name': c['name'],
-          'type': c['type'],
-          'area': c['area'],
-          'outstanding': c['outstanding'],
-          'location': c['location'],
-        });
+        await customerRepository.addCustomer(Customer(
+          name: c['name'] as String,
+          type: c['type'] as String,
+          area: c['area'] as String,
+          outstanding: c['outstanding'] as double,
+          icon: _getCustomerIcon(c['type'] as String),
+          location: c['location'] as String,
+        ));
       }
     }
   }
 
-  // 3-Month Auto-Purge Retention: Deletes detailed logs older than 90 days, increments monthly sales summary
+  // 3-Month Auto-Purge Retention
   Future<void> runAutoPurge() async {
     try {
       final ninetyDaysAgo = DateTime.now().subtract(const Duration(days: 90));
-      final snapshot = await _firestore.collection('deliveryLogs')
-          .where('dateTime', isLessThan: ninetyDaysAgo.toIso8601String())
-          .get();
-
-      if (snapshot.docs.isEmpty) return;
-
-      debugPrint("--- RUNNING AUTO-PURGE RETENTION ON ${snapshot.docs.length} DETAILED TRANSACTION LOGS ---");
-
-      final Map<String, List<DocumentSnapshot>> groupedLogs = {};
-      for (var doc in snapshot.docs) {
-        final dateTimeStr = doc.data()['dateTime'] as String?;
-        if (dateTimeStr != null) {
-          final dt = DateTime.tryParse(dateTimeStr);
-          if (dt != null) {
-            final monthKey = "${dt.year}-${dt.month.toString().padLeft(2, '0')}";
-            if (!groupedLogs.containsKey(monthKey)) {
-              groupedLogs[monthKey] = [];
-            }
-            groupedLogs[monthKey]!.add(doc);
-          }
-        }
-      }
-
-      for (var entry in groupedLogs.entries) {
-        final monthKey = entry.key;
-        final logs = entry.value;
-
-        double monthlySales = 0.0;
-        for (var logDoc in logs) {
-          final data = logDoc.data() as Map<String, dynamic>?;
-          if (data != null) {
-            monthlySales += (data['amount'] as num?)?.toDouble() ?? 0.0;
-          }
-        }
-
-        // Increment monthly total sales document securely in Firestore
-        await _firestore.collection('monthlyStats').doc(monthKey).set({
-          'sales': FieldValue.increment(monthlySales),
-          'deliveriesCount': FieldValue.increment(logs.length),
-        }, SetOptions(merge: true));
-
-        // Delete individual logs
-        final batch = _firestore.batch();
-        for (var logDoc in logs) {
-          batch.delete(logDoc.reference);
-        }
-        await batch.commit();
-      }
-
-      debugPrint("--- AUTO-PURGE COMPLETED SUCCESSFULLY ---");
+      await deliveryLogRepository.purgeLogsOlderThan(ninetyDaysAgo);
     } catch (e) {
       debugPrint("Auto-purge failed: $e");
     }
@@ -823,13 +403,15 @@ class LedgerState extends ChangeNotifier {
   }) async {
     final cleanName = toSentenceCase(name);
     if (cleanName.isNotEmpty) {
-      await _firestore.collection('customers').doc(cleanName).set({
-        'name': cleanName,
-        'type': type,
-        'area': area,
-        'outstanding': 0.0,
-        'location': "Added via Sales",
-      });
+      await customerRepository.addCustomer(Customer(
+        name: cleanName,
+        type: type,
+        area: area,
+        outstanding: 0.0,
+        icon: _getCustomerIcon(type),
+        location: "Added via Sales",
+        status: "Active Client",
+      ));
     }
   }
 
@@ -846,30 +428,23 @@ class LedgerState extends ChangeNotifier {
       if (list != null && index < list.length) {
         final tx = list[index];
         
-        // Find matching document in Firestore
-        final query = await _firestore.collection('deliveryLogs')
-            .where('customerName', isEqualTo: customerName)
-            .where('amount', isEqualTo: tx.amount)
-            .where('isPaid', isEqualTo: tx.isPaid)
-            .where('isPayment', isEqualTo: tx.isPayment)
-            .limit(1)
-            .get();
+        final logsList = await deliveryLogRepository.getLogsForCustomer(customerName);
+        final match = logsList.firstWhere(
+          (log) => log.amount == tx.amount && 
+                   log.isPaid == tx.isPaid && 
+                   log.isPayment == tx.isPayment,
+          orElse: () => throw Exception("Log not found"),
+        );
         
-        if (query.docs.isNotEmpty) {
-          await query.docs.first.reference.delete();
+        if (match.logId != null) {
+          await deliveryLogRepository.deleteDeliveryLog(match.logId!);
         }
 
         // Adjust outstanding balance
         if (tx.isPayment) {
-          // Deleting a payment increases the customer's outstanding balance
-          await _firestore.collection('customers').doc(customerName).update({
-            'outstanding': FieldValue.increment(tx.amount),
-          });
+          await customerRepository.updateCustomerOutstanding(customerName, tx.amount);
         } else if (!tx.isPaid) {
-          // Deleting an unpaid sale reduces the customer's outstanding balance
-          await _firestore.collection('customers').doc(customerName).update({
-            'outstanding': FieldValue.increment(-tx.amount),
-          });
+          await customerRepository.updateCustomerOutstanding(customerName, -tx.amount);
         }
       }
     }
@@ -888,17 +463,16 @@ class LedgerState extends ChangeNotifier {
         final oldAmount = tx.amount;
         final wasPaid = tx.isPaid;
         
-        // Find matching document in Firestore
-        final query = await _firestore.collection('deliveryLogs')
-            .where('customerName', isEqualTo: customerName)
-            .where('amount', isEqualTo: oldAmount)
-            .where('isPaid', isEqualTo: wasPaid)
-            .where('isPayment', isEqualTo: tx.isPayment)
-            .limit(1)
-            .get();
-        
-        if (query.docs.isNotEmpty) {
-          await query.docs.first.reference.update({
+        final logsList = await deliveryLogRepository.getLogsForCustomer(customerName);
+        final match = logsList.firstWhere(
+          (log) => log.amount == oldAmount && 
+                   log.isPaid == wasPaid && 
+                   log.isPayment == tx.isPayment,
+          orElse: () => throw Exception("Log not found"),
+        );
+
+        if (match.logId != null) {
+          await deliveryLogRepository.updateDeliveryLog(match.logId!, {
             'itemName': tx.isPayment ? newDetails : newDetails.replaceAll("1x ", ""),
             'amount': newAmount,
           });
@@ -906,16 +480,11 @@ class LedgerState extends ChangeNotifier {
 
         // Recalculate outstanding balance difference
         if (tx.isPayment) {
-          // Editing a payment: if new payment amount is higher, outstanding balance decreases
           final diff = oldAmount - newAmount;
-          await _firestore.collection('customers').doc(customerName).update({
-            'outstanding': FieldValue.increment(diff),
-          });
+          await customerRepository.updateCustomerOutstanding(customerName, diff);
         } else if (!wasPaid) {
           final diff = newAmount - oldAmount;
-          await _firestore.collection('customers').doc(customerName).update({
-            'outstanding': FieldValue.increment(diff),
-          });
+          await customerRepository.updateCustomerOutstanding(customerName, diff);
         }
       }
     }
@@ -926,24 +495,20 @@ class LedgerState extends ChangeNotifier {
     if (list != null && index < list.length) {
       final tx = list[index];
       if (!tx.isPaid) {
-        // Find in Firestore
-        final query = await _firestore.collection('deliveryLogs')
-            .where('customerName', isEqualTo: customerName)
-            .where('amount', isEqualTo: tx.amount)
-            .where('isPaid', isEqualTo: false)
-            .limit(1)
-            .get();
+        final logsList = await deliveryLogRepository.getLogsForCustomer(customerName);
+        final match = logsList.firstWhere(
+          (log) => log.amount == tx.amount && !log.isPaid,
+          orElse: () => throw Exception("Log not found"),
+        );
         
-        if (query.docs.isNotEmpty) {
-          await query.docs.first.reference.update({
+        if (match.logId != null) {
+          await deliveryLogRepository.updateDeliveryLog(match.logId!, {
             'isPaid': true,
           });
         }
 
         // Reduce outstanding balance
-        await _firestore.collection('customers').doc(customerName).update({
-          'outstanding': FieldValue.increment(-tx.amount),
-        });
+        await customerRepository.updateCustomerOutstanding(customerName, -tx.amount);
       }
     }
   }
@@ -957,26 +522,23 @@ class LedgerState extends ChangeNotifier {
     final cleanCustomer = toSentenceCase(customerName);
     final cleanItem = toSentenceCase(itemName);
     final activeBag = activeRiceBag;
-    final docId = "LOG_${DateTime.now().millisecondsSinceEpoch}";
     final dateStr = "${_deliveryDate.day} ${_getMonthName(_deliveryDate.month)} ${_deliveryDate.year}";
 
-    // 1. Save log to Firestore
-    await _firestore.collection('deliveryLogs').doc(docId).set({
-      'serialNo': _serialNumber,
-      'date': dateStr,
-      'dateTime': _deliveryDate.toIso8601String(),
-      'itemName': cleanItem,
-      'customerName': cleanCustomer,
-      'amount': amount,
-      'isPaid': isPaid,
-      'associatedBagId': activeBag?.bagId,
-    });
+    await deliveryLogRepository.addDeliveryLog(DeliveryLog(
+      serialNo: _serialNumber,
+      date: dateStr,
+      dateTime: _deliveryDate,
+      itemName: cleanItem,
+      customerName: cleanCustomer,
+      amount: amount,
+      isPaid: isPaid,
+      associatedBagId: activeBag?.bagId,
+      isPayment: false,
+    ));
 
-    // 2. Increment customer outstanding if unpaid
+    // Increment customer outstanding if unpaid
     if (!isPaid) {
-      await _firestore.collection('customers').doc(cleanCustomer).update({
-        'outstanding': FieldValue.increment(amount),
-      });
+      await customerRepository.updateCustomerOutstanding(cleanCustomer, amount);
     }
 
     _serialNumber++;
@@ -989,26 +551,22 @@ class LedgerState extends ChangeNotifier {
     required DateTime date,
   }) async {
     final cleanCustomer = toSentenceCase(customerName);
-    final docId = "PAY_${DateTime.now().millisecondsSinceEpoch}";
     final dateStr = "${date.day} ${_getMonthName(date.month)} ${date.year}";
 
-    // 1. Save payment log to Firestore
-    await _firestore.collection('deliveryLogs').doc(docId).set({
-      'serialNo': _serialNumber,
-      'date': dateStr,
-      'dateTime': date.toIso8601String(),
-      'itemName': "Cash Collected",
-      'customerName': cleanCustomer,
-      'amount': amount,
-      'isPaid': true,
-      'isPayment': true,
-      'associatedBagId': null,
-    });
+    await deliveryLogRepository.addDeliveryLog(DeliveryLog(
+      serialNo: _serialNumber,
+      date: dateStr,
+      dateTime: date,
+      itemName: "Cash Collected",
+      customerName: cleanCustomer,
+      amount: amount,
+      isPaid: true,
+      associatedBagId: null,
+      isPayment: true,
+    ));
 
-    // 2. Reduce customer outstanding balance
-    await _firestore.collection('customers').doc(cleanCustomer).update({
-      'outstanding': FieldValue.increment(-amount),
-    });
+    // Reduce customer outstanding balance
+    await customerRepository.updateCustomerOutstanding(cleanCustomer, -amount);
 
     _serialNumber++;
     notifyListeners();
@@ -1033,11 +591,9 @@ class LedgerState extends ChangeNotifier {
       _expenseSuggestions = _expenseSuggestions.map((e) => toSentenceCase(e)).toSet().toList();
       notifyListeners();
       try {
-        await _firestore.collection('settings').doc('expenseItems').set({
-          'items': _expenseSuggestions,
-        });
+        await settingsRepository.updateExpenseSuggestions(_expenseSuggestions);
       } catch (e) {
-        debugPrint("Error saving expense item to Firestore: $e");
+        debugPrint("Error saving expense item to settings: $e");
       }
     }
   }
@@ -1084,14 +640,14 @@ class LedgerState extends ChangeNotifier {
   }) async {
     final cleanItemName = toSentenceCase(itemName);
     final activeBag = activeRiceBag;
-    final docId = "EXP_${DateTime.now().millisecondsSinceEpoch}";
-    await _firestore.collection('expenses').doc(docId).set({
-      'itemName': cleanItemName,
-      'category': category,
-      'amount': amount,
-      'date': date,
-      'associatedBagId': activeBag?.bagId,
-    });
+
+    await expenseRepository.addExpense(ExpenseLog(
+      itemName: cleanItemName,
+      category: category,
+      amount: amount,
+      date: date,
+      associatedBagId: activeBag?.bagId,
+    ));
     
     if (category == "Rice Flour" && totalKg > 0.0) {
       await addRiceFlourBag(totalKg: totalKg, cost: amount, date: date);
@@ -1105,10 +661,7 @@ class LedgerState extends ChangeNotifier {
   }) async {
     final casedName = toSentenceCase(newItemName);
     try {
-      await _firestore.collection('expenses').doc(expenseId).update({
-        'itemName': casedName,
-        'amount': newAmount,
-      });
+      await expenseRepository.updateExpense(expenseId, casedName, newAmount);
       notifyListeners();
     } catch (e) {
       debugPrint("Error updating expense: $e");
@@ -1117,7 +670,7 @@ class LedgerState extends ChangeNotifier {
 
   Future<void> deleteExpense(String expenseId) async {
     try {
-      await _firestore.collection('expenses').doc(expenseId).delete();
+      await expenseRepository.deleteExpense(expenseId);
       notifyListeners();
     } catch (e) {
       debugPrint("Error deleting expense: $e");
@@ -1139,9 +692,9 @@ class LedgerState extends ChangeNotifier {
     _googleSheetsUrl = cleanUrl;
     notifyListeners();
     try {
-      await _firestore.collection('settings').doc('googleSheets').set({'url': cleanUrl});
+      await settingsRepository.updateGoogleSheetsUrl(cleanUrl);
     } catch (e) {
-      debugPrint("Error saving Sheets URL to Firestore: $e");
+      debugPrint("Error saving Sheets URL: $e");
     }
   }
 
@@ -1173,7 +726,6 @@ class LedgerState extends ChangeNotifier {
   }
 
   Future<void> _completeBag(RiceBag bag, String endDate, Map<String, dynamic> additionalUpdates) async {
-    // Dynamic calculations for the bag right before completion
     final revenue = _deliveryLogs
         .where((log) => !log.isPayment && log.associatedBagId == bag.bagId)
         .fold(0.0, (total, log) => total + log.amount);
@@ -1206,17 +758,18 @@ class LedgerState extends ChangeNotifier {
       bagNum = idx != -1 ? idx + 1 : 1;
     }
 
-    final updates = {
-      'status': 'Completed',
-      'endDate': endDate,
-      'revenue': revenue,
-      'expenses': expenses,
-      'profit': profit,
-      'profitMargin': profitMargin,
-      'bagNumber': bagNum,
-      ...additionalUpdates,
-    };
-    await _firestore.collection('riceBags').doc(bag.bagId).update(updates);
+    final updatedBag = bag.copyWith(
+      status: 'Completed',
+      endDate: endDate,
+      revenue: revenue,
+      expenses: expenses,
+      profit: profit,
+      profitMargin: profitMargin,
+      bagNumber: bagNum,
+      usedKg: additionalUpdates['usedKg'],
+      remainingKg: additionalUpdates['remainingKg'],
+    );
+    await riceBagRepository.saveRiceBag(updatedBag);
   }
 
   Future<void> addRiceFlourBag({
@@ -1241,15 +794,16 @@ class LedgerState extends ChangeNotifier {
 
     // 3. Instantiate new active bag
     final bagId = "BAG_${DateTime.now().millisecondsSinceEpoch}";
-    await _firestore.collection('riceBags').doc(bagId).set({
-      'totalKg': totalKg,
-      'usedKg': 0.0,
-      'remainingKg': totalKg,
-      'startDate': date,
-      'status': 'Active',
-      'cost': cost,
-      'bagNumber': nextBagNum,
-    });
+    await riceBagRepository.saveRiceBag(RiceBag(
+      bagId: bagId,
+      totalKg: totalKg,
+      usedKg: 0.0,
+      remainingKg: totalKg,
+      startDate: date,
+      status: 'Active',
+      cost: cost,
+      bagNumber: nextBagNum,
+    ));
   }
 
   Future<void> addDailyUsage({
@@ -1260,11 +814,12 @@ class LedgerState extends ChangeNotifier {
     if (activeBag == null) return;
 
     final usageId = "USE_${DateTime.now().millisecondsSinceEpoch}";
-    await _firestore.collection('dailyUsages').doc(usageId).set({
-      'bagId': activeBag.bagId,
-      'date': date,
-      'usedKg': usedKg,
-    });
+    await riceBagRepository.addDailyUsage(DailyUsage(
+      usageId: usageId,
+      bagId: activeBag.bagId,
+      date: date,
+      usedKg: usedKg,
+    ));
 
     final newUsed = activeBag.usedKg + usedKg;
     final newRemaining = activeBag.remainingKg - usedKg;
@@ -1275,11 +830,12 @@ class LedgerState extends ChangeNotifier {
         'remainingKg': 0.0,
       });
     } else {
-      await _firestore.collection('riceBags').doc(activeBag.bagId).update({
-        'usedKg': newUsed,
-        'remainingKg': newRemaining,
-        'status': 'Active',
-      });
+      final updatedBag = activeBag.copyWith(
+        usedKg: newUsed,
+        remainingKg: newRemaining,
+        status: 'Active',
+      );
+      await riceBagRepository.saveRiceBag(updatedBag);
     }
   }
 
@@ -1303,15 +859,16 @@ class LedgerState extends ChangeNotifier {
 
     // Start a new bag with zero cost
     final bagId = "BAG_${DateTime.now().millisecondsSinceEpoch}";
-    await _firestore.collection('riceBags').doc(bagId).set({
-      'totalKg': totalKg,
-      'usedKg': 0.0,
-      'remainingKg': totalKg,
-      'startDate': date,
-      'status': 'Active',
-      'cost': 0.0,
-      'bagNumber': nextBagNum,
-    });
+    await riceBagRepository.saveRiceBag(RiceBag(
+      bagId: bagId,
+      totalKg: totalKg,
+      usedKg: 0.0,
+      remainingKg: totalKg,
+      startDate: date,
+      status: 'Active',
+      cost: 0.0,
+      bagNumber: nextBagNum,
+    ));
   }
 
   int getBagNumber(RiceBag bag) {
@@ -1552,34 +1109,16 @@ class LedgerState extends ChangeNotifier {
   // Delete transaction globally by its unique Serial Number
   Future<void> deleteTransactionBySerialNo(int serialNo) async {
     try {
-      final query = await _firestore.collection('deliveryLogs')
-          .where('serialNo', isEqualTo: serialNo)
-          .limit(1)
-          .get();
+      final log = _deliveryLogs.firstWhere((l) => l.serialNo == serialNo);
       
-      if (query.docs.isNotEmpty) {
-        final doc = query.docs.first;
-        final data = doc.data();
-        final customerName = data['customerName'] as String?;
-        final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
-        final isPaid = data['isPaid'] as bool? ?? false;
-        final isPayment = data['isPayment'] as bool? ?? false;
+      // Delete from repository
+      await deliveryLogRepository.deleteLogBySerialNo(serialNo);
 
-        // Delete from Firestore
-        await doc.reference.delete();
-
-        // Adjust outstanding balance
-        if (customerName != null) {
-          if (isPayment) {
-            await _firestore.collection('customers').doc(customerName).update({
-              'outstanding': FieldValue.increment(amount),
-            });
-          } else if (!isPaid) {
-            await _firestore.collection('customers').doc(customerName).update({
-              'outstanding': FieldValue.increment(-amount),
-            });
-          }
-        }
+      // Adjust outstanding balance
+      if (log.isPayment) {
+        await customerRepository.updateCustomerOutstanding(log.customerName, log.amount);
+      } else if (!log.isPaid) {
+        await customerRepository.updateCustomerOutstanding(log.customerName, -log.amount);
       }
     } catch (e) {
       debugPrint("Error deleting transaction: $e");
@@ -1589,42 +1128,141 @@ class LedgerState extends ChangeNotifier {
   // Edit transaction globally by its unique Serial Number
   Future<void> editTransactionBySerialNo(int serialNo, String newDetails, double newAmount) async {
     try {
-      final query = await _firestore.collection('deliveryLogs')
-          .where('serialNo', isEqualTo: serialNo)
-          .limit(1)
-          .get();
-      
-      if (query.docs.isNotEmpty) {
-        final doc = query.docs.first;
-        final data = doc.data();
-        final customerName = data['customerName'] as String?;
-        final oldAmount = (data['amount'] as num?)?.toDouble() ?? 0.0;
-        final isPaid = data['isPaid'] as bool? ?? false;
-        final isPayment = data['isPayment'] as bool? ?? false;
+      final log = _deliveryLogs.firstWhere((l) => l.serialNo == serialNo);
+      final oldAmount = log.amount;
 
-        // Update in Firestore
-        await doc.reference.update({
-          'itemName': newDetails,
-          'amount': newAmount,
-        });
+      // Update in repository
+      await deliveryLogRepository.updateLogBySerialNo(serialNo, newDetails, newAmount);
 
-        // Adjust outstanding balance difference
-        if (customerName != null) {
-          if (isPayment) {
-            final diff = oldAmount - newAmount;
-            await _firestore.collection('customers').doc(customerName).update({
-              'outstanding': FieldValue.increment(diff),
-            });
-          } else if (!isPaid) {
-            final diff = newAmount - oldAmount;
-            await _firestore.collection('customers').doc(customerName).update({
-              'outstanding': FieldValue.increment(diff),
+      // Adjust outstanding balance difference
+      if (log.isPayment) {
+        final diff = oldAmount - newAmount;
+        await customerRepository.updateCustomerOutstanding(log.customerName, diff);
+      } else if (!log.isPaid) {
+        final diff = newAmount - oldAmount;
+        await customerRepository.updateCustomerOutstanding(log.customerName, diff);
+      }
+    } catch (e) {
+      debugPrint("Error editing transaction: $e");
+    }
+  }
+
+  // Startup Database Sentence Case Migration script
+  Future<void> runSentenceCaseMigration() async {
+    debugPrint("--- STARTING DATABASE SENTENCE CASE MIGRATION ---");
+    try {
+      // 1. Migrate settings/expenseItems suggestions
+      final rawItems = await settingsRepository.getExpenseSuggestionsStream().first;
+      if (rawItems.isNotEmpty) {
+        final migratedSuggestions = rawItems
+            .map((item) => toSentenceCase(item))
+            .where((item) => item.isNotEmpty)
+            .toSet()
+            .toList();
+        await settingsRepository.updateExpenseSuggestions(migratedSuggestions);
+        debugPrint("Migrated expense suggestions: $migratedSuggestions");
+      }
+
+      // 2. Migrate customers collection (and consolidate duplicates)
+      final customersList = await customerRepository.getAllCustomers(_getCustomerIcon);
+      final Map<String, List<Customer>> groupedCustomers = {};
+      for (var doc in customersList) {
+        final name = doc.name;
+        final casedName = toSentenceCase(name);
+        if (casedName.isNotEmpty) {
+          if (!groupedCustomers.containsKey(casedName)) {
+            groupedCustomers[casedName] = [];
+          }
+          groupedCustomers[casedName]!.add(doc);
+        }
+      }
+
+      for (var entry in groupedCustomers.entries) {
+        final casedName = entry.key;
+        final docs = entry.value;
+
+        // Sum outstanding balance
+        double totalOutstanding = 0.0;
+        for (var doc in docs) {
+          totalOutstanding += doc.outstanding;
+        }
+
+        // Get template fields from first document
+        final first = docs.first;
+        final type = first.type;
+        final area = first.area;
+        final location = first.location;
+
+        // Write the consolidated sentence-cased customer
+        await customerRepository.saveCustomer(Customer(
+          name: casedName,
+          type: type,
+          area: area,
+          outstanding: totalOutstanding,
+          icon: _getCustomerIcon(type),
+          location: location,
+        ));
+
+        // Delete old customer docs if they were cased differently, and update their logs
+        for (var doc in docs) {
+          if (doc.name != casedName) {
+            // Find and update delivery logs
+            final logsList = await deliveryLogRepository.getLogsForCustomer(doc.name);
+            
+            for (var log in logsList) {
+              if (log.logId != null) {
+                await deliveryLogRepository.updateDeliveryLog(log.logId!, {'customerName': casedName});
+              }
+            }
+
+            // Delete old customer doc
+            await customerRepository.deleteCustomer(doc.name);
+          }
+        }
+      }
+      debugPrint("Migrated customers collection successfully.");
+
+      // 3. Migrate deliveryLogs (itemName & customerName case correction)
+      final logsList = await deliveryLogRepository.getAllLogs();
+      for (var log in logsList) {
+        final currentCustomerName = log.customerName;
+        final currentItemName = log.itemName;
+        
+        final casedCustomer = toSentenceCase(currentCustomerName);
+        final casedItem = (currentItemName.toLowerCase() == "cash collected") 
+            ? "Cash Collected" 
+            : toSentenceCase(currentItemName);
+
+        if (casedCustomer != currentCustomerName || casedItem != currentItemName) {
+          if (log.logId != null) {
+            await deliveryLogRepository.updateDeliveryLog(log.logId!, {
+              'customerName': casedCustomer,
+              'itemName': casedItem,
             });
           }
         }
       }
+      debugPrint("Migrated delivery logs successfully.");
+
+      // 4. Migrate expenses collection (itemName case correction)
+      final expensesList = await expenseRepository.getAllExpenses();
+      for (var doc in expensesList) {
+        final currentItemName = doc.itemName;
+        final casedItemName = toSentenceCase(currentItemName);
+        if (casedItemName != currentItemName) {
+          if (doc.expenseId != null) {
+            await expenseRepository.updateExpense(
+              doc.expenseId!,
+              casedItemName,
+              doc.amount,
+            );
+          }
+        }
+      }
+      debugPrint("Migrated expenses successfully.");
+
     } catch (e) {
-      debugPrint("Error editing transaction: $e");
+      debugPrint("Error running sentence case migration: $e");
     }
   }
 
