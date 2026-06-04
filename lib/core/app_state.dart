@@ -4,6 +4,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+
+String toSentenceCase(String text) {
+  final trimmed = text.trim();
+  if (trimmed.isEmpty) return trimmed;
+  if (trimmed.length == 1) return trimmed.toUpperCase();
+  return trimmed[0].toUpperCase() + trimmed.substring(1).toLowerCase();
+}
 
 class Customer {
   final String name;
@@ -85,16 +93,20 @@ class DeliveryLog {
 }
 
 class ExpenseLog {
+  final String? expenseId;
   final String itemName;
   final String category; // RICE, Cylinders, Transportation
   final double amount;
   final String date;
+  final String? associatedBagId;
 
   ExpenseLog({
+    this.expenseId,
     required this.itemName,
     required this.category,
     required this.amount,
     required this.date,
+    this.associatedBagId,
   });
 
   Map<String, dynamic> toJson() => {
@@ -102,6 +114,7 @@ class ExpenseLog {
     "category": category,
     "amount": amount,
     "date": date,
+    "associatedBagId": associatedBagId,
   };
 }
 
@@ -114,6 +127,11 @@ class RiceBag {
   String? endDate;
   String status; // "Active" | "Completed"
   final double cost;
+  final int? bagNumber;
+  final double? revenue;
+  final double? expenses;
+  final double? profit;
+  final double? profitMargin;
 
   RiceBag({
     required this.bagId,
@@ -124,6 +142,11 @@ class RiceBag {
     this.endDate,
     this.status = "Active",
     required this.cost,
+    this.bagNumber,
+    this.revenue,
+    this.expenses,
+    this.profit,
+    this.profitMargin,
   });
 
   Map<String, dynamic> toJson() => {
@@ -135,6 +158,11 @@ class RiceBag {
     "endDate": endDate,
     "status": status,
     "cost": cost,
+    "bagNumber": bagNumber,
+    "revenue": revenue,
+    "expenses": expenses,
+    "profit": profit,
+    "profitMargin": profitMargin,
   };
 }
 
@@ -162,6 +190,7 @@ class DailyUsage {
 class LedgerState extends ChangeNotifier {
   LedgerState() {
     _initFirestore();
+    runSentenceCaseMigration();
   }
 
   // Firestore instances & stream subscriptions
@@ -173,6 +202,7 @@ class LedgerState extends ChangeNotifier {
   StreamSubscription? _usagesSub;
   StreamSubscription? _statsSub;
   StreamSubscription? _settingsSub;
+  StreamSubscription? _expenseSuggestionsSub;
 
   final Map<String, double> _historicalMonthlySales = {};
 
@@ -278,10 +308,12 @@ class LedgerState extends ChangeNotifier {
         for (var doc in snapshot.docs) {
           final data = doc.data();
           _expenses.add(ExpenseLog(
+            expenseId: doc.id,
             itemName: data['itemName'] ?? '',
             category: data['category'] ?? '',
             amount: (data['amount'] as num?)?.toDouble() ?? 0.0,
             date: data['date'] ?? '',
+            associatedBagId: data['associatedBagId'] as String?,
           ));
         }
         // Sort in memory by date descending
@@ -308,6 +340,11 @@ class LedgerState extends ChangeNotifier {
             endDate: data['endDate'],
             status: data['status'] ?? 'Active',
             cost: (data['cost'] as num?)?.toDouble() ?? 0.0,
+            bagNumber: data['bagNumber'] as int?,
+            revenue: (data['revenue'] as num?)?.toDouble(),
+            expenses: (data['expenses'] as num?)?.toDouble(),
+            profit: (data['profit'] as num?)?.toDouble(),
+            profitMargin: (data['profitMargin'] as num?)?.toDouble(),
           ));
         }
         // Sort in memory by startDate descending
@@ -380,6 +417,179 @@ class LedgerState extends ChangeNotifier {
         debugPrint("Firestore settings stream error: $error");
       }
     );
+
+    // 10. Listen to Expense Suggestions list document
+    _expenseSuggestionsSub = _firestore.collection('settings').doc('expenseItems').snapshots().listen(
+      (snapshot) async {
+        if (snapshot.exists && snapshot.data() != null) {
+          final data = snapshot.data()!;
+          final list = List<String>.from(data['items'] ?? []);
+          _expenseSuggestions = list;
+          notifyListeners();
+        } else {
+          // Document does not exist yet. Seed it with the default items list.
+          final defaultItems = [
+            "Gas Cylinder Commercial",
+            "Gas Cylinder Domestic",
+            "Petrol for Scooter",
+            "Diesel for Auto",
+            "Salt bag",
+            "Vehicle Repair",
+            "Delivery Box Roll",
+            "Thread pack",
+          ];
+          try {
+            await _firestore.collection('settings').doc('expenseItems').set({
+              'items': defaultItems,
+            });
+          } catch (e) {
+            debugPrint("Failed to seed default expense items: $e");
+          }
+        }
+      },
+      onError: (error) {
+        debugPrint("Firestore expenseItems stream error: $error");
+      }
+    );
+  }
+
+  Future<void> runSentenceCaseMigration() async {
+    debugPrint("--- STARTING DATABASE SENTENCE CASE MIGRATION ---");
+    try {
+      // 1. Migrate settings/expenseItems suggestions
+      final suggestionsDoc = await _firestore.collection('settings').doc('expenseItems').get();
+      if (suggestionsDoc.exists && suggestionsDoc.data() != null) {
+        final data = suggestionsDoc.data()!;
+        final rawItems = List<String>.from(data['items'] ?? []);
+        final migratedSuggestions = rawItems
+            .map((item) => toSentenceCase(item))
+            .where((item) => item.isNotEmpty)
+            .toSet()
+            .toList();
+        await _firestore.collection('settings').doc('expenseItems').set({
+          'items': migratedSuggestions,
+        });
+        debugPrint("Migrated expense suggestions: $migratedSuggestions");
+      }
+
+      // 2. Migrate customers collection (and consolidate duplicates)
+      final customersSnapshot = await _firestore.collection('customers').get();
+      final Map<String, List<DocumentSnapshot>> groupedCustomers = {};
+      for (var doc in customersSnapshot.docs) {
+        final name = doc.data()['name'] as String? ?? doc.id;
+        final casedName = toSentenceCase(name);
+        if (casedName.isNotEmpty) {
+          if (!groupedCustomers.containsKey(casedName)) {
+            groupedCustomers[casedName] = [];
+          }
+          groupedCustomers[casedName]!.add(doc);
+        }
+      }
+
+      for (var entry in groupedCustomers.entries) {
+        final casedName = entry.key;
+        final docs = entry.value;
+
+        // Sum outstanding balance
+        double totalOutstanding = 0.0;
+        for (var doc in docs) {
+          totalOutstanding += (doc.data() as Map<String, dynamic>?)?['outstanding'] as num? ?? 0.0;
+        }
+
+        // Get template fields from first document
+        final firstData = docs.first.data() as Map<String, dynamic>;
+        final type = firstData['type'] ?? 'RETAIL';
+        final area = firstData['area'] ?? '';
+        final location = firstData['location'] ?? '';
+
+        // Write the consolidated sentence-cased customer
+        await _firestore.collection('customers').doc(casedName).set({
+          'name': casedName,
+          'type': type,
+          'area': area,
+          'outstanding': totalOutstanding,
+          'location': location,
+        });
+
+        // Delete old customer docs if they were cased differently, and update their logs
+        for (var doc in docs) {
+          if (doc.id != casedName) {
+            // Find and update delivery logs
+            final logsSnapshot = await _firestore.collection('deliveryLogs')
+                .where('customerName', isEqualTo: doc.id)
+                .get();
+            
+            final batch = _firestore.batch();
+            for (var logDoc in logsSnapshot.docs) {
+              batch.update(logDoc.reference, {'customerName': casedName});
+            }
+            await batch.commit();
+
+            // Delete old customer doc
+            await doc.reference.delete();
+          }
+        }
+      }
+      debugPrint("Migrated customers collection successfully.");
+
+      // 3. Migrate deliveryLogs (itemName & customerName case correction)
+      final logsSnapshot = await _firestore.collection('deliveryLogs').get();
+      final logsBatch = _firestore.batch();
+      int logsBatchCount = 0;
+      for (var doc in logsSnapshot.docs) {
+        final data = doc.data();
+        final currentCustomerName = data['customerName'] as String? ?? '';
+        final currentItemName = data['itemName'] as String? ?? '';
+        
+        final casedCustomer = toSentenceCase(currentCustomerName);
+        final casedItem = (currentItemName.toLowerCase() == "cash collected") 
+            ? "Cash Collected" 
+            : toSentenceCase(currentItemName);
+
+        if (casedCustomer != currentCustomerName || casedItem != currentItemName) {
+          logsBatch.update(doc.reference, {
+            'customerName': casedCustomer,
+            'itemName': casedItem,
+          });
+          logsBatchCount++;
+          if (logsBatchCount >= 400) {
+            await logsBatch.commit();
+            logsBatchCount = 0;
+          }
+        }
+      }
+      if (logsBatchCount > 0) {
+        await logsBatch.commit();
+      }
+      debugPrint("Migrated delivery logs successfully.");
+
+      // 4. Migrate expenses collection (itemName case correction)
+      final expensesSnapshot = await _firestore.collection('expenses').get();
+      final expensesBatch = _firestore.batch();
+      int expensesBatchCount = 0;
+      for (var doc in expensesSnapshot.docs) {
+        final data = doc.data();
+        final currentItemName = data['itemName'] as String? ?? '';
+        final casedItemName = toSentenceCase(currentItemName);
+        if (casedItemName != currentItemName) {
+          expensesBatch.update(doc.reference, {
+            'itemName': casedItemName,
+          });
+          expensesBatchCount++;
+          if (expensesBatchCount >= 400) {
+            await expensesBatch.commit();
+            expensesBatchCount = 0;
+          }
+        }
+      }
+      if (expensesBatchCount > 0) {
+        await expensesBatch.commit();
+      }
+      debugPrint("Migrated expenses successfully.");
+
+    } catch (e) {
+      debugPrint("Error running sentence case migration: $e");
+    }
   }
 
   // Clean default seeding data to avoid empty screens initially
@@ -502,6 +712,7 @@ class LedgerState extends ChangeNotifier {
     _usagesSub?.cancel();
     _statsSub?.cancel();
     _settingsSub?.cancel();
+    _expenseSuggestionsSub?.cancel();
     super.dispose();
   }
 
@@ -610,7 +821,7 @@ class LedgerState extends ChangeNotifier {
     String type = "RETAIL",
     String area = "Custom Area",
   }) async {
-    final cleanName = name.trim();
+    final cleanName = toSentenceCase(name);
     if (cleanName.isNotEmpty) {
       await _firestore.collection('customers').doc(cleanName).set({
         'name': cleanName,
@@ -743,6 +954,8 @@ class LedgerState extends ChangeNotifier {
     required double amount,
     required bool isPaid,
   }) async {
+    final cleanCustomer = toSentenceCase(customerName);
+    final cleanItem = toSentenceCase(itemName);
     final activeBag = activeRiceBag;
     final docId = "LOG_${DateTime.now().millisecondsSinceEpoch}";
     final dateStr = "${_deliveryDate.day} ${_getMonthName(_deliveryDate.month)} ${_deliveryDate.year}";
@@ -752,8 +965,8 @@ class LedgerState extends ChangeNotifier {
       'serialNo': _serialNumber,
       'date': dateStr,
       'dateTime': _deliveryDate.toIso8601String(),
-      'itemName': itemName,
-      'customerName': customerName,
+      'itemName': cleanItem,
+      'customerName': cleanCustomer,
       'amount': amount,
       'isPaid': isPaid,
       'associatedBagId': activeBag?.bagId,
@@ -761,7 +974,7 @@ class LedgerState extends ChangeNotifier {
 
     // 2. Increment customer outstanding if unpaid
     if (!isPaid) {
-      await _firestore.collection('customers').doc(customerName).update({
+      await _firestore.collection('customers').doc(cleanCustomer).update({
         'outstanding': FieldValue.increment(amount),
       });
     }
@@ -775,6 +988,7 @@ class LedgerState extends ChangeNotifier {
     required double amount,
     required DateTime date,
   }) async {
+    final cleanCustomer = toSentenceCase(customerName);
     final docId = "PAY_${DateTime.now().millisecondsSinceEpoch}";
     final dateStr = "${date.day} ${_getMonthName(date.month)} ${date.year}";
 
@@ -784,7 +998,7 @@ class LedgerState extends ChangeNotifier {
       'date': dateStr,
       'dateTime': date.toIso8601String(),
       'itemName': "Cash Collected",
-      'customerName': customerName,
+      'customerName': cleanCustomer,
       'amount': amount,
       'isPaid': true,
       'isPayment': true,
@@ -792,7 +1006,7 @@ class LedgerState extends ChangeNotifier {
     });
 
     // 2. Reduce customer outstanding balance
-    await _firestore.collection('customers').doc(customerName).update({
+    await _firestore.collection('customers').doc(cleanCustomer).update({
       'outstanding': FieldValue.increment(-amount),
     });
 
@@ -809,6 +1023,25 @@ class LedgerState extends ChangeNotifier {
   }
 
   // 4. Expenditures Database
+  List<String> _expenseSuggestions = [];
+  List<String> get expenseSuggestions => _expenseSuggestions;
+
+  Future<void> addExpenseSuggestion(String itemName) async {
+    final cleanItemName = toSentenceCase(itemName);
+    if (cleanItemName.isNotEmpty && !_expenseSuggestions.contains(cleanItemName)) {
+      _expenseSuggestions.add(cleanItemName);
+      _expenseSuggestions = _expenseSuggestions.map((e) => toSentenceCase(e)).toSet().toList();
+      notifyListeners();
+      try {
+        await _firestore.collection('settings').doc('expenseItems').set({
+          'items': _expenseSuggestions,
+        });
+      } catch (e) {
+        debugPrint("Error saving expense item to Firestore: $e");
+      }
+    }
+  }
+
   final List<String> _expenseCategories = ["Cylinders", "Transportation"];
   List<String> get expenseCategories => _expenseCategories;
 
@@ -849,16 +1082,45 @@ class LedgerState extends ChangeNotifier {
     required String date,
     double totalKg = 0.0,
   }) async {
+    final cleanItemName = toSentenceCase(itemName);
+    final activeBag = activeRiceBag;
     final docId = "EXP_${DateTime.now().millisecondsSinceEpoch}";
     await _firestore.collection('expenses').doc(docId).set({
-      'itemName': itemName,
+      'itemName': cleanItemName,
       'category': category,
       'amount': amount,
       'date': date,
+      'associatedBagId': activeBag?.bagId,
     });
     
     if (category == "Rice Flour" && totalKg > 0.0) {
       await addRiceFlourBag(totalKg: totalKg, cost: amount, date: date);
+    }
+  }
+
+  Future<void> updateExpense({
+    required String expenseId,
+    required String newItemName,
+    required double newAmount,
+  }) async {
+    final casedName = toSentenceCase(newItemName);
+    try {
+      await _firestore.collection('expenses').doc(expenseId).update({
+        'itemName': casedName,
+        'amount': newAmount,
+      });
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error updating expense: $e");
+    }
+  }
+
+  Future<void> deleteExpense(String expenseId) async {
+    try {
+      await _firestore.collection('expenses').doc(expenseId).delete();
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error deleting expense: $e");
     }
   }
 
@@ -910,22 +1172,74 @@ class LedgerState extends ChangeNotifier {
     return null;
   }
 
+  Future<void> _completeBag(RiceBag bag, String endDate, Map<String, dynamic> additionalUpdates) async {
+    // Dynamic calculations for the bag right before completion
+    final revenue = _deliveryLogs
+        .where((log) => !log.isPayment && log.associatedBagId == bag.bagId)
+        .fold(0.0, (total, log) => total + log.amount);
+
+    DateTime? startDate;
+    try {
+      startDate = DateFormat('dd MMMM yyyy').parse(bag.startDate);
+    } catch (_) {}
+
+    final expenses = _expenses.where((exp) {
+      if (exp.associatedBagId == bag.bagId) return true;
+      if (exp.associatedBagId != null) return false;
+      if (startDate != null) {
+        try {
+          final expDate = DateTime.parse(exp.date);
+          return expDate.isAfter(startDate.subtract(const Duration(days: 1)));
+        } catch (_) {}
+      }
+      return false;
+    }).fold(0.0, (total, exp) => total + exp.amount);
+
+    final profit = revenue - expenses;
+    final profitMargin = revenue <= 0.0 ? 0.0 : (profit / revenue) * 100.0;
+
+    int? bagNum = bag.bagNumber;
+    if (bagNum == null) {
+      final sortedBags = List<RiceBag>.from(_riceBags)
+        ..sort((a, b) => a.startDate.compareTo(b.startDate));
+      final idx = sortedBags.indexWhere((b) => b.bagId == bag.bagId);
+      bagNum = idx != -1 ? idx + 1 : 1;
+    }
+
+    final updates = {
+      'status': 'Completed',
+      'endDate': endDate,
+      'revenue': revenue,
+      'expenses': expenses,
+      'profit': profit,
+      'profitMargin': profitMargin,
+      'bagNumber': bagNum,
+      ...additionalUpdates,
+    };
+    await _firestore.collection('riceBags').doc(bag.bagId).update(updates);
+  }
+
   Future<void> addRiceFlourBag({
     required double totalKg,
     required double cost,
     required String date,
   }) async {
-    // 1. Mark previous active bags completed
+    // 1. Mark previous active bags completed with final financials saved
     for (var bag in _riceBags) {
       if (bag.status == "Active") {
-        await _firestore.collection('riceBags').doc(bag.bagId).update({
-          'status': 'Completed',
-          'endDate': date,
-        });
+        await _completeBag(bag, date, {});
       }
     }
 
-    // 2. Instantiate new active bag
+    // 2. Determine bag number
+    int nextBagNum = 1;
+    if (_riceBags.isNotEmpty) {
+      final nums = _riceBags.map((b) => b.bagNumber ?? 0).toList();
+      final maxNum = nums.isEmpty ? 0 : nums.fold<int>(0, (maxVal, element) => element > maxVal ? element : maxVal);
+      nextBagNum = maxNum + 1;
+    }
+
+    // 3. Instantiate new active bag
     final bagId = "BAG_${DateTime.now().millisecondsSinceEpoch}";
     await _firestore.collection('riceBags').doc(bagId).set({
       'totalKg': totalKg,
@@ -934,6 +1248,7 @@ class LedgerState extends ChangeNotifier {
       'startDate': date,
       'status': 'Active',
       'cost': cost,
+      'bagNumber': nextBagNum,
     });
   }
 
@@ -953,19 +1268,19 @@ class LedgerState extends ChangeNotifier {
 
     final newUsed = activeBag.usedKg + usedKg;
     final newRemaining = activeBag.remainingKg - usedKg;
-    final status = newRemaining <= 0.0 ? 'Completed' : 'Active';
-    final endDate = newRemaining <= 0.0 ? date : null;
 
-    final Map<String, dynamic> updates = {
-      'usedKg': newUsed,
-      'remainingKg': newRemaining < 0.0 ? 0.0 : newRemaining,
-      'status': status,
-    };
-    if (endDate != null) {
-      updates['endDate'] = endDate;
+    if (newRemaining <= 0.0) {
+      await _completeBag(activeBag, date, {
+        'usedKg': newUsed,
+        'remainingKg': 0.0,
+      });
+    } else {
+      await _firestore.collection('riceBags').doc(activeBag.bagId).update({
+        'usedKg': newUsed,
+        'remainingKg': newRemaining,
+        'status': 'Active',
+      });
     }
-
-    await _firestore.collection('riceBags').doc(activeBag.bagId).update(updates);
   }
 
   Future<void> closeAndStartNewBag({
@@ -975,10 +1290,15 @@ class LedgerState extends ChangeNotifier {
     // Complete active bag
     final activeBag = activeRiceBag;
     if (activeBag != null) {
-      await _firestore.collection('riceBags').doc(activeBag.bagId).update({
-        'status': 'Completed',
-        'endDate': date,
-      });
+      await _completeBag(activeBag, date, {});
+    }
+
+    // Determine bag number
+    int nextBagNum = 1;
+    if (_riceBags.isNotEmpty) {
+      final nums = _riceBags.map((b) => b.bagNumber ?? 0).toList();
+      final maxNum = nums.isEmpty ? 0 : nums.fold<int>(0, (maxVal, element) => element > maxVal ? element : maxVal);
+      nextBagNum = maxNum + 1;
     }
 
     // Start a new bag with zero cost
@@ -990,7 +1310,60 @@ class LedgerState extends ChangeNotifier {
       'startDate': date,
       'status': 'Active',
       'cost': 0.0,
+      'bagNumber': nextBagNum,
     });
+  }
+
+  int getBagNumber(RiceBag bag) {
+    if (bag.bagNumber != null) return bag.bagNumber!;
+    final sortedBags = List<RiceBag>.from(_riceBags)
+      ..sort((a, b) => a.startDate.compareTo(b.startDate));
+    final idx = sortedBags.indexWhere((b) => b.bagId == bag.bagId);
+    return idx != -1 ? idx + 1 : 1;
+  }
+
+  double getBagRevenue(RiceBag bag) {
+    if (bag.status == "Active") return currentBagRevenue;
+    if (bag.revenue != null) return bag.revenue!;
+    return _deliveryLogs
+        .where((log) => !log.isPayment && log.associatedBagId == bag.bagId)
+        .fold(0.0, (total, log) => total + log.amount);
+  }
+
+  double getBagExpenses(RiceBag bag) {
+    if (bag.status == "Active") return currentBagExpenses;
+    if (bag.expenses != null) return bag.expenses!;
+    
+    DateTime? startDate;
+    try {
+      startDate = DateFormat('dd MMMM yyyy').parse(bag.startDate);
+    } catch (_) {}
+
+    return _expenses.where((exp) {
+      if (exp.associatedBagId == bag.bagId) return true;
+      if (exp.associatedBagId != null) return false;
+      if (startDate != null) {
+        try {
+          final expDate = DateTime.parse(exp.date);
+          return expDate.isAfter(startDate.subtract(const Duration(days: 1)));
+        } catch (_) {}
+      }
+      return false;
+    }).fold(0.0, (total, exp) => total + exp.amount);
+  }
+
+  double getBagProfit(RiceBag bag) {
+    if (bag.status == "Active") return currentBagProfit;
+    if (bag.profit != null) return bag.profit!;
+    return getBagRevenue(bag) - getBagExpenses(bag);
+  }
+
+  double getBagProfitMargin(RiceBag bag) {
+    if (bag.status == "Active") return currentBagProfitMargin;
+    if (bag.profitMargin != null) return bag.profitMargin!;
+    final rev = getBagRevenue(bag);
+    if (rev <= 0.0) return 0.0;
+    return (getBagProfit(bag) / rev) * 100;
   }
 
   double get currentBagEarnings {
@@ -1007,6 +1380,64 @@ class LedgerState extends ChangeNotifier {
     return _deliveryLogs
         .where((log) => log.associatedBagId == prevBag.bagId)
         .fold(0.0, (total, log) => total + log.amount);
+  }
+
+  // Profit & Financial Overview - Active Bag (Current Bag)
+  double get currentBagRevenue {
+    final activeBag = activeRiceBag;
+    if (activeBag == null) return 0.0;
+    return _deliveryLogs
+        .where((log) => !log.isPayment && log.associatedBagId == activeBag.bagId)
+        .fold(0.0, (total, log) => total + log.amount);
+  }
+
+  double get currentBagExpenses {
+    final activeBag = activeRiceBag;
+    if (activeBag == null) return 0.0;
+
+    DateTime? startDate;
+    try {
+      startDate = DateFormat('dd MMMM yyyy').parse(activeBag.startDate);
+    } catch (_) {}
+
+    return _expenses.where((exp) {
+      if (exp.associatedBagId == activeBag.bagId) return true;
+      if (exp.associatedBagId != null) return false; // Assigned to another bag explicitly
+      if (startDate != null) {
+        try {
+          final expDate = DateTime.parse(exp.date);
+          return expDate.isAfter(startDate.subtract(const Duration(days: 1)));
+        } catch (_) {}
+      }
+      return false;
+    }).fold(0.0, (total, exp) => total + exp.amount);
+  }
+
+  double get currentBagProfit => currentBagRevenue - currentBagExpenses;
+
+  double get currentBagProfitMargin {
+    final rev = currentBagRevenue;
+    if (rev <= 0.0) return 0.0;
+    return (currentBagProfit / rev) * 100;
+  }
+
+  // Profit & Financial Overview - Lifetime (Overall Business)
+  double get overallRevenue {
+    return _deliveryLogs
+        .where((log) => !log.isPayment)
+        .fold(0.0, (total, log) => total + log.amount);
+  }
+
+  double get overallExpenses {
+    return _expenses.fold(0.0, (total, exp) => total + exp.amount);
+  }
+
+  double get overallProfit => overallRevenue - overallExpenses;
+
+  double get overallProfitMargin {
+    final rev = overallRevenue;
+    if (rev <= 0.0) return 0.0;
+    return (overallProfit / rev) * 100;
   }
 
   // Dynamic monthly sales trend aggregator

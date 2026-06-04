@@ -69,6 +69,188 @@ class _SummaryScreenState extends State<SummaryScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // SECTION 1: CURRENT BAG PERFORMANCE
+                  Text(
+                    "CURRENT BAG PERFORMANCE",
+                    style: AppTheme.labelBold.copyWith(
+                      fontSize: 11.0,
+                      color: AppTheme.onSurfaceVariant,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 12.0),
+                  Row(
+                    children: [
+                      _buildCurrentBagCard(
+                        "REVENUE",
+                        state.currentBagRevenue,
+                        isCurrency: true,
+                        valueColor: AppTheme.primary,
+                      ),
+                      const SizedBox(width: 16.0),
+                      _buildCurrentBagCard(
+                        "EXPENSES",
+                        state.currentBagExpenses,
+                        isCurrency: true,
+                        valueColor: Colors.black,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16.0),
+                  Row(
+                    children: [
+                      _buildCurrentBagCard(
+                        "PROFIT",
+                        state.currentBagProfit,
+                        isCurrency: true,
+                        valueColor: Colors.green,
+                      ),
+                      const SizedBox(width: 16.0),
+                      _buildCurrentBagCard(
+                        "PROFIT MARGIN",
+                        state.currentBagProfitMargin,
+                        isPercent: true,
+                        valueColor: Colors.green,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 28.0),
+
+                  // SECTION 2: OVERALL BUSINESS OVERVIEW
+                  Text(
+                    "OVERALL BUSINESS OVERVIEW",
+                    style: AppTheme.labelBold.copyWith(
+                      fontSize: 11.0,
+                      color: AppTheme.onSurfaceVariant,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 12.0),
+                  BentoCard(
+                    padding: const EdgeInsets.symmetric(vertical: 18.0, horizontal: 12.0),
+                    backgroundColor: AppTheme.surface,
+                    shadowStyle: ShadowStyle.light,
+                    child: Row(
+                      children: [
+                        _buildOverallMetric("OVERALL REVENUE", state.overallRevenue, isCurrency: true),
+                        _buildVerticalDivider(),
+                        _buildOverallMetric("OVERALL EXPENSES", state.overallExpenses, isCurrency: true, isNegative: true),
+                        _buildVerticalDivider(),
+                        _buildOverallMetric("OVERALL PROFIT", state.overallProfit, isCurrency: true, isProfit: true),
+                        _buildVerticalDivider(),
+                        _buildOverallMetric("OVERALL MARGIN", state.overallProfitMargin, isPercent: true),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 28.0),
+
+                  // SECTION 3: BATCH HISTORY
+                  Text(
+                    "BATCH HISTORY",
+                    style: AppTheme.labelBold.copyWith(
+                      fontSize: 11.0,
+                      color: AppTheme.onSurfaceVariant,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 12.0),
+                  BentoCard(
+                    padding: const EdgeInsets.all(0),
+                    backgroundColor: AppTheme.surface,
+                    shadowStyle: ShadowStyle.light,
+                    child: Builder(
+                      builder: (context) {
+                        final completedBags = state.riceBags.where((b) => b.status == "Completed").toList();
+                        if (completedBags.isEmpty) {
+                          return const Padding(
+                            padding: EdgeInsets.all(24.0),
+                            child: Center(
+                              child: Text(
+                                "No completed batches found.",
+                                style: TextStyle(color: AppTheme.outline),
+                              ),
+                            ),
+                          );
+                        }
+                        return ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: completedBags.length,
+                          separatorBuilder: (context, i) =>
+                              const Divider(height: 1, color: AppTheme.outlineVariant),
+                          itemBuilder: (context, index) {
+                            final bag = completedBags[index];
+                            final bagNum = state.getBagNumber(bag);
+                            final profit = state.getBagProfit(bag);
+                            final endDateStr = bag.endDate ?? "N/A";
+
+                            return ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: AppTheme.primaryContainer.withValues(alpha: 0.1),
+                                radius: 20.0,
+                                child: const Icon(
+                                  Icons.shopping_bag,
+                                  color: AppTheme.primary,
+                                  size: 20.0,
+                                ),
+                              ),
+                              title: Text(
+                                "Batch #$bagNum",
+                                style: AppTheme.labelBold.copyWith(fontSize: 15.0),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "${bag.totalKg.toStringAsFixed(0)} KG",
+                                    style: AppTheme.labelSm.copyWith(color: AppTheme.outline),
+                                  ),
+                                  Text(
+                                    "Completed: $endDateStr",
+                                    style: AppTheme.labelSm.copyWith(color: AppTheme.outline),
+                                  ),
+                                ],
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        "₹${profit.toStringAsFixed(0)}",
+                                        style: AppTheme.dataTabular.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14.0,
+                                          color: profit >= 0 ? AppTheme.success : AppTheme.error,
+                                        ),
+                                      ),
+                                      Text(
+                                        "PROFIT",
+                                        style: AppTheme.labelSm.copyWith(
+                                          fontSize: 8.0,
+                                          color: profit >= 0 ? AppTheme.success : AppTheme.error,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(width: 8.0),
+                                  const Icon(Icons.chevron_right, color: AppTheme.outline, size: 20.0),
+                                ],
+                              ),
+                              onTap: () {
+                                _showBatchDetailsBottomSheet(context, bag, bagNum, state);
+                              },
+                            );
+                          },
+                        );
+                      }
+                    ),
+                  ),
+                  const SizedBox(height: 28.0),
+
                   // Rice Flour Bag Yields
                   Text(
                     "RICE FLOUR BAG YIELDS",
@@ -1276,6 +1458,208 @@ class _SummaryScreenState extends State<SummaryScreen> {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildCurrentBagCard(
+    String label,
+    double value, {
+    bool isCurrency = false,
+    bool isPercent = false,
+    required Color valueColor,
+  }) {
+    String formattedValue = "";
+    if (isCurrency) {
+      formattedValue = "₹${NumberFormat('#,##,###.00').format(value)}";
+    } else if (isPercent) {
+      formattedValue = "${value.toStringAsFixed(1)}%";
+    }
+
+    return Expanded(
+      child: BentoCard(
+        padding: const EdgeInsets.all(16.0),
+        backgroundColor: AppTheme.surface,
+        shadowStyle: ShadowStyle.light,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: AppTheme.labelSm.copyWith(
+                fontSize: 8.5,
+                color: AppTheme.onSurfaceVariant,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8.0),
+            Text(
+              formattedValue,
+              style: AppTheme.headlineMd.copyWith(
+                fontSize: 18.0,
+                color: valueColor,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOverallMetric(
+    String label,
+    double value, {
+    bool isCurrency = false,
+    bool isPercent = false,
+    bool isNegative = false,
+    bool isProfit = false,
+  }) {
+    String formattedValue = "";
+    if (isCurrency) {
+      formattedValue = "₹${NumberFormat('#,##,###').format(value)}";
+    } else if (isPercent) {
+      formattedValue = "${value.toStringAsFixed(1)}%";
+    }
+
+    Color valueColor = Colors.black;
+    if (isProfit && value > 0) {
+      valueColor = Colors.green;
+    } else if (isProfit && value < 0) {
+      valueColor = Colors.red;
+    } else if (isNegative && value > 0) {
+      valueColor = Colors.red;
+    }
+
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            label,
+            style: AppTheme.labelSm.copyWith(
+              fontSize: 8.0,
+              color: AppTheme.onSurfaceVariant,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 6.0),
+          Text(
+            formattedValue,
+            style: AppTheme.headlineMd.copyWith(
+              fontSize: 13.0,
+              fontWeight: FontWeight.w900,
+              color: valueColor,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVerticalDivider() {
+    return Container(
+      width: 1.5,
+      height: 32,
+      color: AppTheme.outlineVariant,
+    );
+  }
+
+  void _showBatchDetailsBottomSheet(BuildContext context, RiceBag bag, int bagNum, LedgerState state) {
+    final revenue = state.getBagRevenue(bag);
+    final expenses = state.getBagExpenses(bag);
+    final profit = state.getBagProfit(bag);
+    final margin = state.getBagProfitMargin(bag);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusLg)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: EdgeInsets.only(
+            left: 24.0,
+            right: 24.0,
+            top: 16.0,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24.0,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Handlebar
+              Center(
+                child: Container(
+                  width: 40.0,
+                  height: 5.0,
+                  decoration: BoxDecoration(
+                    color: AppTheme.outlineVariant,
+                    borderRadius: BorderRadius.circular(2.5),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16.0),
+
+              // Title
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Batch #$bagNum Snapshot",
+                    style: AppTheme.headlineMd.copyWith(
+                      color: AppTheme.primary,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const Divider(height: 24.0, color: AppTheme.outlineVariant),
+
+              // Financial snapshot details
+              _buildSnapshotRow("Batch Number", "Batch #$bagNum"),
+              _buildSnapshotRow("Total Quantity", "${bag.totalKg.toStringAsFixed(0)} KG"),
+              _buildSnapshotRow("Revenue", "₹${NumberFormat('#,##,###.00').format(revenue)}"),
+              _buildSnapshotRow("Expenses", "₹${NumberFormat('#,##,###.00').format(expenses)}"),
+              _buildSnapshotRow("Profit", "₹${NumberFormat('#,##,###.00').format(profit)}", isProfit: true, profitVal: profit),
+              _buildSnapshotRow("Profit Margin", "${margin.toStringAsFixed(2)}%"),
+              _buildSnapshotRow("Start Date", bag.startDate),
+              _buildSnapshotRow("End Date", bag.endDate ?? "N/A"),
+              const SizedBox(height: 16.0),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSnapshotRow(String label, String value, {bool isProfit = false, double profitVal = 0.0}) {
+    Color valColor = Colors.black;
+    if (isProfit) {
+      valColor = profitVal >= 0 ? AppTheme.success : AppTheme.error;
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: AppTheme.bodyMd.copyWith(color: AppTheme.outline, fontWeight: FontWeight.w500),
+          ),
+          Text(
+            value,
+            style: AppTheme.labelBold.copyWith(fontSize: 16.0, color: valColor),
+          ),
+        ],
+      ),
     );
   }
 }
