@@ -39,3 +39,4 @@ class FirestoreExpenseRepository implements ExpenseRepository {
     return snapshot.docs.map((doc) => ExpenseLog.fromJson(doc.data(), id: doc.id)).toList();
   }
 }
+

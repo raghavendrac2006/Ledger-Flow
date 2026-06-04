@@ -131,3 +131,4 @@ class FirestoreDeliveryLogRepository implements DeliveryLogRepository {
     }
   }
 }
+

@@ -46,8 +46,9 @@ class BatchHistoryWidget extends StatelessWidget {
                 final endDateStr = bag.endDate ?? "N/A";
 
                 return ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                   leading: CircleAvatar(
-                    backgroundColor: AppTheme.primaryContainer.withValues(alpha: 0.1),
+                    backgroundColor: AppTheme.primaryContainer.withValues(alpha: 0.2),
                     radius: 20.0,
                     child: const Icon(
                       Icons.shopping_bag,
@@ -55,22 +56,36 @@ class BatchHistoryWidget extends StatelessWidget {
                       size: 20.0,
                     ),
                   ),
-                  title: Text(
-                    "Batch #$bagNum",
-                    style: AppTheme.labelBold.copyWith(fontSize: 15.0),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  title: Row(
                     children: [
                       Text(
-                        "${bag.totalKg.toStringAsFixed(0)} KG",
-                        style: AppTheme.labelSm.copyWith(color: AppTheme.outline),
+                        "Batch #$bagNum",
+                        style: AppTheme.labelBold.copyWith(fontSize: 15.0),
                       ),
-                      Text(
-                        "Completed: $endDateStr",
-                        style: AppTheme.labelSm.copyWith(color: AppTheme.outline),
+                      const SizedBox(width: 8.0),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+                        decoration: BoxDecoration(
+                          color: AppTheme.successContainer,
+                          borderRadius: BorderRadius.circular(100.0),
+                        ),
+                        child: Text(
+                          "COMPLETED",
+                          style: AppTheme.labelBold.copyWith(
+                            color: AppTheme.onSuccessContainer,
+                            fontSize: 8.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ],
+                  ),
+                  subtitle: Padding(
+                    padding: const EdgeInsets.only(top: 4.0),
+                    child: Text(
+                      "${bag.totalKg.toStringAsFixed(0)} KG • End: $endDateStr",
+                      style: AppTheme.labelSm.copyWith(color: AppTheme.onSurfaceVariant),
+                    ),
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -108,3 +123,4 @@ class BatchHistoryWidget extends StatelessWidget {
     );
   }
 }
+

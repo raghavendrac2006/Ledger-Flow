@@ -9,3 +9,4 @@ abstract class CustomerRepository {
   Future<void> deleteCustomer(String customerName);
   Future<List<Customer>> getAllCustomers(IconData Function(String?) getIcon);
 }
+

@@ -8,6 +8,7 @@ import '../widgets/bento_card.dart';
 import '../widgets/custom_toast.dart';
 import '../widgets/recent_expenditures_list_widget.dart';
 import '../widgets/total_expenditure_stats_widget.dart';
+import '../widgets/skeleton_card.dart';
 
 class ExpensesScreen extends StatefulWidget {
   const ExpensesScreen({super.key});
@@ -184,7 +185,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-            side: const BorderSide(color: Colors.black, width: 2.5),
+            side: const BorderSide(color: AppTheme.outlineVariant, width: 1.0),
           ),
           backgroundColor: Colors.white,
           title: Text(
@@ -208,9 +209,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             ),
             Container(
               decoration: BoxDecoration(
-                color: Colors.black,
+                color: AppTheme.primary,
                 borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                border: Border.all(color: Colors.black, width: 1.5),
               ),
               child: TextButton(
                 onPressed: () async {
@@ -328,7 +328,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     borderSide: BorderSide(color: AppTheme.outlineVariant, width: 1.5),
                   ),
                   focusedBorder: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black, width: 2.0),
+                    borderSide: BorderSide(color: AppTheme.primary, width: 2.0),
                   ),
                 ),
                 style: AppTheme.bodyLg,
@@ -342,14 +342,14 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 decoration: InputDecoration(
                   labelText: "AMOUNT SPENT (₹)",
                   labelStyle: AppTheme.labelBold.copyWith(fontSize: 10, color: AppTheme.outline),
-                  prefixIcon: const Icon(Icons.currency_rupee, color: Colors.black),
+                  prefixIcon: const Icon(Icons.currency_rupee, color: AppTheme.onSurface),
                   filled: true,
                   fillColor: AppTheme.surface,
                   enabledBorder: const UnderlineInputBorder(
                     borderSide: BorderSide(color: AppTheme.outlineVariant, width: 1.5),
                   ),
                   focusedBorder: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black, width: 2.0),
+                    borderSide: BorderSide(color: AppTheme.primary, width: 2.0),
                   ),
                 ),
                 style: AppTheme.headlineMd.copyWith(fontSize: 20.0),
@@ -385,7 +385,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                         decoration: BoxDecoration(
                           color: AppTheme.error,
                           borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                          border: Border.all(color: Colors.black, width: 1.5),
                         ),
                         child: Center(
                           child: Text(
@@ -440,9 +439,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 14.0),
                         decoration: BoxDecoration(
-                          color: Colors.black,
+                          color: AppTheme.primary,
                           borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                          border: Border.all(color: Colors.black, width: 1.5),
                         ),
                         child: Center(
                           child: Text(
@@ -569,7 +567,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           });
         }
       },
-      selectedColor: Colors.black,
+      selectedColor: AppTheme.primary,
       backgroundColor: AppTheme.surface,
       labelStyle: AppTheme.labelBold.copyWith(
         fontSize: 12.0,
@@ -578,7 +576,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppTheme.radiusSm),
         side: BorderSide(
-          color: isSelected ? Colors.black : AppTheme.outlineVariant,
+          color: isSelected ? AppTheme.primary : AppTheme.outlineVariant,
           width: 1.5,
         ),
       ),
@@ -609,10 +607,30 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
     return Scaffold(
       body: SafeArea(
-        child: Stack(
-          children: [
-            SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
+        child: state.isLoading
+            ? SingleChildScrollView(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SkeletonCard(height: 24.0, width: 180.0),
+                    const SizedBox(height: 16.0),
+                    const SkeletonCard(height: 250.0),
+                    const SizedBox(height: 32.0),
+                    const SkeletonCard(height: 24.0, width: 220.0),
+                    const SizedBox(height: 16.0),
+                    const SkeletonCard(height: 220.0),
+                    const SizedBox(height: 32.0),
+                    const SkeletonCard(height: 24.0, width: 140.0),
+                    const SizedBox(height: 16.0),
+                    const SkeletonCard(height: 200.0),
+                  ],
+                ),
+              )
+            : Stack(
+                children: [
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.all(24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -625,7 +643,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       letterSpacing: 1.5,
                     ),
                   ),
-                  const SizedBox(height: 12.0),
+                  const SizedBox(height: 16.0),
 
                   BentoCard(
                     padding: const EdgeInsets.all(18.0),
@@ -670,7 +688,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                                   borderSide: BorderSide(color: AppTheme.outlineVariant, width: 1.5),
                                 ),
                                 focusedBorder: const UnderlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.black, width: 2.0),
+                                  borderSide: BorderSide(color: AppTheme.primary, width: 2.0),
                                 ),
                                 errorBorder: const UnderlineInputBorder(
                                   borderSide: BorderSide(color: AppTheme.error, width: 1.5),
@@ -688,14 +706,14 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                         InkWell(
                           onTap: () => _selectDate(context),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 12.0),
+                            padding: const EdgeInsets.symmetric(vertical: 16.0),
                             decoration: const BoxDecoration(
                               border: Border(bottom: BorderSide(color: AppTheme.outlineVariant, width: 1.5)),
                             ),
                             child: Row(
                               children: [
                                 const Icon(Icons.calendar_today, color: AppTheme.primary, size: 20),
-                                const SizedBox(width: 12.0),
+                                const SizedBox(width: 16.0),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -728,7 +746,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             labelText: "AMOUNT SPENT (₹)",
                             labelStyle: AppTheme.labelBold.copyWith(fontSize: 10, color: AppTheme.outline),
                             hintText: "0.00",
-                            prefixIcon: const Icon(Icons.currency_rupee, color: Colors.black),
+                            prefixIcon: const Icon(Icons.currency_rupee, color: AppTheme.onSurface),
                             filled: true,
                             fillColor: AppTheme.surface,
                             errorText: _amountError,
@@ -736,7 +754,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                               borderSide: BorderSide(color: AppTheme.outlineVariant, width: 1.5),
                             ),
                             focusedBorder: const UnderlineInputBorder(
-                              borderSide: BorderSide(color: Colors.black, width: 2.0),
+                              borderSide: BorderSide(color: AppTheme.primary, width: 2.0),
                             ),
                             errorBorder: const UnderlineInputBorder(
                               borderSide: BorderSide(color: AppTheme.error, width: 1.5),
@@ -755,9 +773,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(vertical: 14.0),
                             decoration: BoxDecoration(
-                              color: Colors.black,
+                              color: AppTheme.primary,
                               borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                              border: Border.all(color: Colors.black, width: 1.5),
+                              boxShadow: !_isSaving ? AppTheme.hardShadowButton : null,
                             ),
                             child: Center(
                               child: _isSaving
@@ -793,7 +811,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       letterSpacing: 1.5,
                     ),
                   ),
-                  const SizedBox(height: 12.0),
+                  const SizedBox(height: 16.0),
 
                   BentoCard(
                     padding: const EdgeInsets.all(18.0),
@@ -805,14 +823,14 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                         InkWell(
                           onTap: () => _selectRiceFlourBagDate(context),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 12.0),
+                            padding: const EdgeInsets.symmetric(vertical: 16.0),
                             decoration: const BoxDecoration(
                               border: Border(bottom: BorderSide(color: AppTheme.outlineVariant, width: 1.5)),
                             ),
                             child: Row(
                               children: [
                                 const Icon(Icons.calendar_today, color: AppTheme.primary, size: 20),
-                                const SizedBox(width: 12.0),
+                                const SizedBox(width: 16.0),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -845,7 +863,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             labelStyle: AppTheme.labelBold.copyWith(fontSize: 10, color: AppTheme.outline),
                             hintText: "e.g., 30, 45, 60...",
                             suffixText: "KG",
-                            suffixStyle: AppTheme.labelBold.copyWith(color: Colors.black),
+                            suffixStyle: AppTheme.labelBold.copyWith(color: AppTheme.onSurface),
                             filled: true,
                             fillColor: AppTheme.surface,
                             errorText: _riceFlourKgError,
@@ -853,7 +871,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                               borderSide: BorderSide(color: AppTheme.outlineVariant, width: 1.5),
                             ),
                             focusedBorder: const UnderlineInputBorder(
-                              borderSide: BorderSide(color: Colors.black, width: 2.0),
+                              borderSide: BorderSide(color: AppTheme.primary, width: 2.0),
                             ),
                             errorBorder: const UnderlineInputBorder(
                               borderSide: BorderSide(color: AppTheme.error, width: 1.5),
@@ -872,9 +890,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(vertical: 14.0),
                             decoration: BoxDecoration(
-                              color: Colors.black,
+                              color: AppTheme.primary,
                               borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                              border: Border.all(color: Colors.black, width: 1.5),
+                              boxShadow: !_isSaving ? AppTheme.hardShadowButton : null,
                             ),
                             child: Center(
                               child: _isSaving
@@ -919,7 +937,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12.0),
+                  const SizedBox(height: 16.0),
 
                   // Date Filters Chips
                   SingleChildScrollView(
@@ -943,7 +961,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12.0),
+                  const SizedBox(height: 16.0),
 
                   RecentExpendituresListWidget(
                     expenses: filteredExpenses,
@@ -1080,3 +1098,4 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 }
 
 enum ExpenseFilter { all, today, thisWeek, thisMonth, custom }
+

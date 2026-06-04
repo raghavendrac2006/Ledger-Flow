@@ -10,6 +10,9 @@ import '../widgets/custom_toast.dart';
 import '../widgets/current_bag_performance_widget.dart';
 import '../widgets/overall_business_overview_widget.dart';
 import '../widgets/batch_history_widget.dart';
+import '../widgets/skeleton_card.dart';
+import '../widgets/animated_list_item.dart';
+import '../widgets/empty_state_widget.dart';
 
 class SummaryScreen extends StatefulWidget {
   const SummaryScreen({super.key});
@@ -65,9 +68,35 @@ class _SummaryScreenState extends State<SummaryScreen> {
     final selectedMonthSales = selectedMonthData["sales"] as double;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          SafeArea(
+      body: state.isLoading
+          ? SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SkeletonCard(height: 24.0, width: 200.0),
+                    const SizedBox(height: 16.0),
+                    const SkeletonCard(height: 150.0),
+                    const SizedBox(height: 32.0),
+                    const SkeletonCard(height: 24.0, width: 220.0),
+                    const SizedBox(height: 16.0),
+                    const SkeletonCard(height: 220.0),
+                    const SizedBox(height: 32.0),
+                    const SkeletonCard(height: 24.0, width: 180.0),
+                    const SizedBox(height: 16.0),
+                    const SkeletonCard(height: 120.0),
+                    const SizedBox(height: 32.0),
+                    const SkeletonCard(height: 24.0, width: 140.0),
+                    const SizedBox(height: 16.0),
+                    const SkeletonCard(height: 200.0),
+                  ],
+                ),
+              ),
+            )
+          : Stack(
+              children: [
+                SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
               child: Column(
@@ -82,7 +111,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                       letterSpacing: 1.5,
                     ),
                   ),
-                  const SizedBox(height: 12.0),
+                  const SizedBox(height: 16.0),
                   CurrentBagPerformanceWidget(
                     revenue: state.currentBagRevenue,
                     expenses: state.currentBagExpenses,
@@ -100,7 +129,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                       letterSpacing: 1.5,
                     ),
                   ),
-                  const SizedBox(height: 12.0),
+                  const SizedBox(height: 16.0),
                   OverallBusinessOverviewWidget(
                     overallRevenue: state.overallRevenue,
                     overallExpenses: state.overallExpenses,
@@ -118,7 +147,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                       letterSpacing: 1.5,
                     ),
                   ),
-                  const SizedBox(height: 12.0),
+                  const SizedBox(height: 16.0),
                   BatchHistoryWidget(
                     completedBags: state.riceBags.where((b) => b.status == "Completed").toList(),
                     getBagNumber: state.getBagNumber,
@@ -138,7 +167,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                       letterSpacing: 1.5,
                     ),
                   ),
-                  const SizedBox(height: 12.0),
+                  const SizedBox(height: 16.0),
                   Row(
                     children: [
                       Expanded(
@@ -265,7 +294,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                         ),
                         const SizedBox(height: 20.0),
                         const Divider(color: AppTheme.outlineVariant),
-                        const SizedBox(height: 12.0),
+                        const SizedBox(height: 16.0),
 
                         // Stats mini row
                         Row(
@@ -346,7 +375,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12.0),
+                  const SizedBox(height: 16.0),
 
                   // Custom Interactive Bar Chart Bento Container
                   BentoCard(
@@ -456,22 +485,17 @@ class _SummaryScreenState extends State<SummaryScreen> {
                       letterSpacing: 1.5,
                     ),
                   ),
-                  const SizedBox(height: 12.0),
+                  const SizedBox(height: 16.0),
 
                   BentoCard(
                     padding: const EdgeInsets.all(0),
                     backgroundColor: AppTheme.surface,
                     shadowStyle: ShadowStyle.light,
                     child: state.deliveryLogs.isEmpty
-                        ? const Padding(
-                            padding: EdgeInsets.all(28.0),
-                            child: Center(
-                              child: Text(
-                                "No active route deliveries recorded yet. Fill out details in Sales tab.",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 13.0, color: AppTheme.outline),
-                              ),
-                            ),
+                        ? const EmptyStateWidget(
+                            title: "No Deliveries Recorded",
+                            message: "No active route deliveries recorded yet. Fill out details in Sales tab.",
+                            icon: Icons.local_shipping_outlined,
                           )
                         : ListView.separated(
                             shrinkWrap: true,
@@ -481,46 +505,50 @@ class _SummaryScreenState extends State<SummaryScreen> {
                                 const Divider(height: 1, color: AppTheme.outlineVariant),
                             itemBuilder: (context, index) {
                               final log = state.deliveryLogs[index];
-                              return ListTile(
-                                dense: true,
-                                onTap: () {
-                                  _showEditDeleteBottomSheet(context, state, log);
-                                },
-                                title: Row(
-                                  children: [
-                                    Text(
-                                      "#${log.serialNo} • ${log.customerName}",
-                                      style: AppTheme.labelBold,
-                                    ),
-                                    const Spacer(),
-                                    Text(
-                                      "₹${log.amount.toStringAsFixed(2)}",
-                                      style: AppTheme.dataTabular.copyWith(fontWeight: FontWeight.bold),
-                                    ),
-                                  ],
-                                ),
-                                subtitle: Row(
-                                  children: [
-                                    Text(
-                                      "${log.itemName} • ${log.date}",
-                                      style: AppTheme.labelSm,
-                                    ),
-                                    const Spacer(),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
-                                      decoration: BoxDecoration(
-                                        color: log.isPaid ? AppTheme.successContainer : AppTheme.errorContainer,
-                                        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                              return AnimatedListItem(
+                                index: index,
+                                child: ListTile(
+                                  dense: true,
+                                  onTap: () {
+                                    _showEditDeleteBottomSheet(context, state, log);
+                                  },
+                                  title: Row(
+                                    children: [
+                                      Text(
+                                        "#${log.serialNo} • ${log.customerName}",
+                                        style: AppTheme.labelBold,
                                       ),
-                                      child: Text(
-                                        log.isPaid ? "PAID" : "UNPAID",
-                                        style: AppTheme.labelBold.copyWith(
-                                          color: log.isPaid ? AppTheme.onSuccessContainer : AppTheme.onErrorContainer,
-                                          fontSize: 9.0,
+                                      const Spacer(),
+                                      Text(
+                                        "₹${log.amount.toStringAsFixed(2)}",
+                                        style: AppTheme.dataTabular.copyWith(fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                  subtitle: Row(
+                                    children: [
+                                      Text(
+                                        "${log.itemName} • ${log.date}",
+                                        style: AppTheme.labelSm,
+                                      ),
+                                      const Spacer(),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+                                        decoration: BoxDecoration(
+                                          color: log.isPaid ? AppTheme.successContainer : AppTheme.errorContainer,
+                                          borderRadius: BorderRadius.circular(100.0),
+                                        ),
+                                        child: Text(
+                                          log.isPaid ? "PAID" : "UNPAID",
+                                          style: AppTheme.labelBold.copyWith(
+                                            color: log.isPaid ? AppTheme.onSuccessContainer : AppTheme.onErrorContainer,
+                                            fontSize: 10.0,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               );
                             },
@@ -538,7 +566,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                       letterSpacing: 1.5,
                     ),
                   ),
-                  const SizedBox(height: 12.0),
+                  const SizedBox(height: 16.0),
 
                   BentoCard(
                     padding: const EdgeInsets.all(20.0),
@@ -569,7 +597,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                                     product,
                                     style: AppTheme.labelBold.copyWith(
                                       fontSize: 12.0,
-                                      color: isSelected ? Colors.white : Colors.black,
+                                      color: isSelected ? Colors.white : AppTheme.onSurfaceVariant,
                                     ),
                                   ),
                                   selected: isSelected,
@@ -580,13 +608,13 @@ class _SummaryScreenState extends State<SummaryScreen> {
                                       });
                                     }
                                   },
-                                  selectedColor: Colors.black,
+                                  selectedColor: AppTheme.primary,
                                   backgroundColor: AppTheme.surfaceContainerHighest,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                                     side: BorderSide(
-                                      color: Colors.black,
-                                      width: isSelected ? 2.0 : 1.5,
+                                      color: isSelected ? AppTheme.primary : AppTheme.outlineVariant,
+                                      width: 1.5,
                                     ),
                                   ),
                                   elevation: 0,
@@ -625,11 +653,11 @@ class _SummaryScreenState extends State<SummaryScreen> {
                                       primary: AppTheme.primary,
                                       onPrimary: Colors.white,
                                       surface: Colors.white,
-                                      onSurface: Colors.black,
+                                      onSurface: AppTheme.onSurface,
                                     ),
                                     textButtonTheme: TextButtonThemeData(
                                       style: TextButton.styleFrom(
-                                        foregroundColor: Colors.black,
+                                        foregroundColor: AppTheme.primary,
                                         textStyle: AppTheme.labelBold,
                                       ),
                                     ),
@@ -650,30 +678,24 @@ class _SummaryScreenState extends State<SummaryScreen> {
                             decoration: BoxDecoration(
                               color: AppTheme.surfaceContainerLow,
                               borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                              border: Border.all(color: Colors.black, width: 1.5),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Colors.black,
-                                  offset: Offset(2, 2),
-                                  blurRadius: 0,
-                                ),
-                              ],
+                              border: Border.all(color: AppTheme.outlineVariant, width: 1.0),
+                              boxShadow: AppTheme.hardShadowLight,
                             ),
                             child: Row(
                               children: [
                                 const Icon(Icons.calendar_month, color: AppTheme.primary, size: 20.0),
-                                const SizedBox(width: 12.0),
+                                const SizedBox(width: 16.0),
                                 Expanded(
                                   child: Text(
                                     "${DateFormat('dd MMM yyyy').format(_selectedDateRange.start)}  -  ${DateFormat('dd MMM yyyy').format(_selectedDateRange.end)}",
                                     style: AppTheme.dataTabular.copyWith(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13.0,
-                                      color: Colors.black,
+                                      color: AppTheme.onSurface,
                                     ),
                                   ),
                                 ),
-                                const Icon(Icons.arrow_drop_down, color: Colors.black, size: 20.0),
+                                const Icon(Icons.arrow_drop_down, color: AppTheme.onSurface, size: 20.0),
                               ],
                             ),
                           ),
@@ -686,7 +708,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                             final messenger = ScaffoldMessenger.of(context);
                             messenger.showSnackBar(
                               SnackBar(
-                                backgroundColor: Colors.black,
+                                backgroundColor: AppTheme.primary,
                                 duration: const Duration(seconds: 2),
                                 content: Row(
                                   children: [
@@ -748,16 +770,9 @@ class _SummaryScreenState extends State<SummaryScreen> {
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(vertical: 14.0),
                             decoration: BoxDecoration(
-                              color: Colors.black,
+                              color: AppTheme.primary,
                               borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                              border: Border.all(color: Colors.black, width: 1.5),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: AppTheme.primary,
-                                  offset: Offset(2, 2),
-                                  blurRadius: 0,
-                                ),
-                              ],
+                              boxShadow: AppTheme.hardShadowButton,
                             ),
                             child: Center(
                               child: Row(
@@ -792,7 +807,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                       letterSpacing: 1.5,
                     ),
                   ),
-                  const SizedBox(height: 12.0),
+                  const SizedBox(height: 16.0),
 
                   BentoCard(
                     padding: const EdgeInsets.all(18.0),
@@ -819,11 +834,11 @@ class _SummaryScreenState extends State<SummaryScreen> {
                             fillColor: AppTheme.surfaceContainerHighest,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                              borderSide: const BorderSide(color: Colors.black, width: 1.5),
+                              borderSide: const BorderSide(color: AppTheme.outlineVariant, width: 1.0),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                              borderSide: const BorderSide(color: Colors.black, width: 1.5),
+                              borderSide: const BorderSide(color: AppTheme.outlineVariant, width: 1.0),
                             ),
                           ),
                           style: AppTheme.bodyMd,
@@ -843,7 +858,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                       letterSpacing: 1.5,
                     ),
                   ),
-                  const SizedBox(height: 12.0),
+                  const SizedBox(height: 16.0),
 
                   BentoCard(
                     padding: const EdgeInsets.all(18.0),
@@ -854,7 +869,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                       children: [
                         Text(
                           "FLOUR BAG OPERATIONS",
-                          style: AppTheme.labelBold.copyWith(fontSize: 10.0, color: Colors.black),
+                          style: AppTheme.labelBold.copyWith(fontSize: 10.0, color: AppTheme.onSurface),
                         ),
                         const SizedBox(height: 6.0),
                         const Text(
@@ -866,29 +881,23 @@ class _SummaryScreenState extends State<SummaryScreen> {
                           onTap: () => _showStartNewBagDialog(context, state),
                           child: Container(
                             width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 12.0),
+                            padding: const EdgeInsets.symmetric(vertical: 16.0),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                              border: Border.all(color: Colors.black, width: 2.0),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Colors.black,
-                                  offset: Offset(2, 2),
-                                  blurRadius: 0,
-                                ),
-                              ],
+                              border: Border.all(color: AppTheme.primary, width: 1.5),
+                              boxShadow: AppTheme.hardShadowLight,
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.scale, color: Colors.black, size: 18.0),
+                                const Icon(Icons.scale, color: AppTheme.primary, size: 18.0),
                                 const SizedBox(width: 8.0),
                                 Text(
                                   "START NEW BAG CYCLE",
                                   style: AppTheme.labelBold.copyWith(
                                     fontSize: 12.0,
-                                    color: Colors.black,
+                                    color: AppTheme.primary,
                                   ),
                                 ),
                               ],
@@ -914,10 +923,10 @@ class _SummaryScreenState extends State<SummaryScreen> {
                       decoration: BoxDecoration(
                         color: AppTheme.primary,
                         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                        border: Border.all(color: Colors.black, width: 2.0),
+                        border: Border.all(color: AppTheme.primary, width: 2.0),
                         boxShadow: const [
                           BoxShadow(
-                            color: Colors.black,
+                            color: AppTheme.primary,
                             offset: Offset(4, 4),
                             blurRadius: 0,
                           ),
@@ -1007,14 +1016,8 @@ class _SummaryScreenState extends State<SummaryScreen> {
                           decoration: BoxDecoration(
                             color: AppTheme.successContainer,
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.black, width: 2.0),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Colors.black,
-                                offset: Offset(3, 3),
-                                blurRadius: 0,
-                              ),
-                            ],
+                            border: Border.all(color: AppTheme.success.withValues(alpha: 0.3), width: 1.0),
+                            boxShadow: AppTheme.hardShadowLight,
                           ),
                           child: const Icon(
                             Icons.check_circle_outline,
@@ -1028,7 +1031,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                           style: AppTheme.headlineLg.copyWith(fontSize: 22.0),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 12.0),
+                        const SizedBox(height: 16.0),
                         Text(
                           "All daily route metrics, collections, and expense logs have been synced correctly to the remote cloud server database in real-time.",
                           style: AppTheme.bodyMd.copyWith(color: AppTheme.onSurfaceVariant),
@@ -1044,16 +1047,9 @@ class _SummaryScreenState extends State<SummaryScreen> {
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(vertical: 16.0),
                             decoration: BoxDecoration(
-                              color: Colors.black,
+                              color: AppTheme.primary,
                               borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                              border: Border.all(color: Colors.black, width: 1.5),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: AppTheme.success,
-                                  offset: Offset(2, 2),
-                                  blurRadius: 0,
-                                ),
-                              ],
+                              boxShadow: AppTheme.hardShadowButton,
                             ),
                             child: Center(
                               child: Text(
@@ -1086,7 +1082,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
         return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-            side: const BorderSide(color: Colors.black, width: 2.5),
+            side: const BorderSide(color: AppTheme.outlineVariant, width: 1.0),
           ),
           backgroundColor: Colors.white,
           title: Row(
@@ -1116,7 +1112,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                   labelStyle: AppTheme.labelBold.copyWith(fontSize: 10, color: AppTheme.outline),
                   hintText: "e.g., 30, 45, 60...",
                   suffixText: "KG",
-                  suffixStyle: AppTheme.labelBold.copyWith(color: Colors.black),
+                  suffixStyle: AppTheme.labelBold.copyWith(color: AppTheme.onSurface),
                 ),
                 style: AppTheme.bodyLg,
               ),
@@ -1132,9 +1128,8 @@ class _SummaryScreenState extends State<SummaryScreen> {
             ),
             Container(
               decoration: BoxDecoration(
-                color: Colors.black,
+                color: AppTheme.primary,
                 borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                border: Border.all(color: Colors.black, width: 1.5),
               ),
               child: TextButton(
                 onPressed: () {
@@ -1200,7 +1195,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              const SizedBox(height: 12.0),
+              const SizedBox(height: 16.0),
               Text(
                 "Customer: ${log.customerName} • Date: ${log.date}",
                 style: AppTheme.labelSm.copyWith(color: AppTheme.outline),
@@ -1218,7 +1213,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                     borderSide: BorderSide(color: AppTheme.outlineVariant, width: 1.5),
                   ),
                   focusedBorder: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black, width: 2.0),
+                    borderSide: BorderSide(color: AppTheme.primary, width: 2.0),
                   ),
                 ),
                 style: AppTheme.bodyLg,
@@ -1231,14 +1226,14 @@ class _SummaryScreenState extends State<SummaryScreen> {
                 decoration: InputDecoration(
                   labelText: "AMOUNT (₹)",
                   labelStyle: AppTheme.labelBold.copyWith(fontSize: 10, color: AppTheme.outline),
-                  prefixIcon: const Icon(Icons.currency_rupee, color: Colors.black),
+                  prefixIcon: const Icon(Icons.currency_rupee, color: AppTheme.onSurface),
                   filled: true,
                   fillColor: AppTheme.surface,
                   enabledBorder: const UnderlineInputBorder(
                     borderSide: BorderSide(color: AppTheme.outlineVariant, width: 1.5),
                   ),
                   focusedBorder: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black, width: 2.0),
+                    borderSide: BorderSide(color: AppTheme.primary, width: 2.0),
                   ),
                 ),
                 style: AppTheme.headlineMd.copyWith(fontSize: 20.0),
@@ -1269,7 +1264,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
                         decoration: BoxDecoration(
                           color: AppTheme.error,
                           borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                          border: Border.all(color: Colors.black, width: 1.5),
                         ),
                         child: Center(
                           child: Text(
@@ -1296,9 +1290,9 @@ class _SummaryScreenState extends State<SummaryScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 14.0),
                         decoration: BoxDecoration(
-                          color: Colors.black,
-                          borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                          border: Border.all(color: Colors.black, width: 1.5),
+                          color: AppTheme.primary,
+                          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                          boxShadow: AppTheme.hardShadowButton,
                         ),
                         child: Center(
                           child: Text(
@@ -1419,3 +1413,4 @@ class _SummaryScreenState extends State<SummaryScreen> {
     );
   }
 }
+

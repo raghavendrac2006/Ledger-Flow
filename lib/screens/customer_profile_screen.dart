@@ -5,6 +5,8 @@ import '../core/app_state.dart';
 import '../core/models/models.dart';
 import '../widgets/bento_card.dart';
 import '../widgets/custom_toast.dart';
+import '../widgets/animated_list_item.dart';
+import '../widgets/empty_state_widget.dart';
 
 class CustomerProfileScreen extends StatelessWidget {
   final String customerName;
@@ -115,18 +117,18 @@ class CustomerProfileScreen extends StatelessWidget {
                   children: [
                     Text(
                       hasDebt ? "OUTSTANDING BALANCE DUE" : "SETTLED ACCOUNT BALANCE",
-                      style: AppTheme.labelBold.copyWith(
-                        fontSize: 10.0,
-                        color: hasDebt ? AppTheme.onErrorContainer : AppTheme.onSuccessContainer,
-                        letterSpacing: 1.0,
+                      style: AppTheme.labelSm.copyWith(
+                        fontSize: 12.0,
+                        fontWeight: FontWeight.w500,
+                        color: hasDebt ? AppTheme.onErrorContainer.withValues(alpha: 0.8) : AppTheme.onSuccessContainer.withValues(alpha: 0.8),
                       ),
                     ),
-                    const SizedBox(height: 6.0),
+                    const SizedBox(height: 8.0),
                     Text(
                       "₹${customer.outstanding.toStringAsFixed(2)}",
                       style: AppTheme.dataTabular.copyWith(
-                        fontSize: 28.0,
-                        fontWeight: FontWeight.w900,
+                        fontSize: 32.0,
+                        fontWeight: FontWeight.bold,
                         color: hasDebt ? AppTheme.onErrorContainer : AppTheme.onSuccessContainer,
                       ),
                     ),
@@ -157,7 +159,7 @@ class CustomerProfileScreen extends StatelessWidget {
                   letterSpacing: 1.5,
                 ),
               ),
-              const SizedBox(height: 12.0),
+              const SizedBox(height: 16.0),
               // Collect Cash Primary Action Button
               BentoCard(
                 padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
@@ -170,7 +172,7 @@ class CustomerProfileScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(Icons.payments, color: Colors.white, size: 22.0),
-                    const SizedBox(width: 12.0),
+                    const SizedBox(width: 16.0),
                     Text(
                       "COLLECT CASH / INSTALLMENT",
                       style: AppTheme.labelBold.copyWith(
@@ -183,12 +185,12 @@ class CustomerProfileScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 12.0),
+              const SizedBox(height: 16.0),
               Row(
                 children: [
                   Expanded(
                     child: BentoCard(
-                      padding: const EdgeInsets.all(12.0),
+                      padding: const EdgeInsets.all(16.0),
                       backgroundColor: AppTheme.surface,
                       shadowStyle: ShadowStyle.light,
                       onTap: () {
@@ -209,10 +211,10 @@ class CustomerProfileScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12.0),
+                  const SizedBox(width: 16.0),
                   Expanded(
                     child: BentoCard(
-                      padding: const EdgeInsets.all(12.0),
+                      padding: const EdgeInsets.all(16.0),
                       backgroundColor: AppTheme.surface,
                       shadowStyle: ShadowStyle.light,
                       onTap: () {
@@ -252,18 +254,17 @@ class CustomerProfileScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12.0),
+              const SizedBox(height: 16.0),
 
               BentoCard(
                 padding: const EdgeInsets.all(0),
                 backgroundColor: AppTheme.surface,
                 shadowStyle: ShadowStyle.light,
                 child: transactions.isEmpty
-                    ? const Padding(
-                        padding: EdgeInsets.all(32.0),
-                        child: Center(
-                          child: Text("No transaction history recorded yet."),
-                        ),
+                    ? const EmptyStateWidget(
+                        title: "No Transactions",
+                        message: "No transaction history recorded yet.",
+                        icon: Icons.receipt_long_outlined,
                       )
                     : ListView.separated(
                         shrinkWrap: true,
@@ -275,123 +276,127 @@ class CustomerProfileScreen extends StatelessWidget {
                           final isPaid = tx.isPaid;
                           final isPayment = tx.isPayment;
 
-                          return Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () {
-                                _showEditDeleteBottomSheet(context, state, customer.name, index, tx);
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
-                                child: Row(
-                                  children: [
-                                    // Left details
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          isPayment
-                                              ? Row(
-                                                  children: [
-                                                    const Icon(Icons.payments, size: 16.0, color: Color(0xFF2E7D32)),
-                                                    const SizedBox(width: 6.0),
-                                                    Text(
-                                                      tx.details,
-                                                      style: AppTheme.labelBold.copyWith(
-                                                        fontSize: 14.0,
-                                                        color: const Color(0xFF2E7D32),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                )
-                                              : Text(
-                                                  tx.details,
-                                                  style: AppTheme.labelBold.copyWith(fontSize: 14.0),
-                                                ),
-                                          const SizedBox(height: 2.0),
-                                          Text(
-                                            tx.date,
-                                            style: AppTheme.labelSm.copyWith(fontSize: 10),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    // Amount & Paid Status
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
-                                      children: [
-                                        Text(
-                                          isPayment ? "-₹${tx.amount.toStringAsFixed(2)}" : "₹${tx.amount.toStringAsFixed(2)}",
-                                          style: AppTheme.dataTabular.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 15.0,
-                                            color: isPayment
-                                                ? const Color(0xFF2E7D32)
-                                                : (isPaid ? Colors.black : AppTheme.error),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4.0),
-                                        isPayment
-                                            ? Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
-                                                decoration: BoxDecoration(
-                                                  color: AppTheme.successContainer,
-                                                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                                                  border: Border.all(color: const Color(0xFF2E7D32), width: 1.0),
-                                                ),
-                                                child: Text(
-                                                  "RECEIVED",
-                                                  style: AppTheme.labelBold.copyWith(
-                                                    color: const Color(0xFF2E7D32),
-                                                    fontSize: 8.0,
-                                                    fontWeight: FontWeight.w900,
-                                                  ),
-                                                ),
-                                              )
-                                            : (isPaid
-                                                ? Container(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
-                                                    decoration: BoxDecoration(
-                                                      color: AppTheme.successContainer,
-                                                      borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                                                    ),
-                                                    child: Text(
-                                                      "PAID",
-                                                      style: AppTheme.labelBold.copyWith(
-                                                        color: AppTheme.onSuccessContainer,
-                                                        fontSize: 8.0,
-                                                      ),
-                                                    ),
-                                                  )
-                                                : InkWell(
-                                                    onTap: () {
-                                                      state.markTransactionAsPaid(customer.name, index);
-                                                      CustomToast.showSuccess(
-                                                        context,
-                                                        "COLLECTED ₹${tx.amount.toStringAsFixed(0)} FROM ${customer.name}",
-                                                      );
-                                                    },
-                                                    child: Container(
-                                                      padding:
-                                                          const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                                                      decoration: BoxDecoration(
-                                                        color: AppTheme.errorContainer,
-                                                        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                                                        border: Border.all(color: Colors.black, width: 1.0),
-                                                      ),
-                                                      child: Text(
-                                                        "MARK PAID",
+                          return AnimatedListItem(
+                            index: index,
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  _showEditDeleteBottomSheet(context, state, customer.name, index, tx);
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+                                  child: Row(
+                                    children: [
+                                      // Left details
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            isPayment
+                                                ? Row(
+                                                    children: [
+                                                      const Icon(Icons.payments, size: 16.0, color: AppTheme.success),
+                                                      const SizedBox(width: 6.0),
+                                                      Text(
+                                                        tx.details,
                                                         style: AppTheme.labelBold.copyWith(
-                                                          color: AppTheme.onErrorContainer,
-                                                          fontSize: 8.0,
-                                                          fontWeight: FontWeight.w900,
+                                                          fontSize: 14.0,
+                                                          color: AppTheme.success,
                                                         ),
                                                       ),
+                                                    ],
+                                                  )
+                                                : Text(
+                                                    tx.details,
+                                                    style: AppTheme.labelBold.copyWith(fontSize: 14.0),
+                                                  ),
+                                            const SizedBox(height: 2.0),
+                                            Text(
+                                              tx.date,
+                                              style: AppTheme.labelSm.copyWith(fontSize: 10),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      // Amount & Paid Status
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            isPayment ? "-₹${tx.amount.toStringAsFixed(2)}" : "₹${tx.amount.toStringAsFixed(2)}",
+                                            style: AppTheme.dataTabular.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 15.0,
+                                              color: isPayment
+                                                  ? AppTheme.success
+                                                  : (isPaid ? Colors.black : AppTheme.error),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4.0),
+                                          isPayment
+                                              ? Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+                                                  decoration: BoxDecoration(
+                                                    color: AppTheme.successContainer,
+                                                    borderRadius: BorderRadius.circular(100.0),
+                                                    border: Border.all(color: AppTheme.success.withValues(alpha: 0.3), width: 1.0),
+                                                  ),
+                                                  child: Text(
+                                                    "RECEIVED",
+                                                    style: AppTheme.labelBold.copyWith(
+                                                      color: AppTheme.onSuccessContainer,
+                                                      fontSize: 10.0,
+                                                      fontWeight: FontWeight.bold,
                                                     ),
-                                                  )),
-                                      ],
-                                    ),
-                                  ],
+                                                  ),
+                                                )
+                                              : (isPaid
+                                                  ? Container(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+                                                      decoration: BoxDecoration(
+                                                        color: AppTheme.successContainer,
+                                                        borderRadius: BorderRadius.circular(100.0),
+                                                      ),
+                                                      child: Text(
+                                                        "PAID",
+                                                        style: AppTheme.labelBold.copyWith(
+                                                          color: AppTheme.onSuccessContainer,
+                                                          fontSize: 10.0,
+                                                          fontWeight: FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                    )
+                                                  : InkWell(
+                                                      onTap: () {
+                                                        state.markTransactionAsPaid(customer.name, index);
+                                                        CustomToast.showSuccess(
+                                                          context,
+                                                          "COLLECTED ₹${tx.amount.toStringAsFixed(0)} FROM ${customer.name}",
+                                                        );
+                                                      },
+                                                      borderRadius: BorderRadius.circular(100.0),
+                                                      child: Container(
+                                                        padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+                                                        decoration: BoxDecoration(
+                                                          color: AppTheme.errorContainer,
+                                                          borderRadius: BorderRadius.circular(100.0),
+                                                          border: Border.all(color: AppTheme.error.withValues(alpha: 0.3), width: 1.0),
+                                                        ),
+                                                        child: Text(
+                                                          "MARK PAID",
+                                                          style: AppTheme.labelBold.copyWith(
+                                                            color: AppTheme.onErrorContainer,
+                                                            fontSize: 10.0,
+                                                            fontWeight: FontWeight.bold,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    )),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -456,7 +461,7 @@ class CustomerProfileScreen extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              const SizedBox(height: 12.0),
+              const SizedBox(height: 16.0),
               Text(
                 "Customer: $customerName • Date: ${tx.date}",
                 style: AppTheme.labelSm.copyWith(color: AppTheme.outline),
@@ -725,7 +730,7 @@ class CustomerProfileScreen extends StatelessWidget {
                       }
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+                      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
                       decoration: BoxDecoration(
                         border: Border.all(color: AppTheme.outlineVariant),
                         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
@@ -827,3 +832,4 @@ class CustomerProfileScreen extends StatelessWidget {
     );
   }
 }
+

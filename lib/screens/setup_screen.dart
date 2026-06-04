@@ -33,7 +33,7 @@ class _SetupScreenState extends State<SetupScreen> {
         return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-            side: const BorderSide(color: Colors.black, width: 2.5),
+            side: const BorderSide(color: AppTheme.outlineVariant, width: 1.0),
           ),
           backgroundColor: Colors.white,
           title: Text(
@@ -76,9 +76,8 @@ class _SetupScreenState extends State<SetupScreen> {
             ),
             Container(
               decoration: BoxDecoration(
-                color: Colors.black,
+                color: AppTheme.primary,
                 borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                border: Border.all(color: Colors.black, width: 1.5),
               ),
               child: TextButton(
                 onPressed: () {
@@ -209,15 +208,14 @@ class _SetupScreenState extends State<SetupScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
                       decoration: BoxDecoration(
-                        color: AppTheme.surfaceContainerHighest,
+                        color: AppTheme.primaryContainer,
                         borderRadius: AppTheme.borderSm,
-                        border: Border.all(color: Colors.black, width: 1.5),
                       ),
                       child: Text(
                         "CHANGE",
                         style: AppTheme.labelBold.copyWith(
                           fontSize: 11.0,
-                          color: Colors.black,
+                          color: AppTheme.primary,
                         ),
                       ),
                     ),
@@ -245,7 +243,7 @@ class _SetupScreenState extends State<SetupScreen> {
                       Row(
                         children: [
                           const Icon(Icons.warning_amber_rounded, color: AppTheme.error, size: 24.0),
-                          const SizedBox(width: 12.0),
+                          const SizedBox(width: 16.0),
                           Expanded(
                             child: Text(
                               "No active rice flour bag cycle started yet. Log RICE FLOUR cost in Expenses tab to initialize a bag.",
@@ -276,7 +274,7 @@ class _SetupScreenState extends State<SetupScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12.0),
+                      const SizedBox(height: 16.0),
                       Row(
                         children: [
                           _buildBagMetric("TOTAL KG", "${state.activeRiceBag!.totalKg.toStringAsFixed(0)} KG"),
@@ -291,7 +289,7 @@ class _SetupScreenState extends State<SetupScreen> {
                       const SizedBox(height: 16.0),
                       Text(
                         "HOW MANY KG OF RICE FLOUR USED TODAY?",
-                        style: AppTheme.labelBold.copyWith(fontSize: 10.0, color: Colors.black),
+                        style: AppTheme.labelBold.copyWith(fontSize: 10.0, color: AppTheme.onSurface),
                       ),
                       const SizedBox(height: 10.0),
                       TextField(
@@ -300,16 +298,16 @@ class _SetupScreenState extends State<SetupScreen> {
                         decoration: InputDecoration(
                           hintText: "e.g., 7.0",
                           suffixText: "KG",
-                          suffixStyle: AppTheme.labelBold.copyWith(color: Colors.black),
+                          suffixStyle: AppTheme.labelBold.copyWith(color: AppTheme.onSurface),
                           filled: true,
                           fillColor: AppTheme.surfaceContainerHighest,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                            borderSide: const BorderSide(color: Colors.black, width: 1.5),
+                            borderSide: const BorderSide(color: AppTheme.outlineVariant, width: 1.0),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                            borderSide: const BorderSide(color: Colors.black, width: 1.5),
+                            borderSide: const BorderSide(color: AppTheme.outlineVariant, width: 1.0),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(AppTheme.radiusSm),
@@ -344,7 +342,7 @@ class _SetupScreenState extends State<SetupScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12.0),
+              const SizedBox(height: 16.0),
 
               // Product Choice Grid
               GridView.builder(
@@ -365,7 +363,7 @@ class _SetupScreenState extends State<SetupScreen> {
                     backgroundColor: isSelected ? AppTheme.surfaceContainerLow : AppTheme.surface,
                     borderRadius: AppTheme.radiusLg,
                     border: isSelected
-                        ? Border.all(color: Colors.black, width: 2.0)
+                        ? Border.all(color: AppTheme.primary, width: 2.0)
                         : AppTheme.cardBorder,
                     shadowStyle: isSelected ? ShadowStyle.heavy : ShadowStyle.light,
                     onTap: () => state.toggleSetupItem(index),
@@ -416,9 +414,9 @@ class _SetupScreenState extends State<SetupScreen> {
                           width: 28,
                           height: 28,
                           decoration: BoxDecoration(
-                            color: isSelected ? Colors.black : Colors.white,
+                            color: isSelected ? AppTheme.primary : Colors.white,
                             borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                            border: Border.all(color: Colors.black, width: 1.5),
+                            border: Border.all(color: isSelected ? AppTheme.primary : AppTheme.outline, width: 1.5),
                           ),
                           child: isSelected
                               ? const Icon(
@@ -444,25 +442,19 @@ class _SetupScreenState extends State<SetupScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                    border: Border.all(color: Colors.black, width: 2.0),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black,
-                        offset: Offset(3, 3),
-                        blurRadius: 0,
-                      )
-                    ],
+                    border: Border.all(color: AppTheme.primary, width: 1.5),
+                    boxShadow: AppTheme.hardShadowLight,
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.add, color: Colors.black, size: 20.0),
+                      const Icon(Icons.add, color: AppTheme.primary, size: 20.0),
                       const SizedBox(width: 8.0),
                       Text(
                         "ADD CUSTOM PRODUCT",
                         style: AppTheme.labelBold.copyWith(
                           fontSize: 13.0,
-                          color: Colors.black,
+                          color: AppTheme.primary,
                           letterSpacing: 1.0,
                         ),
                       ),
@@ -483,18 +475,11 @@ class _SetupScreenState extends State<SetupScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 20.0),
                   decoration: BoxDecoration(
                     color: state.isStartRoundsEnabled
-                        ? (isSelectedStyle ? Colors.black : AppTheme.primary)
+                        ? AppTheme.primary
                         : AppTheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                    border: Border.all(color: Colors.black, width: 2.0),
                     boxShadow: state.isStartRoundsEnabled && !_isStarting
-                        ? [
-                            const BoxShadow(
-                              color: Colors.black,
-                              offset: Offset(4, 4),
-                              blurRadius: 0,
-                            )
-                          ]
+                        ? AppTheme.hardShadowButton
                         : null,
                   ),
                   child: Center(
@@ -534,7 +519,7 @@ class _SetupScreenState extends State<SetupScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 12.0),
+              const SizedBox(height: 16.0),
               Center(
                 child: Text(
                   state.roundsStarted
@@ -574,7 +559,7 @@ class _SetupScreenState extends State<SetupScreen> {
             value,
             style: AppTheme.headlineMd.copyWith(
               fontSize: 16.0,
-              color: isHighlighted ? AppTheme.primary : Colors.black,
+              color: isHighlighted ? AppTheme.primary : AppTheme.onSurface,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -605,7 +590,7 @@ class _SetupScreenState extends State<SetupScreen> {
           builder: (context) => AlertDialog(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-              side: const BorderSide(color: Colors.black, width: 2.5),
+              side: const BorderSide(color: AppTheme.outlineVariant, width: 1.0),
             ),
             backgroundColor: Colors.white,
             title: Row(
@@ -617,12 +602,12 @@ class _SetupScreenState extends State<SetupScreen> {
             ),
             content: const Text(
               "You entered a rice flour usage, but no bag is currently active. Please register a bag in the Expenses page first.",
-              style: TextStyle(fontSize: 14.0, color: Colors.black),
+              style: TextStyle(fontSize: 14.0, color: AppTheme.onSurface),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text("OK", style: AppTheme.labelBold.copyWith(color: Colors.black)),
+                child: Text("OK", style: AppTheme.labelBold.copyWith(color: AppTheme.primary)),
               ),
             ],
           ),
@@ -636,7 +621,7 @@ class _SetupScreenState extends State<SetupScreen> {
           builder: (context) => AlertDialog(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-              side: const BorderSide(color: Colors.black, width: 2.5),
+              side: const BorderSide(color: AppTheme.outlineVariant, width: 1.0),
             ),
             backgroundColor: Colors.white,
             title: Row(
@@ -648,7 +633,7 @@ class _SetupScreenState extends State<SetupScreen> {
             ),
             content: Text(
               "Rice flour usage exceeded current bag limit.\n\nRemaining: ${activeBag.remainingKg.toStringAsFixed(1)} KG\nAttempted: ${usageKg.toStringAsFixed(1)} KG",
-              style: const TextStyle(fontSize: 14.0, color: Colors.black),
+              style: const TextStyle(fontSize: 14.0, color: AppTheme.onSurface),
             ),
             actions: [
               TextButton(
@@ -657,7 +642,7 @@ class _SetupScreenState extends State<SetupScreen> {
               ),
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.black,
+                  color: AppTheme.primary,
                   borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                 ),
                 child: TextButton(
@@ -700,3 +685,4 @@ class _SetupScreenState extends State<SetupScreen> {
     });
   }
 }
+

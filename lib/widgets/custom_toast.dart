@@ -49,7 +49,7 @@ class CustomToast {
                       color: Colors.white,
                       size: 24.0,
                     ),
-                    const SizedBox(width: 12.0),
+                    const SizedBox(width: 16.0),
                     Text(
                       message.toUpperCase(),
                       style: AppTheme.labelBold.copyWith(
@@ -120,7 +120,7 @@ class CustomToast {
                       color: Colors.white,
                       size: 24.0,
                     ),
-                    const SizedBox(width: 12.0),
+                    const SizedBox(width: 16.0),
                     Text(
                       message.toUpperCase(),
                       style: AppTheme.labelBold.copyWith(
@@ -163,7 +163,7 @@ class CustomToast {
           title: Row(
             children: [
               const Icon(Icons.warning_amber_rounded, color: Colors.black, size: 28.0),
-              const SizedBox(width: 12.0),
+              const SizedBox(width: 16.0),
               Expanded(
                 child: Text(
                   title.toUpperCase(),
@@ -218,3 +218,4 @@ class CustomToast {
     return result ?? false;
   }
 }
+

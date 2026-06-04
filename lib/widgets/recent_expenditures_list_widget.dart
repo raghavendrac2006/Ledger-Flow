@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import '../core/app_theme.dart';
 import '../core/models/expense_log.dart';
 import 'bento_card.dart';
+import 'animated_list_item.dart';
+import 'empty_state_widget.dart';
 
 class RecentExpendituresListWidget extends StatelessWidget {
   final List<ExpenseLog> expenses;
@@ -49,14 +51,10 @@ class RecentExpendituresListWidget extends StatelessWidget {
       backgroundColor: AppTheme.surface,
       shadowStyle: ShadowStyle.light,
       child: expenses.isEmpty
-          ? const Padding(
-              padding: EdgeInsets.all(24.0),
-              child: Center(
-                child: Text(
-                  "No expenses recorded for this period.",
-                  style: TextStyle(color: AppTheme.outline),
-                ),
-              ),
+          ? const EmptyStateWidget(
+              title: "No Expenses Found",
+              message: "No expenses recorded for the selected period.",
+              icon: Icons.payments_outlined,
             )
           : ListView.separated(
               shrinkWrap: true,
@@ -72,38 +70,41 @@ class RecentExpendituresListWidget extends StatelessWidget {
                   formattedTxDate = expense.date;
                 }
 
-                return ListTile(
-                  onTap: () => onExpenseTap(expense),
-                  leading: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: _getItemColor(expense.itemName).withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                      border: Border.all(
+                return AnimatedListItem(
+                  index: index,
+                  child: ListTile(
+                    onTap: () => onExpenseTap(expense),
+                    leading: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: _getItemColor(expense.itemName).withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: _getItemColor(expense.itemName),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Icon(
+                        _getItemIcon(expense.itemName),
                         color: _getItemColor(expense.itemName),
-                        width: 1.5,
+                        size: 18.0,
                       ),
                     ),
-                    child: Icon(
-                      _getItemIcon(expense.itemName),
-                      color: _getItemColor(expense.itemName),
-                      size: 18.0,
+                    title: Text(
+                      expense.itemName,
+                      style: AppTheme.labelBold.copyWith(fontSize: 14.0),
                     ),
-                  ),
-                  title: Text(
-                    expense.itemName,
-                    style: AppTheme.labelBold.copyWith(fontSize: 14.0),
-                  ),
-                  subtitle: Text(
-                    formattedTxDate,
-                    style: AppTheme.labelSm.copyWith(fontSize: 10),
-                  ),
-                  trailing: Text(
-                    "₹${expense.amount.toStringAsFixed(0)}",
-                    style: AppTheme.dataTabular.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                    subtitle: Text(
+                      formattedTxDate,
+                      style: AppTheme.labelSm.copyWith(fontSize: 10),
+                    ),
+                    trailing: Text(
+                      "₹${expense.amount.toStringAsFixed(0)}",
+                      style: AppTheme.dataTabular.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
                     ),
                   ),
                 );
@@ -112,3 +113,4 @@ class RecentExpendituresListWidget extends StatelessWidget {
     );
   }
 }
+

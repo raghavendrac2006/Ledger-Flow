@@ -12,3 +12,4 @@ abstract class DeliveryLogRepository {
   Future<void> updateLogBySerialNo(int serialNo, String newDetails, double newAmount);
   Future<void> purgeLogsOlderThan(DateTime date);
 }
+

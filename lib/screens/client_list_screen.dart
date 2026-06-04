@@ -5,6 +5,8 @@ import '../core/app_state.dart';
 import '../core/models/models.dart';
 import '../widgets/bento_card.dart';
 import 'customer_profile_screen.dart';
+import '../widgets/animated_list_item.dart';
+import '../widgets/empty_state_widget.dart';
 
 class ClientListScreen extends StatefulWidget {
   const ClientListScreen({super.key});
@@ -52,15 +54,14 @@ class _ClientListScreenState extends State<ClientListScreen> {
         }).toList();
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.black : AppTheme.surface,
-          borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+          color: isSelected ? AppTheme.primary : AppTheme.surface,
+          borderRadius: BorderRadius.circular(100.0),
           border: Border.all(
-            color: isSelected ? Colors.black : AppTheme.outlineVariant,
-            width: 1.5,
+            color: isSelected ? AppTheme.primary : AppTheme.outlineVariant,
+            width: 1.0,
           ),
-          boxShadow: isSelected ? AppTheme.hardShadowLight : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -148,7 +149,7 @@ class _ClientListScreenState extends State<ClientListScreen> {
                           children: [
                             Expanded(
                               child: BentoCard(
-                                padding: const EdgeInsets.all(12.0),
+                                padding: const EdgeInsets.all(16.0),
                                 backgroundColor: AppTheme.surface,
                                 shadowStyle: ShadowStyle.light,
                                 child: Column(
@@ -167,10 +168,10 @@ class _ClientListScreenState extends State<ClientListScreen> {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 12.0),
+                            const SizedBox(width: 16.0),
                             Expanded(
                               child: BentoCard(
-                                padding: const EdgeInsets.all(12.0),
+                                padding: const EdgeInsets.all(16.0),
                                 backgroundColor: AppTheme.surface,
                                 shadowStyle: ShadowStyle.light,
                                 child: Column(
@@ -191,12 +192,12 @@ class _ClientListScreenState extends State<ClientListScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12.0),
+                        const SizedBox(height: 16.0),
                         Row(
                           children: [
                             Expanded(
                               child: BentoCard(
-                                padding: const EdgeInsets.all(12.0),
+                                padding: const EdgeInsets.all(16.0),
                                 backgroundColor: AppTheme.surface,
                                 shadowStyle: ShadowStyle.light,
                                 child: Column(
@@ -215,13 +216,13 @@ class _ClientListScreenState extends State<ClientListScreen> {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 12.0),
+                            const SizedBox(width: 16.0),
                             Expanded(
                               child: BentoCard(
                                 onTap: () {
                                   _showOutstandingCollectionsBottomSheet(context);
                                 },
-                                padding: const EdgeInsets.all(12.0),
+                                padding: const EdgeInsets.all(16.0),
                                 backgroundColor: AppTheme.surface,
                                 shadowStyle: ShadowStyle.light,
                                 child: Column(
@@ -288,7 +289,7 @@ class _ClientListScreenState extends State<ClientListScreen> {
                                   : null,
                               filled: true,
                               fillColor: AppTheme.surface,
-                              contentPadding: const EdgeInsets.symmetric(vertical: 12.0),
+                              contentPadding: const EdgeInsets.symmetric(vertical: 16.0),
                               enabledBorder: OutlineInputBorder(
                                 borderSide: const BorderSide(color: AppTheme.outlineVariant, width: 1.5),
                                 borderRadius: BorderRadius.circular(AppTheme.radiusMd),
@@ -348,7 +349,7 @@ class _ClientListScreenState extends State<ClientListScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12.0),
+                const SizedBox(height: 16.0),
                 Expanded(
                   child: SingleChildScrollView(
                     child: BentoCard(
@@ -356,11 +357,10 @@ class _ClientListScreenState extends State<ClientListScreen> {
                       backgroundColor: AppTheme.surface,
                       shadowStyle: ShadowStyle.light,
                       child: filteredCustomers.isEmpty
-                          ? const Padding(
-                              padding: EdgeInsets.all(32.0),
-                              child: Center(
-                                child: Text("No matching clients found."),
-                              ),
+                          ? const EmptyStateWidget(
+                              title: "No Clients Found",
+                              message: "No matching clients found.",
+                              icon: Icons.people_outline,
                             )
                           : ListView.separated(
                               shrinkWrap: true,
@@ -372,62 +372,65 @@ class _ClientListScreenState extends State<ClientListScreen> {
                                 final customer = filteredCustomers[index];
                                 final hasDebt = customer.outstanding > 0;
 
-                                return ListTile(
-                                  leading: CircleAvatar(
-                                    backgroundColor: hasDebt
-                                        ? AppTheme.errorContainer.withValues(alpha: 0.4)
-                                        : AppTheme.surfaceContainerHighest,
-                                    radius: 20.0,
-                                    child: Icon(
-                                      customer.icon,
-                                      color: hasDebt ? AppTheme.error : AppTheme.primary,
-                                      size: 20.0,
+                                return AnimatedListItem(
+                                  index: index,
+                                  child: ListTile(
+                                    leading: CircleAvatar(
+                                      backgroundColor: hasDebt
+                                          ? AppTheme.errorContainer.withValues(alpha: 0.4)
+                                          : AppTheme.surfaceContainerHighest,
+                                      radius: 20.0,
+                                      child: Icon(
+                                        customer.icon,
+                                        color: hasDebt ? AppTheme.error : AppTheme.primary,
+                                        size: 20.0,
+                                      ),
                                     ),
-                                  ),
-                                  title: Text(
-                                    customer.name,
-                                    style: AppTheme.labelBold.copyWith(fontSize: 15.0),
-                                  ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        crossAxisAlignment: CrossAxisAlignment.end,
-                                        children: [
-                                          Text(
-                                            hasDebt ? "₹${customer.outstanding.toStringAsFixed(0)}" : "CLEAN",
-                                            style: AppTheme.dataTabular.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14.0,
-                                              color: hasDebt ? AppTheme.error : AppTheme.success,
-                                            ),
-                                          ),
-                                          if (hasDebt)
+                                    title: Text(
+                                      customer.name,
+                                      style: AppTheme.labelBold.copyWith(fontSize: 15.0),
+                                    ),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          crossAxisAlignment: CrossAxisAlignment.end,
+                                          children: [
                                             Text(
-                                              "OUTSTANDING",
-                                              style: AppTheme.labelSm.copyWith(
-                                                fontSize: 8.0,
-                                                color: AppTheme.error,
+                                              hasDebt ? "₹${customer.outstanding.toStringAsFixed(0)}" : "CLEAN",
+                                              style: AppTheme.dataTabular.copyWith(
                                                 fontWeight: FontWeight.bold,
+                                                fontSize: 14.0,
+                                                color: hasDebt ? AppTheme.error : AppTheme.success,
                                               ),
                                             ),
-                                        ],
-                                      ),
-                                      const SizedBox(width: 8.0),
-                                      const Icon(Icons.chevron_right, color: AppTheme.outline, size: 20.0),
-                                    ],
-                                  ),
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => CustomerProfileScreen(
-                                          customerName: customer.name,
+                                            if (hasDebt)
+                                              Text(
+                                                "OUTSTANDING",
+                                                style: AppTheme.labelSm.copyWith(
+                                                  fontSize: 8.0,
+                                                  color: AppTheme.error,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                          ],
                                         ),
-                                      ),
-                                    );
-                                  },
+                                        const SizedBox(width: 8.0),
+                                        const Icon(Icons.chevron_right, color: AppTheme.outline, size: 20.0),
+                                      ],
+                                    ),
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => CustomerProfileScreen(
+                                            customerName: customer.name,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
                                 );
                               },
                             ),
@@ -583,7 +586,7 @@ class _OutstandingCollectionsSheetState extends State<OutstandingCollectionsShee
                   ),
                 ],
               ),
-              const SizedBox(height: 12.0),
+              const SizedBox(height: 16.0),
 
               // Total pending statistics
               Row(
@@ -694,7 +697,7 @@ class _OutstandingCollectionsSheetState extends State<OutstandingCollectionsShee
                   letterSpacing: 1.5,
                 ),
               ),
-              const SizedBox(height: 12.0),
+              const SizedBox(height: 16.0),
 
               // Scrollable list of pending clients
               Expanded(
@@ -703,14 +706,10 @@ class _OutstandingCollectionsSheetState extends State<OutstandingCollectionsShee
                   backgroundColor: AppTheme.surface,
                   shadowStyle: ShadowStyle.light,
                   child: filteredPending.isEmpty
-                      ? const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(32.0),
-                            child: Text(
-                              "No matching pending balances found.",
-                              style: TextStyle(color: AppTheme.outline),
-                            ),
-                          ),
+                      ? const EmptyStateWidget(
+                          title: "No Pending Balances",
+                          message: "No matching pending balances found.",
+                          icon: Icons.account_balance_wallet_outlined,
                         )
                       : ListView.separated(
                           itemCount: filteredPending.length,
@@ -720,65 +719,68 @@ class _OutstandingCollectionsSheetState extends State<OutstandingCollectionsShee
                             final customer = filteredPending[index];
                             final pendingText = _getPaymentPendingText(customer, state);
 
-                            return ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: AppTheme.errorContainer.withValues(alpha: 0.4),
-                                radius: 20.0,
-                                child: Icon(
-                                  customer.icon,
-                                  color: AppTheme.error,
-                                  size: 20.0,
+                            return AnimatedListItem(
+                              index: index,
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: AppTheme.errorContainer.withValues(alpha: 0.4),
+                                  radius: 20.0,
+                                  child: Icon(
+                                    customer.icon,
+                                    color: AppTheme.error,
+                                    size: 20.0,
+                                  ),
                                 ),
-                              ),
-                              title: Text(
-                                customer.name,
-                                style: AppTheme.labelBold.copyWith(fontSize: 15.0),
-                              ),
-                              subtitle: Text(
-                                pendingText,
-                                style: AppTheme.labelSm.copyWith(color: AppTheme.outline),
-                              ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        "Pending: ₹${customer.outstanding.toStringAsFixed(0)}",
-                                        style: AppTheme.dataTabular.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14.0,
-                                          color: AppTheme.error,
+                                title: Text(
+                                  customer.name,
+                                  style: AppTheme.labelBold.copyWith(fontSize: 15.0),
+                                ),
+                                subtitle: Text(
+                                  pendingText,
+                                  style: AppTheme.labelSm.copyWith(color: AppTheme.outline),
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          "Pending: ₹${customer.outstanding.toStringAsFixed(0)}",
+                                          style: AppTheme.dataTabular.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14.0,
+                                            color: AppTheme.error,
+                                          ),
                                         ),
-                                      ),
-                                      Text(
-                                        "OUTSTANDING",
-                                        style: AppTheme.labelSm.copyWith(
-                                          fontSize: 8.0,
-                                          color: AppTheme.error,
-                                          fontWeight: FontWeight.bold,
+                                        Text(
+                                          "OUTSTANDING",
+                                          style: AppTheme.labelSm.copyWith(
+                                            fontSize: 8.0,
+                                            color: AppTheme.error,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(width: 8.0),
-                                  const Icon(Icons.chevron_right, color: AppTheme.outline, size: 20.0),
-                                ],
-                              ),
-                              onTap: () {
-                                // Close the bottom sheet and push the ledger page
-                                Navigator.pop(context);
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => CustomerProfileScreen(
-                                      customerName: customer.name,
+                                      ],
                                     ),
-                                  ),
-                                );
-                              },
+                                    const SizedBox(width: 8.0),
+                                    const Icon(Icons.chevron_right, color: AppTheme.outline, size: 20.0),
+                                  ],
+                                ),
+                                onTap: () {
+                                  // Close the bottom sheet and push the ledger page
+                                  Navigator.pop(context);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => CustomerProfileScreen(
+                                        customerName: customer.name,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
                             );
                           },
                         ),
@@ -815,4 +817,5 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
     return true;
   }
 }
+
 

@@ -28,7 +28,7 @@ class OverallBusinessOverviewWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         BentoCard(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+          padding: const EdgeInsets.all(16.0),
           backgroundColor: AppTheme.surface,
           shadowStyle: ShadowStyle.light,
           child: Row(
@@ -41,19 +41,18 @@ class OverallBusinessOverviewWidget extends StatelessWidget {
                     Text(
                       "OVERALL NET PROFIT",
                       style: AppTheme.labelSm.copyWith(
-                        fontSize: 9.0,
+                        fontSize: 12.0,
+                        fontWeight: FontWeight.w500,
                         color: AppTheme.onSurfaceVariant,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
                       ),
                     ),
-                    const SizedBox(height: 6.0),
+                    const SizedBox(height: 8.0),
                     Text(
                       formattedProfit,
-                      style: AppTheme.headlineMd.copyWith(
-                        fontSize: 24.0,
-                        color: overallProfit >= 0 ? Colors.green[700] : Colors.red[700],
-                        fontWeight: FontWeight.w900,
+                      style: AppTheme.headlineXl.copyWith(
+                        fontSize: 32.0,
+                        fontWeight: FontWeight.bold,
+                        color: overallProfit >= 0 ? AppTheme.success : AppTheme.error,
                       ),
                     ),
                   ],
@@ -61,13 +60,13 @@ class OverallBusinessOverviewWidget extends StatelessWidget {
               ),
               Icon(
                 overallProfit >= 0 ? Icons.monetization_on : Icons.money_off,
-                color: overallProfit >= 0 ? Colors.green[700] : Colors.red[700],
+                color: overallProfit >= 0 ? AppTheme.success : AppTheme.error,
                 size: 28.0,
               ),
             ],
           ),
         ),
-        const SizedBox(height: 12.0),
+        const SizedBox(height: 16.0),
         Row(
           children: [
             _buildSecondaryCard(
@@ -79,13 +78,13 @@ class OverallBusinessOverviewWidget extends StatelessWidget {
             _buildSecondaryCard(
               "OVERALL EXPENSES",
               formattedExpenses,
-              Colors.red[700] ?? Colors.red,
+              AppTheme.error,
             ),
             const SizedBox(width: 8.0),
             _buildSecondaryCard(
               "OVERALL MARGIN",
               formattedMargin,
-              overallProfitMargin >= 0 ? Colors.green[700] ?? Colors.green : Colors.red[700] ?? Colors.red,
+              overallProfitMargin >= 0 ? AppTheme.success : AppTheme.error,
             ),
           ],
         ),
@@ -96,7 +95,7 @@ class OverallBusinessOverviewWidget extends StatelessWidget {
   Widget _buildSecondaryCard(String label, String value, Color valueColor) {
     return Expanded(
       child: BentoCard(
-        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
+        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
         backgroundColor: AppTheme.surface,
         shadowStyle: ShadowStyle.light,
         child: Column(
@@ -105,18 +104,18 @@ class OverallBusinessOverviewWidget extends StatelessWidget {
             Text(
               label,
               style: AppTheme.labelSm.copyWith(
-                fontSize: 8.0,
+                fontSize: 12.0,
+                fontWeight: FontWeight.w500,
                 color: AppTheme.onSurfaceVariant,
-                fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 4.0),
+            const SizedBox(height: 8.0),
             Text(
               value,
-              style: AppTheme.headlineMd.copyWith(
-                fontSize: 13.0,
+              style: AppTheme.dataTabular.copyWith(
+                fontSize: 16.0,
+                fontWeight: FontWeight.bold,
                 color: valueColor,
-                fontWeight: FontWeight.w800,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -127,3 +126,4 @@ class OverallBusinessOverviewWidget extends StatelessWidget {
     );
   }
 }
+

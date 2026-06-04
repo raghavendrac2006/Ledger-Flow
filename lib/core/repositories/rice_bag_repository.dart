@@ -9,3 +9,4 @@ abstract class RiceBagRepository {
   Future<void> addDailyUsage(DailyUsage usage);
   Future<List<RiceBag>> getAllRiceBags();
 }
+

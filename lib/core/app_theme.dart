@@ -3,46 +3,46 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Brand Colors
-  static const Color primary = Color(0xFF000666);
-  static const Color primaryContainer = Color(0xFF1A237E);
-  static const Color onPrimaryContainer = Color(0xFF8690EE);
+  static const Color primary = Color(0xFF1E3A8A); // Premium Royal Navy Blue
+  static const Color primaryContainer = Color(0xFFEFF6FF); // Soft Translucent Blue Tint
+  static const Color onPrimaryContainer = Color(0xFF1E3A8A);
   
-  static const Color background = Color(0xFFFBF8FF);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceContainer = Color(0xFFEFECF5);
-  static const Color surfaceContainerLow = Color(0xFFF5F2FB);
-  static const Color surfaceContainerHigh = Color(0xFFEAE7EF);
-  static const Color surfaceContainerHighest = Color(0xFFE4E1EA);
+  static const Color background = Color(0xFFF8FAFC); // Ultra-Light Ice Gray background
+  static const Color surface = Color(0xFFFFFFFF); // Pure Alabaster White
+  static const Color surfaceContainer = Color(0xFFF1F5F9); // Light Slate
+  static const Color surfaceContainerLow = Color(0xFFF8FAFC);
+  static const Color surfaceContainerHigh = Color(0xFFE2E8F0);
+  static const Color surfaceContainerHighest = Color(0xFFCBD5E1);
   
-  static const Color onSurface = Color(0xFF1B1B21);
-  static const Color onSurfaceVariant = Color(0xFF454652);
-  static const Color outline = Color(0xFF767683);
-  static const Color outlineVariant = Color(0xFFC6C5D4);
+  static const Color onSurface = Color(0xFF0F172A); // Matte Black / Dark Slate
+  static const Color onSurfaceVariant = Color(0xFF64748B); // Slate Steel Grey secondary labels
+  static const Color outline = Color(0xFF94A3B8);
+  static const Color outlineVariant = Color(0xFFE2E8F0); // Muted contrast divider
   
-  static const Color secondary = Color(0xFF4C616C);
-  static const Color secondaryContainer = Color(0xFFCFE6F2);
-  static const Color onSecondaryContainer = Color(0xFF526772);
+  static const Color secondary = Color(0xFF64748B);
+  static const Color secondaryContainer = Color(0xFFF1F5F9);
+  static const Color onSecondaryContainer = Color(0xFF0F172A);
   
-  static const Color success = Color(0xFF2E7D32);
-  static const Color successContainer = Color(0xFFD0F0C0);
-  static const Color onSuccessContainer = Color(0xFF1B5E20);
+  static const Color success = Color(0xFF059669); // Sharp Deep Mint profit/revenue text
+  static const Color successContainer = Color(0xFFD1FAE5);
+  static const Color onSuccessContainer = Color(0xFF065F46);
   
-  static const Color error = Color(0xFFBA1A1A);
-  static const Color errorContainer = Color(0xFFFFDAD6);
-  static const Color onErrorContainer = Color(0xFF93000A);
+  static const Color error = Color(0xFFDC2626); // Clean Crimson Red expense text
+  static const Color errorContainer = Color(0xFFFEE2E2);
+  static const Color onErrorContainer = Color(0xFF991B1B);
   
-  static const Color tertiary = Color(0xFF380B00);
-  static const Color tertiaryFixed = Color(0xFFFFDBD0);
-  static const Color tertiaryFixedDim = Color(0xFFFFB59D);
-  static const Color onTertiaryFixed = Color(0xFF390C00);
-  static const Color onTertiaryFixedVariant = Color(0xFF7B2E12);
+  static const Color tertiary = Color(0xFF7C2D12);
+  static const Color tertiaryFixed = Color(0xFFFFEDD5);
+  static const Color tertiaryFixedDim = Color(0xFFFED7AA);
+  static const Color onTertiaryFixed = Color(0xFF431407);
+  static const Color onTertiaryFixedVariant = Color(0xFF9A3412);
 
-  // Border Radii
-  static const double radiusDefault = 4.0;
-  static const double radiusSm = 4.0;
-  static const double radiusMd = 8.0;
-  static const double radiusLg = 8.0;
-  static const double radiusXl = 12.0;
+  // Border Radii (16.0 container overhaul)
+  static const double radiusDefault = 8.0;
+  static const double radiusSm = 8.0;
+  static const double radiusMd = 12.0;
+  static const double radiusLg = 16.0;
+  static const double radiusXl = 16.0;
 
   static BorderRadius get borderDefault => BorderRadius.circular(radiusDefault);
   static BorderRadius get borderSm => BorderRadius.circular(radiusSm);
@@ -50,103 +50,103 @@ class AppTheme {
   static BorderRadius get borderLg => BorderRadius.circular(radiusLg);
   static BorderRadius get borderXl => BorderRadius.circular(radiusXl);
 
-  // Flat Hard Shadows (High-Contrast Modernism)
+  // Premium Soft Shadows
   static List<BoxShadow> get hardShadowLight => [
-        const BoxShadow(
-          color: Color(0x1A000000), // 10% opacity black
-          offset: Offset(2, 2),
-          blurRadius: 0,
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.03),
+          offset: const Offset(0, 4),
+          blurRadius: 12,
         ),
       ];
 
   static List<BoxShadow> get hardShadowHeavy => [
-        const BoxShadow(
-          color: Colors.black,
-          offset: Offset(4, 4),
-          blurRadius: 0,
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.06),
+          offset: const Offset(0, 8),
+          blurRadius: 16,
         ),
       ];
 
   static List<BoxShadow> get hardShadowButton => [
-        const BoxShadow(
-          color: Color(0xFF1A237E),
-          offset: Offset(0, 6),
-          blurRadius: 0,
+        BoxShadow(
+          color: primary.withValues(alpha: 0.15),
+          offset: const Offset(0, 4),
+          blurRadius: 12,
         ),
       ];
 
-  // Flat low-contrast outlines
+  // Subtle clean card border outlines
   static Border get cardBorder => Border.all(
+        color: outlineVariant,
+        width: 1.0,
+      );
+
+  static Border get heavyBorder => Border.all(
         color: outlineVariant,
         width: 1.5,
       );
 
-  static Border get heavyBorder => Border.all(
-        color: Colors.black,
-        width: 4.0,
-      );
-
   static Border get mediumBorder => Border.all(
-        color: Colors.black,
-        width: 2.0,
+        color: outlineVariant,
+        width: 1.0,
       );
 
   // Typography paired Hanken Grotesk and Inter
-  static TextStyle get headlineXl => GoogleFonts.hankenGrotesk(
+  static TextStyle get headlineXl => GoogleFonts.inter(
         fontSize: 32,
-        fontWeight: FontWeight.w800,
-        height: 40 / 32,
-        letterSpacing: -0.64,
+        fontWeight: FontWeight.bold,
+        height: 1.2,
+        fontFeatures: const [FontFeature.tabularFigures()],
         color: onSurface,
       );
 
-  static TextStyle get headlineLg => GoogleFonts.hankenGrotesk(
-        fontSize: 24,
-        fontWeight: FontWeight.w700,
-        height: 32 / 24,
-        letterSpacing: -0.24,
+  static TextStyle get headlineLg => GoogleFonts.inter(
+        fontSize: 28,
+        fontWeight: FontWeight.bold,
+        height: 1.2,
+        fontFeatures: const [FontFeature.tabularFigures()],
         color: onSurface,
       );
 
-  static TextStyle get headlineMd => GoogleFonts.hankenGrotesk(
+  static TextStyle get headlineMd => GoogleFonts.inter(
         fontSize: 20,
-        fontWeight: FontWeight.w700,
-        height: 28 / 20,
+        fontWeight: FontWeight.bold,
+        height: 1.3,
         color: onSurface,
       );
 
   static TextStyle get bodyLg => GoogleFonts.inter(
         fontSize: 18,
         fontWeight: FontWeight.w400,
-        height: 28 / 18,
+        height: 1.5,
         color: onSurface,
       );
 
   static TextStyle get bodyMd => GoogleFonts.inter(
         fontSize: 16,
         fontWeight: FontWeight.w400,
-        height: 24 / 16,
+        height: 1.5,
         color: onSurface,
       );
 
   static TextStyle get labelBold => GoogleFonts.inter(
         fontSize: 14,
         fontWeight: FontWeight.bold,
-        height: 20 / 14,
+        height: 1.4,
         color: onSurface,
       );
 
   static TextStyle get labelSm => GoogleFonts.inter(
         fontSize: 12,
         fontWeight: FontWeight.w500,
-        height: 16 / 12,
+        height: 1.3,
         color: onSurfaceVariant,
       );
 
   static TextStyle get dataTabular => GoogleFonts.inter(
         fontSize: 16,
         fontWeight: FontWeight.w600,
-        height: 24 / 16,
+        height: 1.4,
         fontFeatures: const [FontFeature.tabularFigures()],
         color: onSurface,
       );
@@ -175,3 +175,4 @@ class AppTheme {
     );
   }
 }
+

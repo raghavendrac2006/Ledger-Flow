@@ -115,7 +115,7 @@ class PdfService {
                     height: 1.5,
                     color: PdfColors.white,
                   ),
-                  pw.SizedBox(height: 12.0),
+                  pw.SizedBox(height: 16.0),
                   pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
@@ -171,7 +171,7 @@ class PdfService {
                     decoration: pw.BoxDecoration(
                       border: pw.Border.all(color: borderColor, width: 1.5),
                     ),
-                    padding: const pw.EdgeInsets.all(12.0),
+                    padding: const pw.EdgeInsets.all(16.0),
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
@@ -182,14 +182,14 @@ class PdfService {
                     ),
                   ),
                 ),
-                pw.SizedBox(width: 12.0),
+                pw.SizedBox(width: 16.0),
                 // Metric 2: Total Value
                 pw.Expanded(
                   child: pw.Container(
                     decoration: pw.BoxDecoration(
                       border: pw.Border.all(color: borderColor, width: 1.5),
                     ),
-                    padding: const pw.EdgeInsets.all(12.0),
+                    padding: const pw.EdgeInsets.all(16.0),
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
@@ -200,14 +200,14 @@ class PdfService {
                     ),
                   ),
                 ),
-                pw.SizedBox(width: 12.0),
+                pw.SizedBox(width: 16.0),
                 // Metric 3: Collection Rate
                 pw.Expanded(
                   child: pw.Container(
                     decoration: pw.BoxDecoration(
                       border: pw.Border.all(color: borderColor, width: 1.5),
                     ),
-                    padding: const pw.EdgeInsets.all(12.0),
+                    padding: const pw.EdgeInsets.all(16.0),
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
@@ -312,7 +312,7 @@ class PdfService {
                     "FINANCIAL CONSOLIDATION SUMMARY",
                     style: pw.TextStyle(fontSize: 8.5, fontWeight: pw.FontWeight.bold, letterSpacing: 0.5),
                   ),
-                  pw.SizedBox(height: 12.0),
+                  pw.SizedBox(height: 16.0),
                   pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
@@ -361,3 +361,4 @@ class PdfService {
     savePdfFile(bytes, cleanFileName);
   }
 }
+

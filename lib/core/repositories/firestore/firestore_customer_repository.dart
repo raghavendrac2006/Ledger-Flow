@@ -46,3 +46,4 @@ class FirestoreCustomerRepository implements CustomerRepository {
     }).toList();
   }
 }
+

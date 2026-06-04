@@ -4,6 +4,8 @@ import '../core/app_theme.dart';
 import '../core/app_state.dart';
 import '../widgets/bento_card.dart';
 import '../widgets/custom_toast.dart';
+import '../widgets/skeleton_card.dart';
+import '../widgets/animated_list_item.dart';
 
 class SalesEntryScreen extends StatefulWidget {
   const SalesEntryScreen({super.key});
@@ -124,7 +126,7 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
         return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-            side: const BorderSide(color: Colors.black, width: 2.5),
+            side: const BorderSide(color: AppTheme.outlineVariant, width: 1.0),
           ),
           backgroundColor: Colors.white,
           title: Text(
@@ -155,9 +157,8 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
             ),
             Container(
               decoration: BoxDecoration(
-                color: Colors.black,
+                color: AppTheme.primary,
                 borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                border: Border.all(color: Colors.black, width: 1.5),
               ),
               child: TextButton(
                 onPressed: () {
@@ -209,6 +210,28 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
   Widget build(BuildContext context) {
     final state = Provider.of<LedgerState>(context);
 
+    if (state.isLoading) {
+      return Scaffold(
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SkeletonCard(height: 24.0, width: 180.0),
+                const SizedBox(height: 16.0),
+                const SkeletonCard(height: 380.0),
+                const SizedBox(height: 32.0),
+                const SkeletonCard(height: 24.0, width: 220.0),
+                const SizedBox(height: 16.0),
+                const SkeletonCard(height: 180.0),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     // If rounds have not started yet, block sales log with lock screen
     if (!state.roundsStarted) {
       return Scaffold(
@@ -246,7 +269,7 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
                     style: AppTheme.headlineLg.copyWith(fontSize: 20.0),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 12.0),
+                  const SizedBox(height: 16.0),
                   Text(
                     "You need to initialize your day's delivery route and select products in the Setup screen before you can record sales transactions.",
                     style: AppTheme.bodyMd.copyWith(color: AppTheme.onSurfaceVariant),
@@ -630,18 +653,9 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 20.0),
                         decoration: BoxDecoration(
-                          color: Colors.black,
+                          color: AppTheme.primary,
                           borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                          border: Border.all(color: Colors.black, width: 2.0),
-                          boxShadow: !_isSaving
-                              ? [
-                                  const BoxShadow(
-                                    color: Color(0xFF000666),
-                                    offset: Offset(4, 4),
-                                    blurRadius: 0,
-                                  ),
-                                ]
-                              : null,
+                          boxShadow: !_isSaving ? AppTheme.hardShadowButton : null,
                         ),
                         child: Center(
                           child: _isSaving
@@ -673,7 +687,7 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
                         "RECENT ENTRIES FOR THIS RUN",
                         style: AppTheme.labelBold.copyWith(fontSize: 11, color: AppTheme.onSurfaceVariant, letterSpacing: 1.5),
                       ),
-                      const SizedBox(height: 12.0),
+                      const SizedBox(height: 16.0),
                       BentoCard(
                         padding: const EdgeInsets.all(0),
                         backgroundColor: AppTheme.surface,
@@ -685,43 +699,49 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
                           separatorBuilder: (context, i) => const Divider(height: 1, color: AppTheme.outlineVariant),
                           itemBuilder: (context, index) {
                             final log = state.deliveryLogs[index];
-                            return ListTile(
-                              dense: true,
-                              title: Row(
-                                children: [
-                                  Text(
-                                    "#${log.serialNo} • ${log.customerName}",
-                                    style: AppTheme.labelBold,
-                                  ),
-                                  const Spacer(),
-                                  Text(
-                                    "₹${log.amount.toStringAsFixed(0)}",
-                                    style: AppTheme.dataTabular.copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                              subtitle: Row(
-                                children: [
-                                  Text(
-                                    log.itemName,
-                                    style: AppTheme.labelSm,
-                                  ),
-                                  const Spacer(),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
-                                    decoration: BoxDecoration(
-                                      color: log.isPaid ? AppTheme.successContainer : AppTheme.errorContainer,
-                                      borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                            if (_isSaving) {
+                              return const SkeletonCard(height: 60);
+                            }
+                            return AnimatedListItem(
+                              index: index,
+                              child: ListTile(
+                                dense: true,
+                                title: Row(
+                                  children: [
+                                    Text(
+                                      "#${log.serialNo} • ${log.customerName}",
+                                      style: AppTheme.labelBold,
                                     ),
-                                    child: Text(
-                                      log.isPaid ? "PAID" : "UNPAID",
-                                      style: AppTheme.labelBold.copyWith(
-                                        color: log.isPaid ? AppTheme.onSuccessContainer : AppTheme.onErrorContainer,
-                                        fontSize: 9.0,
+                                    const Spacer(),
+                                    Text(
+                                      "₹${log.amount.toStringAsFixed(0)}",
+                                      style: AppTheme.dataTabular.copyWith(fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                                subtitle: Row(
+                                  children: [
+                                    Text(
+                                      log.itemName,
+                                      style: AppTheme.labelSm,
+                                    ),
+                                    const Spacer(),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+                                      decoration: BoxDecoration(
+                                        color: log.isPaid ? AppTheme.successContainer : AppTheme.errorContainer,
+                                        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                                      ),
+                                      child: Text(
+                                        log.isPaid ? "PAID" : "UNPAID",
+                                        style: AppTheme.labelBold.copyWith(
+                                          color: log.isPaid ? AppTheme.onSuccessContainer : AppTheme.onErrorContainer,
+                                          fontSize: 9.0,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             );
                           },
@@ -808,3 +828,4 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
     );
   }
 }
+

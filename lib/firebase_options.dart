@@ -78,3 +78,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'daily-sales-record-5d41b.firebasestorage.app',
   );
 }
+

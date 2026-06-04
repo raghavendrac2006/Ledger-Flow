@@ -41,6 +41,27 @@ class LedgerState extends ChangeNotifier {
   }) {
     _initFirestore();
     runSentenceCaseMigration();
+    // Safety timer to prevent getting stuck in loading state forever
+    Timer(const Duration(seconds: 4), () {
+      if (_isLoading) {
+        _isLoading = false;
+        notifyListeners();
+      }
+    });
+  }
+
+  bool _isLoading = true;
+  bool get isLoading => _isLoading;
+  final Set<String> _loadedStreams = {};
+
+  void _onStreamLoaded(String streamName) {
+    if (_isLoading) {
+      _loadedStreams.add(streamName);
+      if (_loadedStreams.containsAll(['customers', 'logs', 'expenses', 'bags', 'usages'])) {
+        _isLoading = false;
+        notifyListeners();
+      }
+    }
   }
 
   // Firestore stream subscriptions
@@ -69,10 +90,12 @@ class LedgerState extends ChangeNotifier {
       (snapshot) {
         _customers.clear();
         _customers.addAll(snapshot);
+        _onStreamLoaded('customers');
         notifyListeners();
       },
       onError: (error) {
         debugPrint("Firestore customers stream error: $error");
+        _onStreamLoaded('customers'); // don't block load on errors
       }
     );
 
@@ -110,10 +133,12 @@ class LedgerState extends ChangeNotifier {
 
         // Self-healing serial number
         _serialNumber = maxSerial + 1;
+        _onStreamLoaded('logs');
         notifyListeners();
       },
       onError: (error) {
         debugPrint("Firestore deliveryLogs stream error: $error");
+        _onStreamLoaded('logs');
       }
     );
 
@@ -124,10 +149,12 @@ class LedgerState extends ChangeNotifier {
         _expenses.addAll(snapshot);
         // Sort in memory by date descending
         _expenses.sort((a, b) => b.date.compareTo(a.date));
+        _onStreamLoaded('expenses');
         notifyListeners();
       },
       onError: (error) {
         debugPrint("Firestore expenses stream error: $error");
+        _onStreamLoaded('expenses');
       }
     );
 
@@ -138,10 +165,12 @@ class LedgerState extends ChangeNotifier {
         _riceBags.addAll(snapshot);
         // Sort in memory by startDate descending
         _riceBags.sort((a, b) => b.startDate.compareTo(a.startDate));
+        _onStreamLoaded('bags');
         notifyListeners();
       },
       onError: (error) {
         debugPrint("Firestore riceBags stream error: $error");
+        _onStreamLoaded('bags');
       }
     );
 
@@ -150,10 +179,12 @@ class LedgerState extends ChangeNotifier {
       (snapshot) {
         _dailyUsages.clear();
         _dailyUsages.addAll(snapshot);
+        _onStreamLoaded('usages');
         notifyListeners();
       },
       onError: (error) {
         debugPrint("Firestore dailyUsages stream error: $error");
+        _onStreamLoaded('usages');
       }
     );
 
@@ -1285,3 +1316,4 @@ class LedgerState extends ChangeNotifier {
 
   int get todayReturnsCount => 0;
 }
+

@@ -38,3 +38,4 @@ class FirestoreSettingsRepository implements SettingsRepository {
     }, SetOptions(merge: true));
   }
 }
+

@@ -45,3 +45,4 @@ class FirestoreRiceBagRepository implements RiceBagRepository {
     return snapshot.docs.map((doc) => RiceBag.fromJson(doc.data(), id: doc.id)).toList();
   }
 }
+

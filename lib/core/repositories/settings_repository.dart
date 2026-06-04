@@ -4,3 +4,4 @@ abstract class SettingsRepository {
   Stream<List<String>> getExpenseSuggestionsStream();
   Future<void> updateExpenseSuggestions(List<String> suggestions);
 }
+

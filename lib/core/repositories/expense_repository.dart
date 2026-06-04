@@ -7,3 +7,4 @@ abstract class ExpenseRepository {
   Future<void> deleteExpense(String expenseId);
   Future<List<ExpenseLog>> getAllExpenses();
 }
+

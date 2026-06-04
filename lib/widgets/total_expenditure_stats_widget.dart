@@ -80,7 +80,7 @@ class TotalExpenditureStatsWidget extends StatelessWidget {
             letterSpacing: 1.5,
           ),
         ),
-        const SizedBox(height: 12.0),
+        const SizedBox(height: 16.0),
 
         BentoCard(
           padding: const EdgeInsets.all(20.0),
@@ -183,7 +183,7 @@ class TotalExpenditureStatsWidget extends StatelessWidget {
             letterSpacing: 1.5,
           ),
         ),
-        const SizedBox(height: 12.0),
+        const SizedBox(height: 16.0),
 
         BentoCard(
           padding: const EdgeInsets.all(18.0),
@@ -293,3 +293,4 @@ class TotalExpenditureStatsWidget extends StatelessWidget {
     );
   }
 }
+

@@ -51,14 +51,14 @@ class _HomeShellState extends State<HomeShell> {
 
     Widget buildDrawer() {
       return Drawer(
-        backgroundColor: AppTheme.background,
+        backgroundColor: const Color(0xFF0F172A),
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
         child: Column(
           children: [
             DrawerHeader(
               decoration: const BoxDecoration(
                 color: AppTheme.primary,
-                border: Border(bottom: BorderSide(color: Colors.black, width: 4.0)),
+                border: Border(bottom: BorderSide(color: Colors.white10, width: 1.0)),
               ),
               child: Center(
                 child: Text(
@@ -73,7 +73,7 @@ class _HomeShellState extends State<HomeShell> {
             _buildDrawerTile(3, "Customer List", Icons.groups),
             _buildDrawerTile(4, "Daily Summary", Icons.cloud_upload),
             const Spacer(),
-            const Divider(color: AppTheme.outlineVariant),
+            const Divider(color: Colors.white10),
             _buildDrawerTile(-1, "Reset Rounds", Icons.refresh, onTap: () {
               state.resetRounds();
               setState(() {
@@ -125,8 +125,8 @@ class _HomeShellState extends State<HomeShell> {
             Container(
               width: 280,
               decoration: const BoxDecoration(
-                color: AppTheme.surface,
-                border: Border(right: BorderSide(color: AppTheme.outlineVariant, width: 1.5)),
+                color: Color(0xFF0F172A),
+                border: Border(right: BorderSide(color: Colors.white10, width: 1.5)),
               ),
               child: CustomScrollView(
                 slivers: [
@@ -135,12 +135,12 @@ class _HomeShellState extends State<HomeShell> {
                       padding: const EdgeInsets.all(24.0),
                       child: Text(
                         "Delivery Pro".toUpperCase(),
-                        style: AppTheme.headlineLg.copyWith(color: AppTheme.primary, letterSpacing: 1.5),
+                        style: AppTheme.headlineLg.copyWith(color: Colors.white, letterSpacing: 1.5),
                       ),
                     ),
                   ),
-                  const SliverToBoxAdapter(child: Divider(color: AppTheme.outlineVariant)),
-                  const SliverToBoxAdapter(child: SizedBox(height: 12.0)),
+                  const SliverToBoxAdapter(child: Divider(color: Colors.white10)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 16.0)),
                   SliverList(
                     delegate: SliverChildListDelegate([
                       _buildSidebarItem(0, "Daily Setup", Icons.edit_calendar),
@@ -155,7 +155,7 @@ class _HomeShellState extends State<HomeShell> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        const Divider(color: AppTheme.outlineVariant),
+                        const Divider(color: Colors.white10),
                         _buildSidebarItem(-1, "Reset Rounds", Icons.refresh, onTap: () {
                           state.resetRounds();
                           setState(() {
@@ -242,16 +242,16 @@ class _HomeShellState extends State<HomeShell> {
   Widget _buildDrawerTile(int index, String label, IconData icon, {VoidCallback? onTap}) {
     final isSelected = _currentIndex == index;
     return ListTile(
-      leading: Icon(icon, color: isSelected ? AppTheme.primary : AppTheme.onSurfaceVariant),
+      leading: Icon(icon, color: isSelected ? AppTheme.primary : const Color(0xFF94A3B8)),
       title: Text(
         label,
         style: AppTheme.bodyLg.copyWith(
-          color: isSelected ? AppTheme.primary : AppTheme.onSurfaceVariant,
+          color: isSelected ? AppTheme.primary : const Color(0xFF94A3B8),
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
       ),
       selected: isSelected,
-      selectedTileColor: AppTheme.surfaceContainerHigh,
+      selectedTileColor: AppTheme.primaryContainer,
       onTap: onTap ?? () {
         setState(() {
           _currentIndex = index;
@@ -273,7 +273,7 @@ class _HomeShellState extends State<HomeShell> {
         },
         borderRadius: BorderRadius.circular(AppTheme.radiusXl),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
           decoration: BoxDecoration(
             color: isSelected ? AppTheme.primaryContainer : Colors.transparent,
             borderRadius: BorderRadius.circular(AppTheme.radiusXl),
@@ -282,7 +282,7 @@ class _HomeShellState extends State<HomeShell> {
             children: [
               Icon(
                 icon,
-                color: isSelected ? Colors.white : AppTheme.onSurfaceVariant,
+                color: isSelected ? AppTheme.primary : const Color(0xFF94A3B8),
                 size: 24.0,
               ),
               const SizedBox(width: 16.0),
@@ -290,7 +290,7 @@ class _HomeShellState extends State<HomeShell> {
                 child: Text(
                   label,
                   style: AppTheme.bodyLg.copyWith(
-                    color: isSelected ? Colors.white : AppTheme.onSurfaceVariant,
+                    color: isSelected ? AppTheme.primary : const Color(0xFF94A3B8),
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
@@ -302,3 +302,4 @@ class _HomeShellState extends State<HomeShell> {
     );
   }
 }
+
