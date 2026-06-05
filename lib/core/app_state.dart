@@ -17,6 +17,8 @@ import 'repositories/delivery_log_repository.dart';
 import 'repositories/expense_repository.dart';
 import 'repositories/rice_bag_repository.dart';
 import 'repositories/settings_repository.dart';
+import 'models/owner_finance_model.dart';
+import 'repositories/owner_finance_repository.dart';
 
 String toSentenceCase(String text) {
   final trimmed = text.trim();
@@ -31,6 +33,7 @@ class LedgerState extends ChangeNotifier {
   final ExpenseRepository expenseRepository;
   final RiceBagRepository riceBagRepository;
   final SettingsRepository settingsRepository;
+  final OwnerFinanceRepository ownerFinanceRepository;
 
   LedgerState({
     required this.customerRepository,
@@ -38,6 +41,7 @@ class LedgerState extends ChangeNotifier {
     required this.expenseRepository,
     required this.riceBagRepository,
     required this.settingsRepository,
+    required this.ownerFinanceRepository,
   }) {
     _initFirestore();
     runSentenceCaseMigration();
@@ -73,11 +77,45 @@ class LedgerState extends ChangeNotifier {
   StreamSubscription? _statsSub;
   StreamSubscription? _settingsSub;
   StreamSubscription? _expenseSuggestionsSub;
+  StreamSubscription? _ownerLoanSub;
+  StreamSubscription? _ownerRepaymentsSub;
 
   final Map<String, double> _historicalMonthlySales = {};
 
+  OwnerLoanConfig? _activeLoan;
+  OwnerLoanConfig? get activeLoan => _activeLoan;
+
+  final List<RepaymentLog> _repaymentLogs = [];
+  List<RepaymentLog> get repaymentLogs => _repaymentLogs;
+
   void _initFirestore() {
     debugPrint("--- INITIALIZING REAL-TIME CLOUD FIRESTORE ---");
+
+    ownerFinanceRepository.initDefaultLoanConfigIfEmpty().then((_) {
+      _ownerLoanSub = ownerFinanceRepository.getActiveLoanStream().listen(
+        (loan) {
+          _activeLoan = loan;
+          notifyListeners();
+          
+          if (loan != null) {
+            _ownerRepaymentsSub?.cancel();
+            _ownerRepaymentsSub = ownerFinanceRepository.getRepaymentsStream(loan.id).listen(
+              (repayments) {
+                _repaymentLogs.clear();
+                _repaymentLogs.addAll(repayments);
+                notifyListeners();
+              },
+              onError: (error) {
+                debugPrint("Firestore owner repayments stream error: $error");
+              }
+            );
+          }
+        },
+        onError: (error) {
+          debugPrint("Firestore owner loan stream error: $error");
+        }
+      );
+    });
 
     // 1. Seed Default Customers if Database is empty
     _seedDefaultCustomers();
@@ -324,6 +362,8 @@ class LedgerState extends ChangeNotifier {
     _statsSub?.cancel();
     _settingsSub?.cancel();
     _expenseSuggestionsSub?.cancel();
+    _ownerLoanSub?.cancel();
+    _ownerRepaymentsSub?.cancel();
     super.dispose();
   }
 
@@ -1315,5 +1355,28 @@ class LedgerState extends ChangeNotifier {
   }).length;
 
   int get todayReturnsCount => 0;
+
+  Future<void> updateOwnerLoanNotes(String notes) async {
+    if (_activeLoan != null) {
+      await ownerFinanceRepository.updateNotes(_activeLoan!.id, notes);
+    }
+  }
+
+  Future<void> addOwnerRepayment(double amount) async {
+    if (_activeLoan != null && amount > 0.0) {
+      final repayment = RepaymentLog(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        amountPaid: amount,
+        repaymentDate: DateTime.now(),
+      );
+      await ownerFinanceRepository.addRepayment(_activeLoan!.id, repayment);
+    }
+  }
+
+  Future<void> updateOwnerLoanTotalBorrowed(double total) async {
+    if (_activeLoan != null) {
+      await ownerFinanceRepository.updateTotalBorrowed(_activeLoan!.id, total);
+    }
+  }
 }
 

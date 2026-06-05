@@ -23,6 +23,131 @@ class _SetupScreenState extends State<SetupScreen> {
     super.dispose();
   }
 
+  void _showUsageHistoryDialog(BuildContext context, LedgerState state) {
+    final activeBag = state.activeRiceBag;
+    if (activeBag == null) return;
+
+    final usages = state.dailyUsages.where((u) => u.bagId == activeBag.bagId).toList();
+    
+    DateTime parseDate(String dateStr) {
+      try {
+        return DateFormat('dd MMMM yyyy').parse(dateStr);
+      } catch (_) {
+        try {
+          return DateTime.parse(dateStr);
+        } catch (_) {
+          return DateTime.fromMillisecondsSinceEpoch(0);
+        }
+      }
+    }
+
+    usages.sort((a, b) {
+      final dateA = parseDate(a.date);
+      final dateB = parseDate(b.date);
+      final dateCompare = dateB.compareTo(dateA); // Latest date at the top
+      if (dateCompare != 0) {
+        return dateCompare;
+      }
+      // Within the same day, First-In-First-Out (oldest creation time first)
+      return a.usageId.compareTo(b.usageId);
+    });
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+            side: const BorderSide(color: AppTheme.outlineVariant, width: 1.0),
+          ),
+          backgroundColor: Colors.white,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "PRODUCTION LOGS",
+                style: AppTheme.headlineMd.copyWith(fontSize: 18.0),
+              ),
+              const SizedBox(height: 4.0),
+              Text(
+                "Active Bag #${state.getBagNumber(activeBag)} (${activeBag.totalKg.toStringAsFixed(0)} KG)",
+                style: AppTheme.labelSm.copyWith(color: AppTheme.onSurfaceVariant),
+              ),
+            ],
+          ),
+          content: usages.isEmpty
+              ? SizedBox(
+                  height: 120,
+                  child: Center(
+                     child: Text(
+                      "No daily production logged for this bag yet.",
+                      style: AppTheme.labelSm.copyWith(color: AppTheme.outline),
+                    ),
+                  ),
+                )
+              : SizedBox(
+                  width: double.maxFinite,
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: usages.length,
+                    separatorBuilder: (context, index) => const Divider(color: AppTheme.outlineVariant),
+                    itemBuilder: (context, index) {
+                      final usage = usages[index];
+                      String displayDate = usage.date;
+                      try {
+                        final parsed = DateFormat('dd MMMM yyyy').parse(usage.date);
+                        displayDate = DateFormat('dd MMM yyyy').format(parsed);
+                      } catch (_) {
+                        try {
+                          final parsed = DateTime.parse(usage.date);
+                          displayDate = DateFormat('dd MMM yyyy').format(parsed);
+                        } catch (_) {
+                          // Keep as is
+                        }
+                      }
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.calendar_today, color: AppTheme.primary, size: 16.0),
+                                const SizedBox(width: 12.0),
+                                Text(
+                                  displayDate,
+                                  style: AppTheme.bodyMd.copyWith(fontWeight: FontWeight.w500),
+                                ),
+                              ],
+                            ),
+                            Text(
+                              "${usage.usedKg.toStringAsFixed(1)} KG",
+                              style: AppTheme.dataTabular.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                "CLOSE",
+                style: AppTheme.labelBold.copyWith(color: AppTheme.primary),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _showAddProductDialog(BuildContext context, LedgerState state) {
     final TextEditingController nameCont = TextEditingController();
     final TextEditingController subCont = TextEditingController();
@@ -231,94 +356,105 @@ class _SetupScreenState extends State<SetupScreen> {
                 style: AppTheme.labelBold.copyWith(fontSize: 12, color: AppTheme.onSurfaceVariant),
               ),
               const SizedBox(height: 8.0),
-              BentoCard(
-                padding: const EdgeInsets.all(18.0),
-                backgroundColor: AppTheme.surface,
-                borderRadius: AppTheme.radiusLg,
-                shadowStyle: ShadowStyle.light,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (state.activeRiceBag == null) ...[
-                      Row(
-                        children: [
-                          const Icon(Icons.warning_amber_rounded, color: AppTheme.error, size: 24.0),
-                          const SizedBox(width: 16.0),
-                          Expanded(
-                            child: Text(
-                              "No active rice flour bag cycle started yet. Log RICE FLOUR cost in Expenses tab to initialize a bag.",
-                              style: AppTheme.labelSm.copyWith(color: AppTheme.error, fontWeight: FontWeight.bold),
+              GestureDetector(
+                onLongPress: () {
+                  if (state.activeRiceBag != null) {
+                    _showUsageHistoryDialog(context, state);
+                  }
+                },
+                child: BentoCard(
+                  padding: const EdgeInsets.all(18.0),
+                  backgroundColor: AppTheme.surface,
+                  borderRadius: AppTheme.radiusLg,
+                  shadowStyle: ShadowStyle.light,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (state.activeRiceBag == null) ...[
+                        Row(
+                          children: [
+                            const Icon(Icons.warning_amber_rounded, color: AppTheme.error, size: 24.0),
+                            const SizedBox(width: 16.0),
+                            Expanded(
+                              child: Text(
+                                "No active rice flour bag cycle started yet. Log RICE FLOUR cost in Expenses tab to initialize a bag.",
+                                style: AppTheme.labelSm.copyWith(color: AppTheme.error, fontWeight: FontWeight.bold),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ] else ...[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "ACTIVE BAG STATUS",
-                            style: AppTheme.labelSm.copyWith(color: AppTheme.onSurfaceVariant, fontWeight: FontWeight.bold),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                              border: Border.all(color: AppTheme.primary, width: 1.0),
-                            ),
-                            child: Text(
-                              "ACTIVE",
-                              style: AppTheme.labelBold.copyWith(fontSize: 9.0, color: AppTheme.primary),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16.0),
-                      Row(
-                        children: [
-                          _buildBagMetric("TOTAL KG", "${state.activeRiceBag!.totalKg.toStringAsFixed(0)} KG"),
-                          _buildSeparator(),
-                          _buildBagMetric("USED", "${state.activeRiceBag!.usedKg.toStringAsFixed(1)} KG"),
-                          _buildSeparator(),
-                          _buildBagMetric("REMAINING", "${state.activeRiceBag!.remainingKg.toStringAsFixed(1)} KG", isHighlighted: true),
-                        ],
-                      ),
-                      const SizedBox(height: 20.0),
-                      const Divider(color: AppTheme.outlineVariant, height: 1),
-                      const SizedBox(height: 16.0),
-                      Text(
-                        "HOW MANY KG OF RICE FLOUR USED TODAY?",
-                        style: AppTheme.labelBold.copyWith(fontSize: 10.0, color: AppTheme.onSurface),
-                      ),
-                      const SizedBox(height: 10.0),
-                      TextField(
-                        controller: _riceUsageController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: InputDecoration(
-                          hintText: "e.g., 7.0",
-                          suffixText: "KG",
-                          suffixStyle: AppTheme.labelBold.copyWith(color: AppTheme.onSurface),
-                          filled: true,
-                          fillColor: AppTheme.surfaceContainerHighest,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                            borderSide: const BorderSide(color: AppTheme.outlineVariant, width: 1.0),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                            borderSide: const BorderSide(color: AppTheme.outlineVariant, width: 1.0),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                            borderSide: const BorderSide(color: AppTheme.primary, width: 2.0),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
+                          ],
                         ),
-                        style: AppTheme.headlineMd.copyWith(fontSize: 18.0),
-                      ),
+                      ] else ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "ACTIVE BAG STATUS (LONG PRESS FOR LOGS)",
+                              style: AppTheme.labelSm.copyWith(
+                                color: AppTheme.onSurfaceVariant,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 9.5,
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                                border: Border.all(color: AppTheme.primary, width: 1.0),
+                              ),
+                              child: Text(
+                                "ACTIVE",
+                                style: AppTheme.labelBold.copyWith(fontSize: 9.0, color: AppTheme.primary),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16.0),
+                        Row(
+                          children: [
+                            _buildBagMetric("TOTAL KG", "${state.activeRiceBag!.totalKg.toStringAsFixed(0)} KG"),
+                            _buildSeparator(),
+                            _buildBagMetric("USED", "${state.activeRiceBag!.usedKg.toStringAsFixed(1)} KG"),
+                            _buildSeparator(),
+                            _buildBagMetric("REMAINING", "${state.activeRiceBag!.remainingKg.toStringAsFixed(1)} KG", isHighlighted: true),
+                          ],
+                        ),
+                        const SizedBox(height: 20.0),
+                        const Divider(color: AppTheme.outlineVariant, height: 1),
+                        const SizedBox(height: 16.0),
+                        Text(
+                          "HOW MANY KG OF RICE FLOUR USED TODAY?",
+                          style: AppTheme.labelBold.copyWith(fontSize: 10.0, color: AppTheme.onSurface),
+                        ),
+                        const SizedBox(height: 10.0),
+                        TextField(
+                          controller: _riceUsageController,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          decoration: InputDecoration(
+                            hintText: "e.g., 7.0",
+                            suffixText: "KG",
+                            suffixStyle: AppTheme.labelBold.copyWith(color: AppTheme.onSurface),
+                            filled: true,
+                            fillColor: AppTheme.surfaceContainerHighest,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                              borderSide: const BorderSide(color: AppTheme.outlineVariant, width: 1.0),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                              borderSide: const BorderSide(color: AppTheme.outlineVariant, width: 1.0),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                              borderSide: const BorderSide(color: AppTheme.primary, width: 2.0),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
+                          ),
+                          style: AppTheme.headlineMd.copyWith(fontSize: 18.0),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
 

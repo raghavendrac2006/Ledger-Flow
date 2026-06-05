@@ -7,6 +7,8 @@ import 'sales_entry_screen.dart';
 import 'expenses_screen.dart';
 import 'client_list_screen.dart';
 import 'summary_screen.dart';
+import 'owner_finance_screen.dart';
+import 'ai_analyst_screen.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -28,6 +30,8 @@ class _HomeShellState extends State<HomeShell> {
       const ExpensesScreen(),
       const ClientListScreen(),
       const SummaryScreen(),
+      const OwnerFinanceScreen(),
+      const AIAnalystScreen(),
     ];
   }
 
@@ -72,6 +76,8 @@ class _HomeShellState extends State<HomeShell> {
             _buildDrawerTile(2, "Expenses", Icons.payments),
             _buildDrawerTile(3, "Customer List", Icons.groups),
             _buildDrawerTile(4, "Daily Summary", Icons.cloud_upload),
+            _buildDrawerTile(5, "Owner Finance", Icons.account_balance),
+            _buildDrawerTile(6, "AI Analyst", Icons.psychology),
             const Spacer(),
             const Divider(color: Colors.white10),
             _buildDrawerTile(-1, "Reset Rounds", Icons.refresh, onTap: () {
@@ -148,6 +154,8 @@ class _HomeShellState extends State<HomeShell> {
                       _buildSidebarItem(2, "Expenses", Icons.payments),
                       _buildSidebarItem(3, "Customer List", Icons.groups),
                       _buildSidebarItem(4, "Daily Summary", Icons.cloud_upload),
+                      _buildSidebarItem(5, "Owner Finance", Icons.account_balance),
+                      _buildSidebarItem(6, "AI Analyst", Icons.psychology),
                     ]),
                   ),
                   SliverFillRemaining(
@@ -173,7 +181,7 @@ class _HomeShellState extends State<HomeShell> {
           Expanded(child: _screens[_currentIndex]),
         ],
       ),
-      bottomNavigationBar: isDesktop
+      bottomNavigationBar: isDesktop || _currentIndex > 4
           ? null
           : Container(
               decoration: const BoxDecoration(
@@ -225,7 +233,7 @@ class _HomeShellState extends State<HomeShell> {
   String _getScreenTitle(int index) {
     switch (index) {
       case 0:
-        return "Delivery Setup";
+        return "Daily Setup";
       case 1:
         return "Sales Entry";
       case 2:
@@ -234,6 +242,10 @@ class _HomeShellState extends State<HomeShell> {
         return "Active Customers";
       case 4:
         return "Summary";
+      case 5:
+        return "Owner Finance";
+      case 6:
+        return "AI Analyst";
       default:
         return "Delivery Pro";
     }

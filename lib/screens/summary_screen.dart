@@ -22,7 +22,6 @@ class SummaryScreen extends StatefulWidget {
 }
 
 class _SummaryScreenState extends State<SummaryScreen> {
-  int _selectedBarIndex = 4; // Defaults to October (index 4)
   String _selectedExportItem = "1 ₹ Chakli";
   DateTimeRange _selectedDateRange = DateTimeRange(
     start: DateTime.now().subtract(const Duration(days: 30)),
@@ -60,12 +59,26 @@ class _SummaryScreenState extends State<SummaryScreen> {
     }
     final todaySales = state.todaySales;
     final totalDeliveries = state.todayDeliveriesCount;
-    final totalReturns = state.todayReturnsCount;
 
-    final chartData = state.getChartData();
-    final selectedMonthData = chartData[_selectedBarIndex];
-    final selectedMonthName = selectedMonthData["month"] as String;
-    final selectedMonthSales = selectedMonthData["sales"] as double;
+    // Calculate Yesterday's Sales
+    final yesterday = DateTime.now().subtract(const Duration(days: 1));
+    final yesterdaySales = state.deliveryLogs.where((l) {
+      return !l.isPayment &&
+             l.dateTime.day == yesterday.day &&
+             l.dateTime.month == yesterday.month &&
+             l.dateTime.year == yesterday.year;
+    }).fold(0.0, (total, log) => total + log.amount);
+
+    double percentageChange = 0.0;
+    if (yesterdaySales > 0.0) {
+      percentageChange = ((todaySales - yesterdaySales) / yesterdaySales) * 100.0;
+    } else if (todaySales > 0.0) {
+      percentageChange = 100.0;
+    }
+
+    final formattedPctChange = percentageChange > 0.0
+        ? "+${percentageChange.toStringAsFixed(1)}%"
+        : "${percentageChange.toStringAsFixed(1)}%";
 
     return Scaffold(
       body: state.isLoading
@@ -274,7 +287,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                                 border: Border.all(color: Colors.black, width: 1.0),
                               ),
                               child: Text(
-                                "0.0% VS YESTERDAY",
+                                "$formattedPctChange VS YESTERDAY",
                                 style: AppTheme.labelBold.copyWith(
                                   color: Colors.black,
                                   fontSize: 8.5,
@@ -330,7 +343,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    "RETURNED BAGS",
+                                    "YESTERDAY'S REVENUE",
                                     style: AppTheme.labelSm.copyWith(
                                       fontSize: 10.0,
                                       fontWeight: FontWeight.bold,
@@ -339,136 +352,17 @@ class _SummaryScreenState extends State<SummaryScreen> {
                                   ),
                                   const SizedBox(height: 2.0),
                                   Text(
-                                    "$totalReturns",
-                                    style: AppTheme.headlineMd.copyWith(fontSize: 18.0),
+                                    "₹${NumberFormat('#,##,###.00').format(yesterdaySales)}",
+                                    style: AppTheme.dataTabular.copyWith(
+                                      fontSize: 18.0,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
                           ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 32.0),
-
-                  // Interactive Sales Trend Section Header
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "MONTHLY SALES TREND",
-                        style: AppTheme.labelBold.copyWith(
-                          fontSize: 11.0,
-                          color: AppTheme.onSurfaceVariant,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      Text(
-                        "$selectedMonthName: ₹${NumberFormat('#,##,###').format(selectedMonthSales)}",
-                        style: AppTheme.labelBold.copyWith(
-                          fontSize: 12.0,
-                          color: AppTheme.primary,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16.0),
-
-                  // Custom Interactive Bar Chart Bento Container
-                  BentoCard(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
-                    backgroundColor: AppTheme.surface,
-                    shadowStyle: ShadowStyle.light,
-                    child: Column(
-                      children: [
-                        // Chart body
-                        SizedBox(
-                          height: 140,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: List.generate(chartData.length, (index) {
-                              final data = chartData[index];
-                              final sales = data["sales"] as double;
-                              final month = data["month"] as String;
-
-                              final isSelected = _selectedBarIndex == index;
-
-                              // Maximum sales base value is 150000.0 for scaling heights
-                              final double scaleRatio = sales == 0.0 ? 0.0 : sales / 150000.0;
-                              final double barHeight = sales == 0.0 ? 2.0 : (scaleRatio * 120.0).clamp(15.0, 120.0);
-
-                              return Expanded(
-                                child: GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      _selectedBarIndex = index;
-                                    });
-                                  },
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      // Hover/Selection Details Value Tooltip
-                                      if (isSelected)
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
-                                          margin: const EdgeInsets.only(bottom: 4.0),
-                                          decoration: BoxDecoration(
-                                            color: Colors.black,
-                                            borderRadius: BorderRadius.circular(2.0),
-                                          ),
-                                          child: Text(
-                                            "₹${(sales / 1000).toStringAsFixed(0)}k",
-                                            style: AppTheme.labelBold.copyWith(
-                                              fontSize: 9.0,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ),
-                                      // The actual bar
-                                      AnimatedContainer(
-                                        duration: const Duration(milliseconds: 200),
-                                        width: 24.0,
-                                        height: barHeight,
-                                        decoration: BoxDecoration(
-                                          color: isSelected ? Colors.black : AppTheme.surfaceContainerHighest,
-                                          borderRadius: const BorderRadius.only(
-                                            topLeft: Radius.circular(AppTheme.radiusSm),
-                                            topRight: Radius.circular(AppTheme.radiusSm),
-                                          ),
-                                          border: Border.all(
-                                            color: Colors.black,
-                                            width: isSelected ? 2.0 : 1.5,
-                                          ),
-                                          boxShadow: isSelected
-                                              ? const [
-                                                  BoxShadow(
-                                                    color: AppTheme.primary,
-                                                    offset: Offset(2, 0),
-                                                    blurRadius: 0,
-                                                  ),
-                                                ]
-                                              : null,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8.0),
-                                      Text(
-                                        month,
-                                        style: AppTheme.labelBold.copyWith(
-                                          fontSize: 10.0,
-                                          color: isSelected ? Colors.black : AppTheme.outline,
-                                          fontWeight: isSelected ? FontWeight.w900 : FontWeight.normal,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }),
-                          ),
                         ),
                       ],
                     ),

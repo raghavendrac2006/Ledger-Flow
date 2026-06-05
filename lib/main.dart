@@ -4,18 +4,18 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'core/app_theme.dart';
 import 'core/app_state.dart';
+import 'core/ai_analyst_controller.dart';
 import 'core/repositories/firestore/firestore_customer_repository.dart';
 import 'core/repositories/firestore/firestore_delivery_log_repository.dart';
 import 'core/repositories/firestore/firestore_expense_repository.dart';
 import 'core/repositories/firestore/firestore_rice_bag_repository.dart';
 import 'core/repositories/firestore/firestore_settings_repository.dart';
+import 'core/repositories/firestore/firestore_owner_finance_repository.dart';
 import 'screens/home_shell.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
@@ -33,6 +33,16 @@ class MyApp extends StatelessWidget {
             expenseRepository: FirestoreExpenseRepository(),
             riceBagRepository: FirestoreRiceBagRepository(),
             settingsRepository: FirestoreSettingsRepository(),
+            ownerFinanceRepository: FirestoreOwnerFinanceRepository(),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => AIAnalystController(
+            customerRepository: FirestoreCustomerRepository(),
+            deliveryLogRepository: FirestoreDeliveryLogRepository(),
+            expenseRepository: FirestoreExpenseRepository(),
+            riceBagRepository: FirestoreRiceBagRepository(),
+            ownerFinanceRepository: FirestoreOwnerFinanceRepository(),
           ),
         ),
       ],
@@ -45,4 +55,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
