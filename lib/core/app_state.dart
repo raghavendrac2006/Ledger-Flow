@@ -474,6 +474,13 @@ class LedgerState extends ChangeNotifier {
   }) async {
     final cleanName = toSentenceCase(name);
     if (cleanName.isNotEmpty) {
+      // Prevent overwriting outstanding balances for existing customers due to input race conditions
+      final bool alreadyExists = _customers.any((c) => c.name.toLowerCase() == cleanName.toLowerCase());
+      if (alreadyExists) {
+        debugPrint("addCustomer: Customer '$cleanName' already exists. Skipping write to prevent overwriting balance.");
+        return;
+      }
+
       await customerRepository.addCustomer(Customer(
         name: cleanName,
         type: type,

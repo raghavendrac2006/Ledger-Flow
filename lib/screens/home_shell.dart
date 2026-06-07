@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../core/app_theme.dart';
 import '../core/app_state.dart';
+import '../core/services/update_service.dart';
 import 'setup_screen.dart';
 import 'sales_entry_screen.dart';
 import 'expenses_screen.dart';
@@ -33,6 +36,20 @@ class _HomeShellState extends State<HomeShell> {
       const OwnerFinanceScreen(),
       const AIAnalystScreen(),
     ];
+    _requestNotificationPermission();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      UpdateService.checkForUpdate(context);
+    });
+  }
+
+  void _requestNotificationPermission() async {
+    if (kIsWeb) return;
+    final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+        FlutterLocalNotificationsPlugin();
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
   }
 
   void _onTabTapped(int index) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../core/app_theme.dart';
 import '../core/app_state.dart';
 import '../widgets/bento_card.dart';
@@ -713,7 +714,7 @@ class _SetupScreenState extends State<SetupScreen> {
     );
   }
 
-  void _handleStartRounds(LedgerState state) {
+  void _handleStartRounds(LedgerState state) async {
     final usageText = _riceUsageController.text.trim();
     final double usageKg = double.tryParse(usageText) ?? 0.0;
 
@@ -784,7 +785,7 @@ class _SetupScreenState extends State<SetupScreen> {
                 child: TextButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    _proceedWithStartRounds(state, usageKg);
+                    _handleStartRoundsWithAudit(state, usageKg);
                   },
                   child: Text("PROCEED ANYWAY", style: AppTheme.labelBold.copyWith(color: Colors.white)),
                 ),
@@ -794,6 +795,78 @@ class _SetupScreenState extends State<SetupScreen> {
         );
         return;
       }
+    }
+
+    _handleStartRoundsWithAudit(state, usageKg);
+  }
+
+  void _handleStartRoundsWithAudit(LedgerState state, double usageKg) async {
+    setState(() {
+      _isStarting = true;
+    });
+
+    try {
+      final auditDate = state.deliveryDate.subtract(const Duration(days: 1));
+      final auditDateStr = DateFormat('yyyy-MM-dd').format(auditDate);
+
+      final auditDoc = await FirebaseFirestore.instance
+          .collection('audit_results')
+          .doc(auditDateStr)
+          .get();
+
+      if (auditDoc.exists && auditDoc.data() != null) {
+        final result = auditDoc.data()!['result'] as String? ?? '';
+        if (result.startsWith("ALERT:")) {
+          setState(() {
+            _isStarting = false;
+          });
+          if (mounted) {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                  side: const BorderSide(color: AppTheme.outlineVariant, width: 1.0),
+                ),
+                backgroundColor: Colors.white,
+                title: Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded, color: AppTheme.error),
+                    const SizedBox(width: 8.0),
+                    Text("AUDIT ALERT", style: AppTheme.headlineMd.copyWith(fontSize: 18.0)),
+                  ],
+                ),
+                content: Text(
+                  "Yesterday's financial ledger has audit warnings:\n\n${result.replaceFirst("ALERT:", "").trim()}\n\nDo you want to proceed with starting today's rounds?",
+                  style: const TextStyle(fontSize: 14.0, color: AppTheme.onSurface),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text("CANCEL", style: AppTheme.labelBold.copyWith(color: AppTheme.outline)),
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary,
+                      borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                    ),
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _proceedWithStartRounds(state, usageKg);
+                      },
+                      child: Text("PROCEED", style: AppTheme.labelBold.copyWith(color: Colors.white)),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint("Error checking audit results: $e");
     }
 
     _proceedWithStartRounds(state, usageKg);
