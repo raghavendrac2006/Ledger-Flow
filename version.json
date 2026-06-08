@@ -1,6 +1,6 @@
 {
-    "latest_version": "1.0.1",
-    "build_number": 2,
-    "apk_url": "https://github.com/raghavendrac2006/Delivery-pro/releases/download/v1.0.1/app-release.apk",
-    "release_notes": "Added transaction rollbacks and automated daily background auditing."
+    "latest_version": "1.0.2",
+    "build_number": 3,
+    "apk_url": "https://github.com/raghavendrac2006/Delivery-pro/releases/download/v1.0.2/app-release.apk",
+    "release_notes": "Added 3-day transaction log retention and dynamic revenue stats comparisons."
 }

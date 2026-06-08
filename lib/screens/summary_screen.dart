@@ -57,17 +57,9 @@ class _SummaryScreenState extends State<SummaryScreen> {
     if (!_sheetsUrlFocusNode.hasFocus && _sheetsUrlController.text != state.googleSheetsUrl) {
       _sheetsUrlController.text = state.googleSheetsUrl;
     }
-    final todaySales = state.todaySales;
-    final totalDeliveries = state.todayDeliveriesCount;
-
-    // Calculate Yesterday's Sales
-    final yesterday = DateTime.now().subtract(const Duration(days: 1));
-    final yesterdaySales = state.deliveryLogs.where((l) {
-      return !l.isPayment &&
-             l.dateTime.day == yesterday.day &&
-             l.dateTime.month == yesterday.month &&
-             l.dateTime.year == yesterday.year;
-    }).fold(0.0, (total, log) => total + log.amount);
+    final todaySales = state.latestActiveRevenue;
+    final totalDeliveries = state.latestActiveDeliveriesCount;
+    final yesterdaySales = state.previousActiveRevenue;
 
     double percentageChange = 0.0;
     if (yesterdaySales > 0.0) {
@@ -272,7 +264,11 @@ class _SummaryScreenState extends State<SummaryScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              "TODAY'S REVENUE",
+                              state.latestActiveDateLabel == "Today"
+                                  ? "TODAY'S REVENUE"
+                                  : state.latestActiveDateLabel == "Yesterday"
+                                      ? "YESTERDAY'S REVENUE"
+                                      : "${state.latestActiveDateLabel.toUpperCase()} REVENUE",
                               style: AppTheme.labelBold.copyWith(
                                 fontSize: 11.0,
                                 color: AppTheme.onSurfaceVariant,
@@ -287,7 +283,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                                 border: Border.all(color: Colors.black, width: 1.0),
                               ),
                               child: Text(
-                                "$formattedPctChange VS YESTERDAY",
+                                "$formattedPctChange VS ${state.previousActiveDateLabel.toUpperCase()}",
                                 style: AppTheme.labelBold.copyWith(
                                   color: Colors.black,
                                   fontSize: 8.5,
@@ -343,7 +339,11 @@ class _SummaryScreenState extends State<SummaryScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    "YESTERDAY'S REVENUE",
+                                    state.previousActiveDateLabel == "Today"
+                                        ? "TODAY'S REVENUE"
+                                        : state.previousActiveDateLabel == "Yesterday"
+                                            ? "YESTERDAY'S REVENUE"
+                                            : "${state.previousActiveDateLabel.toUpperCase()} REVENUE",
                                     style: AppTheme.labelSm.copyWith(
                                       fontSize: 10.0,
                                       fontWeight: FontWeight.bold,
