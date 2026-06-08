@@ -389,6 +389,8 @@ class _ClientListScreenState extends State<ClientListScreen> {
                                     title: Text(
                                       customer.name,
                                       style: AppTheme.labelBold.copyWith(fontSize: 15.0),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                     trailing: Row(
                                       mainAxisSize: MainAxisSize.min,
@@ -734,6 +736,8 @@ class _OutstandingCollectionsSheetState extends State<OutstandingCollectionsShee
                                 title: Text(
                                   customer.name,
                                   style: AppTheme.labelBold.copyWith(fontSize: 15.0),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                                 subtitle: Text(
                                   pendingText,
@@ -747,7 +751,7 @@ class _OutstandingCollectionsSheetState extends State<OutstandingCollectionsShee
                                       crossAxisAlignment: CrossAxisAlignment.end,
                                       children: [
                                         Text(
-                                          "Pending: ₹${customer.outstanding.toStringAsFixed(0)}",
+                                          "₹${customer.outstanding.toStringAsFixed(0)}",
                                           style: AppTheme.dataTabular.copyWith(
                                             fontWeight: FontWeight.bold,
                                             fontSize: 14.0,

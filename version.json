@@ -1,6 +1,6 @@
 {
-    "latest_version": "1.0.4",
-    "build_number": 5,
-    "apk_url": "https://github.com/raghavendrac2006/Delivery-pro/releases/download/v1.0.4/app-release.apk",
-    "release_notes": "Added Owner Savings Ledger with segmented control layout, smart withdrawal note parsing, and repaired Muslim customer document outstanding balance."
+    "latest_version": "1.0.5",
+    "build_number": 6,
+    "apk_url": "https://github.com/raghavendrac2006/Delivery-pro/releases/download/v1.0.5/app-release.apk",
+    "release_notes": "Fixed client list wrapping layout bug on smaller screens and high font scaling settings."
 }
