@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-import 'package:cloud_firestore/cloud_firestore.dart' hide Transaction;
 
 import 'models/customer.dart';
 import 'models/transaction.dart';
@@ -82,8 +81,6 @@ class LedgerState extends ChangeNotifier {
   StreamSubscription? _ownerRepaymentsSub;
 
   final Map<String, double> _historicalMonthlySales = {};
-
-  bool _isPurging = false;
 
   OwnerLoanConfig? _activeLoan;
   OwnerLoanConfig? get activeLoan => _activeLoan;
@@ -175,9 +172,6 @@ class LedgerState extends ChangeNotifier {
         // Self-healing serial number
         _serialNumber = maxSerial + 1;
         _onStreamLoaded('logs');
-        if (!_isPurging) {
-          _enforceThreeDayRetention();
-        }
         notifyListeners();
       },
       onError: (error) {
@@ -410,80 +404,21 @@ class LedgerState extends ChangeNotifier {
     }).length;
   }
 
-  Future<void> _enforceThreeDayRetention() async {
-    // 1. Group active logs by date string (yyyy-MM-dd)
-    final Map<String, List<DeliveryLog>> logsByDate = {};
+  List<String> get lastThreeActiveDates {
+    final Set<String> dates = {};
     for (var log in _deliveryLogs) {
-      final dateKey = DateFormat('yyyy-MM-dd').format(log.dateTime);
-      if (!logsByDate.containsKey(dateKey)) {
-        logsByDate[dateKey] = [];
-      }
-      logsByDate[dateKey]!.add(log);
+      dates.add(DateFormat('yyyy-MM-dd').format(log.dateTime));
     }
+    final sorted = dates.toList()..sort((a, b) => b.compareTo(a));
+    return sorted.length > 3 ? sorted.sublist(0, 3) : sorted;
+  }
 
-    // 2. Sort the unique dates descending
-    final sortedDates = logsByDate.keys.toList()..sort((a, b) => b.compareTo(a));
-
-    // 3. If there are more than 3 unique dates, identify the dates to delete
-    if (sortedDates.length > 3) {
-      _isPurging = true;
-      final datesToDelete = sortedDates.sublist(3);
-      final List<DeliveryLog> logsToDelete = [];
-      
-      for (var date in datesToDelete) {
-        logsToDelete.addAll(logsByDate[date]!);
-      }
-
-      // Group logs to delete by month to update monthlyStats
-      final Map<String, List<DeliveryLog>> groupedByMonth = {};
-      for (var log in logsToDelete) {
-        final dt = log.dateTime;
-        final monthKey = "${dt.year}-${dt.month.toString().padLeft(2, '0')}";
-        if (!groupedByMonth.containsKey(monthKey)) {
-          groupedByMonth[monthKey] = [];
-        }
-        groupedByMonth[monthKey]!.add(log);
-      }
-
-      // Update monthly stats and delete logs in Firestore
-      try {
-        final FirebaseFirestore firestore = FirebaseFirestore.instance;
-        for (var entry in groupedByMonth.entries) {
-          final monthKey = entry.key;
-          final logs = entry.value;
-
-          double monthlySales = 0.0;
-          for (var log in logs) {
-            if (!log.isPayment) {
-              monthlySales += log.amount;
-            }
-          }
-
-          // Increment monthlyStats for the deleted logs
-          if (monthlySales > 0 || logs.isNotEmpty) {
-            await firestore.collection('monthlyStats').doc(monthKey).set({
-              'sales': FieldValue.increment(monthlySales),
-              'deliveriesCount': FieldValue.increment(logs.where((l) => !l.isPayment).length),
-            }, SetOptions(merge: true));
-          }
-
-          // Delete from deliveryLogs collection in batches
-          final batch = firestore.batch();
-          for (var log in logs) {
-            if (log.logId != null) {
-              final docRef = firestore.collection('deliveryLogs').doc(log.logId);
-              batch.delete(docRef);
-            }
-          }
-          await batch.commit();
-        }
-        debugPrint("3-Day Retention: Purged logs for dates: $datesToDelete");
-      } catch (e) {
-        debugPrint("Error in 3-Day Retention purge: $e");
-      } finally {
-        _isPurging = false;
-      }
-    }
+  List<DeliveryLog> get filteredDeliveryLogsForSummary {
+    final activeDates = lastThreeActiveDates;
+    return _deliveryLogs.where((log) {
+      final dateStr = DateFormat('yyyy-MM-dd').format(log.dateTime);
+      return activeDates.contains(dateStr);
+    }).toList();
   }
 
   // Helper method to assign proper category icons

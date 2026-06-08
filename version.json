@@ -1,6 +1,6 @@
 {
-    "latest_version": "1.0.2",
-    "build_number": 3,
-    "apk_url": "https://github.com/raghavendrac2006/Delivery-pro/releases/download/v1.0.2/app-release.apk",
-    "release_notes": "Added 3-day transaction log retention and dynamic revenue stats comparisons."
+    "latest_version": "1.0.3",
+    "build_number": 4,
+    "apk_url": "https://github.com/raghavendrac2006/Delivery-pro/releases/download/v1.0.3/app-release.apk",
+    "release_notes": "Fixed active bag profit and customer balances discrepancies by transitioning 3-day transaction loop limit to a safe UI-only filter."
 }

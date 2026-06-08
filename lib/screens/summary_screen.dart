@@ -385,7 +385,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                     padding: const EdgeInsets.all(0),
                     backgroundColor: AppTheme.surface,
                     shadowStyle: ShadowStyle.light,
-                    child: state.deliveryLogs.isEmpty
+                    child: state.filteredDeliveryLogsForSummary.isEmpty
                         ? const EmptyStateWidget(
                             title: "No Deliveries Recorded",
                             message: "No active route deliveries recorded yet. Fill out details in Sales tab.",
@@ -394,11 +394,11 @@ class _SummaryScreenState extends State<SummaryScreen> {
                         : ListView.separated(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
-                            itemCount: state.deliveryLogs.length,
+                            itemCount: state.filteredDeliveryLogsForSummary.length,
                             separatorBuilder: (context, i) =>
                                 const Divider(height: 1, color: AppTheme.outlineVariant),
                             itemBuilder: (context, index) {
-                              final log = state.deliveryLogs[index];
+                              final log = state.filteredDeliveryLogsForSummary[index];
                               return AnimatedListItem(
                                 index: index,
                                 child: ListTile(
