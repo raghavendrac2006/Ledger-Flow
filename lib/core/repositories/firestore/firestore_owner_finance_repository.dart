@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../models/owner_finance_model.dart';
-import '../owner_finance_repository.dart';
+import 'package:stitch_daily_delivery_ledger/core/models/owner_finance_model.dart';
+import 'package:stitch_daily_delivery_ledger/core/repositories/owner_finance_repository.dart';
 
 class FirestoreOwnerFinanceRepository implements OwnerFinanceRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -111,4 +111,26 @@ class FirestoreOwnerFinanceRepository implements OwnerFinanceRepository {
     list.sort((a, b) => b.repaymentDate.compareTo(a.repaymentDate));
     return list;
   }
+
+  @override
+  Stream<List<SavingsLog>> getSavingsLogsStream() {
+    return _firestore
+        .collection('savings_logs')
+        .snapshots()
+        .map((snapshot) {
+      final list = snapshot.docs.map((doc) => SavingsLog.fromJson(doc.data())).toList();
+      // Sort descending by date
+      list.sort((a, b) => b.date.compareTo(a.date));
+      return list;
+    });
+  }
+
+  @override
+  Future<void> addSavingsLog(SavingsLog log) async {
+    await _firestore
+        .collection('savings_logs')
+        .doc(log.id)
+        .set(log.toJson());
+  }
 }
+

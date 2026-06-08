@@ -19,18 +19,28 @@ class OwnerFinanceScreen extends StatefulWidget {
 class _OwnerFinanceScreenState extends State<OwnerFinanceScreen> {
   final TextEditingController _notesController = TextEditingController();
   final TextEditingController _repaymentController = TextEditingController();
+  final TextEditingController _depositController = TextEditingController();
+  final TextEditingController _withdrawalNoteController = TextEditingController();
 
+  bool _showSavings = false;
   bool _isNotesInitialized = false;
   bool _isSavingNotes = false;
   bool _isAddingRepayment = false;
+  bool _isAddingDeposit = false;
+  bool _isAddingWithdrawal = false;
   String? _repaymentError;
+  String? _depositError;
+  String? _withdrawalError;
 
   @override
   void dispose() {
     _notesController.dispose();
     _repaymentController.dispose();
+    _depositController.dispose();
+    _withdrawalNoteController.dispose();
     super.dispose();
   }
+
 
   void _saveNotes(LedgerState state) async {
     final notes = _notesController.text;
@@ -96,6 +106,136 @@ class _OwnerFinanceScreenState extends State<OwnerFinanceScreen> {
       }
     }
   }
+
+  void _addSavingsDeposit(LedgerState state) async {
+    final amountText = _depositController.text.trim();
+    if (amountText.isEmpty) {
+      setState(() {
+        _depositError = "Amount cannot be empty";
+      });
+      return;
+    }
+
+    final amount = double.tryParse(amountText);
+    if (amount == null || amount <= 0) {
+      setState(() {
+        _depositError = "Enter a valid positive amount";
+      });
+      return;
+    }
+
+    setState(() {
+      _depositError = null;
+      _isAddingDeposit = true;
+    });
+
+    try {
+      await state.addSavingsDeposit(amount);
+      _depositController.clear();
+      if (mounted) {
+        CustomToast.showSuccess(context, "Savings Added Successfully");
+      }
+    } catch (e) {
+      if (mounted) {
+        CustomToast.showError(context, "Failed to Record Savings");
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAddingDeposit = false;
+        });
+      }
+    }
+  }
+
+  void _addSavingsWithdrawal(LedgerState state) async {
+    final noteText = _withdrawalNoteController.text.trim();
+    if (noteText.isEmpty) {
+      setState(() {
+        _withdrawalError = "Note / Transaction cannot be empty";
+      });
+      return;
+    }
+
+    final parsedAmount = parseAmountFromText(noteText);
+    if (parsedAmount == null) {
+      setState(() {
+        _withdrawalError = "Format error. Use: item = amount (e.g. machine upgrade = 200)";
+      });
+      return;
+    }
+
+    if (parsedAmount <= 0) {
+      setState(() {
+        _withdrawalError = "Enter a valid positive amount in note";
+      });
+      return;
+    }
+
+    if (parsedAmount > state.totalSavings) {
+      setState(() {
+        _withdrawalError = "Insufficient savings (Balance: ₹${state.totalSavings.toStringAsFixed(0)})";
+      });
+      return;
+    }
+
+    setState(() {
+      _withdrawalError = null;
+      _isAddingWithdrawal = true;
+    });
+
+    try {
+      await state.addSavingsWithdrawal(parsedAmount, noteText);
+      _withdrawalNoteController.clear();
+      if (mounted) {
+        CustomToast.showSuccess(context, "Deducted ₹${parsedAmount.toStringAsFixed(0)} from Savings");
+      }
+    } catch (e) {
+      if (mounted) {
+        CustomToast.showError(context, "Failed to Record Usage");
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAddingWithdrawal = false;
+        });
+      }
+    }
+  }
+
+  double? parseAmountFromText(String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return null;
+    
+    // Try matching '='
+    if (trimmed.contains('=')) {
+      final parts = trimmed.split('=');
+      if (parts.length >= 2) {
+        final amt = double.tryParse(parts[1].trim());
+        if (amt != null) return amt;
+      }
+    }
+    
+    // Try matching ':'
+    if (trimmed.contains(':')) {
+      final parts = trimmed.split(':');
+      if (parts.length >= 2) {
+        final amt = double.tryParse(parts[1].trim());
+        if (amt != null) return amt;
+      }
+    }
+    
+    // Try matching space-separated number at the end
+    final parts = trimmed.split(RegExp(r'\s+'));
+    if (parts.isNotEmpty) {
+      final lastPart = parts.last;
+      final amt = double.tryParse(lastPart);
+      if (amt != null) return amt;
+    }
+    
+    return null;
+  }
+
 
   void _showEditBorrowedDialog(LedgerState state, double currentTotal) {
     final controller = TextEditingController();
@@ -673,6 +813,361 @@ class _OwnerFinanceScreenState extends State<OwnerFinanceScreen> {
       );
     }
 
+    Widget buildSegmentedControl() {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 24.0),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          border: Border.all(color: AppTheme.outlineVariant, width: 1.0),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _showSavings = false;
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12.0),
+                  decoration: BoxDecoration(
+                    color: !_showSavings ? AppTheme.primary : Colors.transparent,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusMd - 1),
+                  ),
+                  child: Center(
+                    child: Text(
+                      "LOAN LEDGER",
+                      style: AppTheme.labelBold.copyWith(
+                        color: !_showSavings ? Colors.white : AppTheme.onSurfaceVariant,
+                        fontSize: 13.0,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _showSavings = true;
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12.0),
+                  decoration: BoxDecoration(
+                    color: _showSavings ? AppTheme.primary : Colors.transparent,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusMd - 1),
+                  ),
+                  child: Center(
+                    child: Text(
+                      "SAVINGS LEDGER",
+                      style: AppTheme.labelBold.copyWith(
+                        color: _showSavings ? Colors.white : AppTheme.onSurfaceVariant,
+                        fontSize: 13.0,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget buildSavingsMetrics() {
+      final formattedSavings = currencyFormat.format(state.totalSavings);
+      return BentoCard(
+        padding: const EdgeInsets.all(24.0),
+        backgroundColor: AppTheme.surface,
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12.0),
+              decoration: const BoxDecoration(
+                color: AppTheme.successContainer,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.savings_outlined,
+                color: AppTheme.success,
+                size: 28.0,
+              ),
+            ),
+            const SizedBox(width: 20.0),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "TOTAL SAVINGS BALANCE",
+                    style: AppTheme.labelSm.copyWith(
+                      color: AppTheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                  const SizedBox(height: 6.0),
+                  Text(
+                    formattedSavings,
+                    style: AppTheme.headlineLg.copyWith(
+                      color: AppTheme.success,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 28.0,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget buildSavingsDepositForm() {
+      return BentoCard(
+        padding: const EdgeInsets.all(16.0),
+        backgroundColor: AppTheme.surface,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              "DEPOSIT TO SAVINGS",
+              style: AppTheme.labelBold.copyWith(
+                fontSize: 14.0,
+                color: AppTheme.primary,
+              ),
+            ),
+            const SizedBox(height: 16.0),
+            TextField(
+              controller: _depositController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              style: AppTheme.bodyMd,
+              decoration: InputDecoration(
+                labelText: "Deposit Amount (₹)",
+                labelStyle: AppTheme.labelSm,
+                hintText: "e.g., 400",
+                errorText: _depositError,
+                filled: true,
+                fillColor: AppTheme.background,
+                contentPadding: const EdgeInsets.all(16.0),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                  borderSide: const BorderSide(color: AppTheme.outlineVariant, width: 1.0),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                  borderSide: const BorderSide(color: AppTheme.outlineVariant, width: 1.0),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                  borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+                ),
+              ),
+              onChanged: (_) {
+                if (_depositError != null) {
+                  setState(() {
+                    _depositError = null;
+                  });
+                }
+              },
+            ),
+            const SizedBox(height: 16.0),
+            ElevatedButton(
+              onPressed: _isAddingDeposit ? null : () => _addSavingsDeposit(state),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.success,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                ),
+              ),
+              child: _isAddingDeposit
+                  ? const SizedBox(
+                      width: 20.0,
+                      height: 20.0,
+                      child: CircularProgressIndicator(strokeWidth: 2.0, color: Colors.white),
+                    )
+                  : Text(
+                      "DEPOSIT MONEY",
+                      style: AppTheme.labelBold.copyWith(color: Colors.white, letterSpacing: 1.2),
+                    ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget buildSavingsWithdrawalForm() {
+      return BentoCard(
+        padding: const EdgeInsets.all(16.0),
+        backgroundColor: AppTheme.surface,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              "USE SAVINGS (WITHDRAWAL)",
+              style: AppTheme.labelBold.copyWith(
+                fontSize: 14.0,
+                color: AppTheme.primary,
+              ),
+            ),
+            const SizedBox(height: 16.0),
+            TextField(
+              controller: _withdrawalNoteController,
+              keyboardType: TextInputType.text,
+              style: AppTheme.bodyMd,
+              decoration: InputDecoration(
+                labelText: "Used Money & Note",
+                labelStyle: AppTheme.labelSm,
+                hintText: "e.g., machine upgrade = 200",
+                errorText: _withdrawalError,
+                filled: true,
+                fillColor: AppTheme.background,
+                contentPadding: const EdgeInsets.all(16.0),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                  borderSide: const BorderSide(color: AppTheme.outlineVariant, width: 1.0),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                  borderSide: const BorderSide(color: AppTheme.outlineVariant, width: 1.0),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                  borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+                ),
+              ),
+              onChanged: (_) {
+                if (_withdrawalError != null) {
+                  setState(() {
+                    _withdrawalError = null;
+                  });
+                }
+              },
+            ),
+            const SizedBox(height: 16.0),
+            ElevatedButton(
+              onPressed: _isAddingWithdrawal ? null : () => _addSavingsWithdrawal(state),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.error,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                ),
+              ),
+              child: _isAddingWithdrawal
+                  ? const SizedBox(
+                      width: 20.0,
+                      height: 20.0,
+                      child: CircularProgressIndicator(strokeWidth: 2.0, color: Colors.white),
+                    )
+                  : Text(
+                      "RECORD TRANSACTION",
+                      style: AppTheme.labelBold.copyWith(color: Colors.white, letterSpacing: 1.2),
+                    ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget buildSavingsHistory() {
+      final logs = state.savingsLogs;
+
+      return BentoCard(
+        padding: const EdgeInsets.all(16.0),
+        backgroundColor: AppTheme.surface,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              "SAVINGS TRANSACTION HISTORY",
+              style: AppTheme.labelBold.copyWith(
+                fontSize: 14.0,
+                color: AppTheme.primary,
+              ),
+            ),
+            const SizedBox(height: 16.0),
+            if (logs.isEmpty)
+              const EmptyStateWidget(
+                title: "No Transactions Found",
+                message: "Logs of savings deposits and withdrawals will appear here.",
+                icon: Icons.history,
+              )
+            else
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: logs.length,
+                separatorBuilder: (context, index) => const Divider(height: 1, color: AppTheme.outlineVariant),
+                itemBuilder: (context, index) {
+                  final log = logs[index];
+                  final formattedDate = DateFormat('dd MMM yyyy, hh:mm a').format(log.date);
+                  final isDeposit = log.type == 'deposit';
+                  final displayAmt = currencyFormat.format(log.amount.abs());
+
+                  return AnimatedListItem(
+                    index: index,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12.0),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 36.0,
+                            height: 36.0,
+                            decoration: BoxDecoration(
+                              color: isDeposit ? AppTheme.successContainer : AppTheme.errorContainer,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              isDeposit ? Icons.arrow_downward : Icons.arrow_upward,
+                              color: isDeposit ? AppTheme.success : AppTheme.error,
+                              size: 18.0,
+                            ),
+                          ),
+                          const SizedBox(width: 16.0),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  log.notes,
+                                  style: AppTheme.labelBold.copyWith(fontSize: 14.0),
+                                ),
+                                const SizedBox(height: 4.0),
+                                Text(
+                                  formattedDate,
+                                  style: AppTheme.labelSm.copyWith(fontSize: 11.0),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            (isDeposit ? "+ " : "- ") + displayAmt,
+                            style: AppTheme.dataTabular.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: isDeposit ? AppTheme.success : AppTheme.error,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
@@ -681,41 +1176,81 @@ class _OwnerFinanceScreenState extends State<OwnerFinanceScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                "OWNER CAPITAL LOAN LEDGER",
-                style: AppTheme.labelBold.copyWith(
-                  fontSize: 11.0,
-                  color: AppTheme.onSurfaceVariant,
-                  letterSpacing: 1.5,
+              buildSegmentedControl(),
+              if (!_showSavings) ...[
+                Text(
+                  "OWNER CAPITAL LOAN LEDGER",
+                  style: AppTheme.labelBold.copyWith(
+                    fontSize: 11.0,
+                    color: AppTheme.onSurfaceVariant,
+                    letterSpacing: 1.5,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16.0),
-              buildMetrics(),
-              const SizedBox(height: 24.0),
-              if (isDesktop)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: buildNotesSection()),
-                    const SizedBox(width: 24.0),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          buildRepaymentForm(),
-                          const SizedBox(height: 24.0),
-                          buildRepaymentHistory(),
-                        ],
+                const SizedBox(height: 16.0),
+                buildMetrics(),
+                const SizedBox(height: 24.0),
+                if (isDesktop)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: buildNotesSection()),
+                      const SizedBox(width: 24.0),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            buildRepaymentForm(),
+                            const SizedBox(height: 24.0),
+                            buildRepaymentHistory(),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                )
-              else ...[
-                buildNotesSection(),
+                    ],
+                  )
+                else ...[
+                  buildNotesSection(),
+                  const SizedBox(height: 24.0),
+                  buildRepaymentForm(),
+                  const SizedBox(height: 24.0),
+                  buildRepaymentHistory(),
+                ],
+              ] else ...[
+                Text(
+                  "OWNER SAVINGS LEDGER",
+                  style: AppTheme.labelBold.copyWith(
+                    fontSize: 11.0,
+                    color: AppTheme.onSurfaceVariant,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 16.0),
+                buildSavingsMetrics(),
                 const SizedBox(height: 24.0),
-                buildRepaymentForm(),
-                const SizedBox(height: 24.0),
-                buildRepaymentHistory(),
+                if (isDesktop)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: buildSavingsDepositForm()),
+                      const SizedBox(width: 24.0),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            buildSavingsWithdrawalForm(),
+                            const SizedBox(height: 24.0),
+                            buildSavingsHistory(),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                else ...[
+                  buildSavingsDepositForm(),
+                  const SizedBox(height: 24.0),
+                  buildSavingsWithdrawalForm(),
+                  const SizedBox(height: 24.0),
+                  buildSavingsHistory(),
+                ],
               ],
             ],
           ),

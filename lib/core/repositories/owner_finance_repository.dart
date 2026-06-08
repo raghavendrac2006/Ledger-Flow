@@ -1,4 +1,4 @@
-import '../models/owner_finance_model.dart';
+import 'package:stitch_daily_delivery_ledger/core/models/owner_finance_model.dart';
 
 abstract class OwnerFinanceRepository {
   Stream<OwnerLoanConfig?> getActiveLoanStream();
@@ -10,4 +10,8 @@ abstract class OwnerFinanceRepository {
 
   Future<OwnerLoanConfig?> getActiveLoan();
   Future<List<RepaymentLog>> getRepayments(String loanId);
+
+  Stream<List<SavingsLog>> getSavingsLogsStream();
+  Future<void> addSavingsLog(SavingsLog log);
 }
+

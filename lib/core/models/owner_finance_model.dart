@@ -89,3 +89,42 @@ class RepaymentLog {
     };
   }
 }
+
+class SavingsLog {
+  final String id;
+  final double amount;
+  final String type;
+  final String notes;
+  final DateTime date;
+
+  SavingsLog({
+    required this.id,
+    required this.amount,
+    required this.type,
+    required this.notes,
+    required this.date,
+  });
+
+  factory SavingsLog.fromJson(Map<String, dynamic> json) {
+    return SavingsLog(
+      id: json['id'] as String? ?? '',
+      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
+      type: json['type'] as String? ?? 'deposit',
+      notes: json['notes'] as String? ?? '',
+      date: json['date'] != null
+          ? DateTime.parse(json['date'] as String)
+          : DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'amount': amount,
+      'type': type,
+      'notes': notes,
+      'date': date.toIso8601String(),
+    };
+  }
+}
+

@@ -17,8 +17,8 @@ import 'repositories/delivery_log_repository.dart';
 import 'repositories/expense_repository.dart';
 import 'repositories/rice_bag_repository.dart';
 import 'repositories/settings_repository.dart';
-import 'models/owner_finance_model.dart';
-import 'repositories/owner_finance_repository.dart';
+import 'package:stitch_daily_delivery_ledger/core/models/owner_finance_model.dart';
+import 'package:stitch_daily_delivery_ledger/core/repositories/owner_finance_repository.dart';
 
 String toSentenceCase(String text) {
   final trimmed = text.trim();
@@ -79,6 +79,7 @@ class LedgerState extends ChangeNotifier {
   StreamSubscription? _expenseSuggestionsSub;
   StreamSubscription? _ownerLoanSub;
   StreamSubscription? _ownerRepaymentsSub;
+  StreamSubscription? _savingsLogsSub;
 
   final Map<String, double> _historicalMonthlySales = {};
 
@@ -87,6 +88,13 @@ class LedgerState extends ChangeNotifier {
 
   final List<RepaymentLog> _repaymentLogs = [];
   List<RepaymentLog> get repaymentLogs => _repaymentLogs;
+
+  final List<SavingsLog> _savingsLogs = [];
+  List<SavingsLog> get savingsLogs => _savingsLogs;
+
+  double get totalSavings {
+    return _savingsLogs.fold(0.0, (sum, log) => sum + log.amount);
+  }
 
   void _initFirestore() {
     debugPrint("--- INITIALIZING REAL-TIME CLOUD FIRESTORE ---");
@@ -113,6 +121,17 @@ class LedgerState extends ChangeNotifier {
         },
         onError: (error) {
           debugPrint("Firestore owner loan stream error: $error");
+        }
+      );
+
+      _savingsLogsSub = ownerFinanceRepository.getSavingsLogsStream().listen(
+        (logs) {
+          _savingsLogs.clear();
+          _savingsLogs.addAll(logs);
+          notifyListeners();
+        },
+        onError: (error) {
+          debugPrint("Firestore savings logs stream error: $error");
         }
       );
     });
@@ -453,6 +472,7 @@ class LedgerState extends ChangeNotifier {
     _expenseSuggestionsSub?.cancel();
     _ownerLoanSub?.cancel();
     _ownerRepaymentsSub?.cancel();
+    _savingsLogsSub?.cancel();
     super.dispose();
   }
 
@@ -1214,6 +1234,7 @@ class LedgerState extends ChangeNotifier {
         "deliveryLogs": _deliveryLogs.map((log) => log.toJson()).toList(),
         "expenses": _expenses.map((exp) => exp.toJson()).toList(),
         "riceBags": _riceBags.map((bag) => bag.toJson()).toList(),
+        "savingsLogs": _savingsLogs.map((log) => log.toJson()).toList(),
       };
 
       final bodyData = json.encode(payload);
@@ -1472,6 +1493,32 @@ class LedgerState extends ChangeNotifier {
   Future<void> updateOwnerLoanTotalBorrowed(double total) async {
     if (_activeLoan != null) {
       await ownerFinanceRepository.updateTotalBorrowed(_activeLoan!.id, total);
+    }
+  }
+
+  Future<void> addSavingsDeposit(double amount) async {
+    if (amount > 0.0) {
+      final log = SavingsLog(
+        id: "SAV_${DateTime.now().millisecondsSinceEpoch}",
+        amount: amount,
+        type: 'deposit',
+        notes: 'Deposit to Savings',
+        date: DateTime.now(),
+      );
+      await ownerFinanceRepository.addSavingsLog(log);
+    }
+  }
+
+  Future<void> addSavingsWithdrawal(double amount, String notes) async {
+    if (amount > 0.0) {
+      final log = SavingsLog(
+        id: "SAV_${DateTime.now().millisecondsSinceEpoch}",
+        amount: -amount,
+        type: 'withdrawal',
+        notes: notes.trim().isEmpty ? 'Withdrawal from Savings' : notes.trim(),
+        date: DateTime.now(),
+      );
+      await ownerFinanceRepository.addSavingsLog(log);
     }
   }
 }
