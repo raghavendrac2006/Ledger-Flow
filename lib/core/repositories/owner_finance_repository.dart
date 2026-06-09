@@ -13,5 +13,8 @@ abstract class OwnerFinanceRepository {
 
   Stream<List<SavingsLog>> getSavingsLogsStream();
   Future<void> addSavingsLog(SavingsLog log);
+
+  Stream<SavingsRecommendation?> getPendingSavingsRecommendationStream(String date);
+  Future<void> updateSavingsRecommendationStatus(String date, String status, int? transferredAmount);
 }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -161,6 +162,83 @@ void callbackDispatcher() {
           .set({
         'date': yesterdayDateStr,
         'result': responseText,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      // --- CASH-FLOW CORE REPOSITORY AGGREGATION & ADVISOR LOOP ---
+      double actualCashInHand = 0.0;
+      double salesPaid = 0.0;
+      double repaymentsIncoming = 0.0;
+
+      for (var doc in logsSnapshot.docs) {
+        final data = doc.data();
+        final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+        final isPaid = data['isPaid'] ?? false;
+        final isPayment = data['isPayment'] ?? false;
+
+        if (!isPayment && isPaid) {
+          salesPaid += amount;
+        } else if (isPayment) {
+          repaymentsIncoming += amount;
+        }
+      }
+      actualCashInHand = salesPaid + repaymentsIncoming;
+
+      double actualExpenses = 0.0;
+      for (var doc in expensesSnapshot.docs) {
+        final data = doc.data();
+        final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+        actualExpenses += amount;
+      }
+
+      double netLiquidMargin = actualCashInHand - actualExpenses;
+
+      final savingsPrompt = Content.text(
+        "You are an on-the-ground cash flow analyst for a local distribution market. Analyze yesterday's true physical cash flow.\n\n"
+        "Yesterday's Financial Summary:\n"
+        "- Cash Received from Paid Sales: ₹$salesPaid\n"
+        "- Customer Repayments/Installments: ₹$repaymentsIncoming\n"
+        "- Total Cash-In-Hand: ₹$actualCashInHand\n"
+        "- Total Expenses: ₹$actualExpenses\n"
+        "- Net Liquid Margin (Surplus): ₹$netLiquidMargin\n\n"
+        "Rules:\n"
+        "1. If Net Liquid Margin is less than or equal to 0, return a recommended savings value of 0.\n"
+        "2. If positive, calculate a safe micro-savings recommendation between 10% to 20% of that physical cash surplus, rounded to the nearest 10 or 50 rupees.\n"
+        "3. You MUST return a clean, verified JSON structure matching exactly:\n"
+        "{\n"
+        "  \"suggested_savings\": <int>,\n"
+        "  \"conversational_reason\": \"<String brief summary in English describing the cash-in performance>\"\n"
+        "}\n\n"
+        "Do NOT return any markdown wrapping, code block tags, or extra text. Return ONLY the raw JSON string."
+      );
+
+      final savingsResponse = await model.generateContent([savingsPrompt]);
+      final savingsResponseText = savingsResponse.text?.trim() ?? "{\"suggested_savings\": 0, \"conversational_reason\": \"No response from advisor.\"}";
+
+      String cleanJsonText = savingsResponseText;
+      if (cleanJsonText.startsWith("```")) {
+        cleanJsonText = cleanJsonText.replaceAll(RegExp(r'^```[a-z]*\n|```$'), '');
+      }
+      cleanJsonText = cleanJsonText.trim();
+
+      int suggestedSavings = 0;
+      String conversationalReason = "Could not parse advisor response.";
+      try {
+        final parsed = jsonDecode(cleanJsonText) as Map<String, dynamic>;
+        suggestedSavings = (parsed['suggested_savings'] as num?)?.toInt() ?? 0;
+        conversationalReason = parsed['conversational_reason'] as String? ?? '';
+      } catch (e) {
+        debugPrint("Failed to parse savings advisor JSON: $e. Response was: $savingsResponseText");
+      }
+
+      await FirebaseFirestore.instance
+          .collection('savings_recommendations')
+          .doc(yesterdayDateStr)
+          .set({
+        'date': yesterdayDateStr,
+        'suggested_savings': suggestedSavings,
+        'conversational_reason': conversationalReason,
+        'status': 'pending',
         'timestamp': FieldValue.serverTimestamp(),
       });
 

@@ -128,3 +128,35 @@ class SavingsLog {
   }
 }
 
+class SavingsRecommendation {
+  final String date;
+  final int suggestedSavings;
+  final String conversationalReason;
+  final String status;
+
+  SavingsRecommendation({
+    required this.date,
+    required this.suggestedSavings,
+    required this.conversationalReason,
+    required this.status,
+  });
+
+  factory SavingsRecommendation.fromJson(Map<String, dynamic> json, String date) {
+    return SavingsRecommendation(
+      date: date,
+      suggestedSavings: (json['suggested_savings'] as num?)?.toInt() ?? 0,
+      conversationalReason: json['conversational_reason'] as String? ?? '',
+      status: json['status'] as String? ?? 'pending',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'suggested_savings': suggestedSavings,
+      'conversational_reason': conversationalReason,
+      'status': status,
+    };
+  }
+}
+
+

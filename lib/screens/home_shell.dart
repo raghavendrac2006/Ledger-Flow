@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../core/app_theme.dart';
 import '../core/app_state.dart';
+import '../core/models/models.dart';
 import '../core/services/update_service.dart';
 import 'setup_screen.dart';
 import 'sales_entry_screen.dart';
@@ -23,6 +25,7 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int _currentIndex = 0;
   late final List<Widget> _screens;
+  String? _shownRecommendationDate;
 
   @override
   void initState() {
@@ -69,6 +72,14 @@ class _HomeShellState extends State<HomeShell> {
   Widget build(BuildContext context) {
     final state = Provider.of<LedgerState>(context);
     final isDesktop = MediaQuery.of(context).size.width >= 768;
+
+    final pendingRec = state.pendingRecommendation;
+    if (pendingRec != null && _shownRecommendationDate != pendingRec.date) {
+      _shownRecommendationDate = pendingRec.date;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showSavingsRecommendationDialog(context, state, pendingRec);
+      });
+    }
 
     Widget buildDrawer() {
       return Drawer(
@@ -328,6 +339,267 @@ class _HomeShellState extends State<HomeShell> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showSavingsRecommendationDialog(
+    BuildContext context,
+    LedgerState state,
+    SavingsRecommendation rec,
+  ) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        bool isEditing = false;
+        final TextEditingController amountController =
+            TextEditingController(text: rec.suggestedSavings.toString());
+        String? inputError;
+
+        return Consumer<LedgerState>(
+          builder: (context, ledgerState, child) {
+            // Check if the recommendation is still pending. If not (processed by another device), dismiss dialog automatically.
+            final currentRec = ledgerState.pendingRecommendation;
+            if (currentRec == null || currentRec.date != rec.date) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                }
+              });
+              return const SizedBox.shrink();
+            }
+
+            return StatefulBuilder(
+              builder: (context, setState) {
+                return Dialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                    side: const BorderSide(color: AppTheme.outlineVariant, width: 1.5),
+                  ),
+                  backgroundColor: Colors.white,
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Title Header
+                        Row(
+                          children: [
+                            const Icon(Icons.savings_outlined, color: AppTheme.primary, size: 24.0),
+                            const SizedBox(width: 12.0),
+                            Text(
+                              "DAILY SAVINGS ADVISOR",
+                              style: AppTheme.headlineMd.copyWith(
+                                color: AppTheme.primary,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16.0),
+                        const Divider(color: AppTheme.outlineVariant, height: 1.0),
+                        const SizedBox(height: 20.0),
+
+                        if (!isEditing) ...[
+                          // Recommended amount display
+                          Center(
+                            child: Column(
+                              children: [
+                                Text(
+                                  "₹${rec.suggestedSavings}",
+                                  style: AppTheme.headlineXl.copyWith(
+                                    fontSize: 44.0,
+                                    color: AppTheme.primary,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const SizedBox(height: 8.0),
+                                Text(
+                                  "RECOMMENDED DAILY MICRO-SAVINGS",
+                                  style: AppTheme.labelSm.copyWith(
+                                    letterSpacing: 1.0,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20.0),
+                          // Explanation/Reasoning
+                          Container(
+                            padding: const EdgeInsets.all(16.0),
+                            decoration: BoxDecoration(
+                              color: AppTheme.surfaceContainerLow,
+                              border: Border.all(color: AppTheme.outlineVariant, width: 1.0),
+                              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                            ),
+                            child: Text(
+                              rec.conversationalReason,
+                              style: AppTheme.bodyMd.copyWith(
+                                fontStyle: FontStyle.italic,
+                                color: AppTheme.onSurfaceVariant,
+                                height: 1.4,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          const SizedBox(height: 28.0),
+
+                          // Button 1: Transfer Recommended Amount
+                          ElevatedButton(
+                            onPressed: () async {
+                              Navigator.pop(context);
+                              await state.executeSavingsTransfer(rec.date, rec.suggestedSavings);
+                              await HapticFeedback.lightImpact();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14.0),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              "TRANSFER ₹${rec.suggestedSavings}",
+                              style: AppTheme.labelBold.copyWith(color: Colors.white, letterSpacing: 1.0),
+                            ),
+                          ),
+                          const SizedBox(height: 12.0),
+
+                          // Button 2: Edit Amount
+                          OutlinedButton(
+                            onPressed: () {
+                              setState(() {
+                                isEditing = true;
+                              });
+                            },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppTheme.primary,
+                              side: const BorderSide(color: AppTheme.primary, width: 1.5),
+                              padding: const EdgeInsets.symmetric(vertical: 14.0),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                              ),
+                            ),
+                            child: Text(
+                              "EDIT AMOUNT",
+                              style: AppTheme.labelBold.copyWith(color: AppTheme.primary, letterSpacing: 1.0),
+                            ),
+                          ),
+                          const SizedBox(height: 12.0),
+
+                          // Button 3: Don't Transfer
+                          TextButton(
+                            onPressed: () async {
+                              Navigator.pop(context);
+                              await state.skipSavingsRecommendation(rec.date);
+                            },
+                            child: Text(
+                              "DON'T TRANSFER",
+                              style: AppTheme.labelBold.copyWith(
+                                color: AppTheme.error,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                          ),
+                        ] else ...[
+                          // Edit Mode view
+                          Text(
+                            "ENTER SAVINGS AMOUNT (₹)",
+                            style: AppTheme.labelSm.copyWith(
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                          const SizedBox(height: 8.0),
+                          TextField(
+                            controller: amountController,
+                            keyboardType: TextInputType.number,
+                            autofocus: true,
+                            decoration: InputDecoration(
+                              hintText: "e.g., ${rec.suggestedSavings}",
+                              errorText: inputError,
+                              prefixIcon: const Icon(Icons.currency_rupee, color: AppTheme.onSurface),
+                              filled: true,
+                              fillColor: AppTheme.surfaceContainerLow,
+                              enabledBorder: const UnderlineInputBorder(
+                                borderSide: BorderSide(color: AppTheme.outlineVariant, width: 1.5),
+                              ),
+                              focusedBorder: const UnderlineInputBorder(
+                                borderSide: BorderSide(color: AppTheme.primary, width: 2.0),
+                              ),
+                              errorBorder: const UnderlineInputBorder(
+                                borderSide: BorderSide(color: AppTheme.error, width: 1.5),
+                              ),
+                              focusedErrorBorder: const UnderlineInputBorder(
+                                borderSide: BorderSide(color: AppTheme.error, width: 2.0),
+                              ),
+                            ),
+                            style: AppTheme.headlineMd.copyWith(fontSize: 22.0),
+                          ),
+                          const SizedBox(height: 24.0),
+
+                          // Confirm Action
+                          ElevatedButton(
+                            onPressed: () async {
+                              final text = amountController.text.trim();
+                              final val = int.tryParse(text);
+                              if (val == null || val <= 0) {
+                                setState(() {
+                                  inputError = "Enter a valid positive amount";
+                                });
+                                return;
+                              }
+                              Navigator.pop(context);
+                              await state.executeSavingsTransfer(rec.date, val);
+                              await HapticFeedback.lightImpact();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14.0),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              "CONFIRM TRANSFER",
+                              style: AppTheme.labelBold.copyWith(color: Colors.white, letterSpacing: 1.0),
+                            ),
+                          ),
+                          const SizedBox(height: 12.0),
+
+                          // Cancel Edit
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                isEditing = false;
+                                inputError = null;
+                                amountController.text = rec.suggestedSavings.toString();
+                              });
+                            },
+                            child: Text(
+                              "CANCEL",
+                              style: AppTheme.labelBold.copyWith(
+                                color: AppTheme.onSurfaceVariant,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 }

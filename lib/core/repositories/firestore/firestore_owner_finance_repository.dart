@@ -132,5 +132,39 @@ class FirestoreOwnerFinanceRepository implements OwnerFinanceRepository {
         .doc(log.id)
         .set(log.toJson());
   }
+
+  @override
+  Stream<SavingsRecommendation?> getPendingSavingsRecommendationStream(String date) {
+    return _firestore
+        .collection('savings_recommendations')
+        .doc(date)
+        .snapshots()
+        .map((snapshot) {
+      if (!snapshot.exists || snapshot.data() == null) {
+        return null;
+      }
+      final data = snapshot.data()!;
+      final status = data['status'] ?? 'pending';
+      if (status == 'pending') {
+        return SavingsRecommendation.fromJson(data, snapshot.id);
+      }
+      return null;
+    });
+  }
+
+  @override
+  Future<void> updateSavingsRecommendationStatus(String date, String status, int? transferredAmount) async {
+    final Map<String, dynamic> updates = {
+      'status': status,
+      'processed_at': DateTime.now().toIso8601String(),
+    };
+    if (transferredAmount != null) {
+      updates['transferred_amount'] = transferredAmount;
+    }
+    await _firestore
+        .collection('savings_recommendations')
+        .doc(date)
+        .update(updates);
+  }
 }
 

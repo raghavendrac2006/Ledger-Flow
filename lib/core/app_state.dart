@@ -80,6 +80,9 @@ class LedgerState extends ChangeNotifier {
   StreamSubscription? _ownerLoanSub;
   StreamSubscription? _ownerRepaymentsSub;
   StreamSubscription? _savingsLogsSub;
+  StreamSubscription? _savingsRecommendationSub;
+  SavingsRecommendation? _pendingRecommendation;
+  SavingsRecommendation? get pendingRecommendation => _pendingRecommendation;
 
   final Map<String, double> _historicalMonthlySales = {};
 
@@ -135,6 +138,23 @@ class LedgerState extends ChangeNotifier {
         }
       );
     });
+
+    final yesterday = DateTime.now().subtract(const Duration(days: 1));
+    final yesterdayDateStr =
+        "${yesterday.year}-${yesterday.month.toString().padLeft(2, '0')}-${yesterday.day.toString().padLeft(2, '0')}";
+
+    _savingsRecommendationSub = ownerFinanceRepository
+        .getPendingSavingsRecommendationStream(yesterdayDateStr)
+        .listen(
+      (recommendation) {
+        _pendingRecommendation = recommendation;
+        notifyListeners();
+      },
+      onError: (error) {
+        debugPrint("Firestore savings recommendations stream error: $error");
+      }
+    );
+
 
     // 1. Seed Default Customers if Database is empty
     _seedDefaultCustomers();
@@ -473,6 +493,7 @@ class LedgerState extends ChangeNotifier {
     _ownerLoanSub?.cancel();
     _ownerRepaymentsSub?.cancel();
     _savingsLogsSub?.cancel();
+    _savingsRecommendationSub?.cancel();
     super.dispose();
   }
 
@@ -1577,5 +1598,35 @@ class LedgerState extends ChangeNotifier {
       await ownerFinanceRepository.addSavingsLog(log);
     }
   }
+
+  Future<void> executeSavingsTransfer(String docId, int amount) async {
+    final doubleAmount = amount.toDouble();
+    if (doubleAmount > 0.0) {
+      final log = SavingsLog(
+        id: "SAV_REC_$docId",
+        amount: doubleAmount,
+        type: 'deposit',
+        notes: 'Transfer from Daily Surplus Recommendation',
+        date: DateTime.now(),
+      );
+      await ownerFinanceRepository.addSavingsLog(log);
+    }
+
+    await ownerFinanceRepository.updateSavingsRecommendationStatus(
+      docId,
+      'transferred',
+      amount,
+    );
+  }
+
+  Future<void> skipSavingsRecommendation(String docId) async {
+    await ownerFinanceRepository.updateSavingsRecommendationStatus(
+      docId,
+      'skipped',
+      null,
+    );
+  }
 }
+
+
 
