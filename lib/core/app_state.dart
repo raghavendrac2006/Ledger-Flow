@@ -1157,6 +1157,62 @@ class LedgerState extends ChangeNotifier {
     }).fold(0.0, (total, exp) => total + exp.amount);
   }
 
+  List<ExpenseLog> get currentBagExpensesList {
+    final activeBag = activeRiceBag;
+    if (activeBag == null) return [];
+
+    DateTime? startDate;
+    try {
+      startDate = DateFormat('dd MMMM yyyy').parse(activeBag.startDate);
+    } catch (_) {}
+
+    return _expenses.where((exp) {
+      if (exp.associatedBagId == activeBag.bagId) return true;
+      if (exp.associatedBagId != null) return false; // Assigned to another bag explicitly
+      if (startDate != null) {
+        try {
+          final expDate = DateTime.parse(exp.date);
+          return expDate.isAfter(startDate.subtract(const Duration(days: 1)));
+        } catch (_) {}
+      }
+      return false;
+    }).toList();
+  }
+
+  List<ExpenseLog> getExpensesForBag(RiceBag bag) {
+    if (bag.status == "Active") return currentBagExpensesList;
+
+    DateTime? startDate;
+    try {
+      startDate = DateFormat('dd MMMM yyyy').parse(bag.startDate);
+    } catch (_) {}
+
+    DateTime? endDate;
+    if (bag.endDate != null) {
+      try {
+        endDate = DateFormat('dd MMMM yyyy').parse(bag.endDate!);
+      } catch (_) {}
+    }
+
+    return _expenses.where((exp) {
+      if (exp.associatedBagId == bag.bagId) return true;
+      if (exp.associatedBagId != null) return false;
+
+      if (startDate != null) {
+        try {
+          final expDate = DateTime.parse(exp.date);
+          final isAfterStart = expDate.isAfter(startDate.subtract(const Duration(days: 1)));
+          if (endDate != null) {
+            final isBeforeEnd = expDate.isBefore(endDate.add(const Duration(days: 1)));
+            return isAfterStart && isBeforeEnd;
+          }
+          return isAfterStart;
+        } catch (_) {}
+      }
+      return false;
+    }).toList();
+  }
+
   double get currentBagProfit => currentBagRevenue - currentBagExpenses;
 
   double get currentBagProfitMargin {

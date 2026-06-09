@@ -9,6 +9,7 @@ import '../widgets/custom_toast.dart';
 import '../widgets/recent_expenditures_list_widget.dart';
 import '../widgets/total_expenditure_stats_widget.dart';
 import '../widgets/skeleton_card.dart';
+import '../widgets/empty_state_widget.dart';
 
 class ExpensesScreen extends StatefulWidget {
   const ExpensesScreen({super.key});
@@ -31,9 +32,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   bool _showSuggestions = false;
   String _itemSearchQuery = "";
 
-  // Separate Rice Flour Bag weight capacity inputs (Box 2)
-  final TextEditingController _riceFlourKgController = TextEditingController();
-  DateTime _riceFlourBagSelectedDate = DateTime.now();
+
 
   // New Date Filters state
   ExpenseFilter _currentFilter = ExpenseFilter.today;
@@ -41,7 +40,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
   String? _itemError;
   String? _amountError;
-  String? _riceFlourKgError;
 
   @override
   void initState() {
@@ -55,9 +53,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     _amountController.addListener(() {
       _validateAmount(_amountController.text);
     });
-    _riceFlourKgController.addListener(() {
-      _validateRiceFlourKg(_riceFlourKgController.text);
-    });
+
   }
 
   void _validateItem(String value) {
@@ -89,28 +85,11 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     }
   }
 
-  void _validateRiceFlourKg(String value) {
-    final kg = double.tryParse(value.trim());
-    if (value.trim().isEmpty) {
-      setState(() {
-        _riceFlourKgError = "Bag weight capacity cannot be empty";
-      });
-    } else if (kg == null || kg <= 0) {
-      setState(() {
-        _riceFlourKgError = "Enter a valid positive weight";
-      });
-    } else {
-      setState(() {
-        _riceFlourKgError = null;
-      });
-    }
-  }
 
   @override
   void dispose() {
     _itemController.dispose();
     _amountController.dispose();
-    _riceFlourKgController.dispose();
     _itemFocusNode.dispose();
     _amountFocusNode.dispose();
     super.dispose();
@@ -800,124 +779,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 32.0),
 
-                  // 2. RECORD RICE FLOUR BAG WEIGHT TITLE & FORM
-                  Text(
-                    "RECORD RICE FLOUR BAG WEIGHT (KG)",
-                    style: AppTheme.labelBold.copyWith(
-                      fontSize: 11.0,
-                      color: AppTheme.onSurfaceVariant,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 16.0),
-
-                  BentoCard(
-                    padding: const EdgeInsets.all(18.0),
-                    backgroundColor: AppTheme.surface,
-                    shadowStyle: ShadowStyle.light,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        InkWell(
-                          onTap: () => _selectRiceFlourBagDate(context),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 16.0),
-                            decoration: const BoxDecoration(
-                              border: Border(bottom: BorderSide(color: AppTheme.outlineVariant, width: 1.5)),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.calendar_today, color: AppTheme.primary, size: 20),
-                                const SizedBox(width: 16.0),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "DATE BAG WAS STARTED",
-                                      style: AppTheme.labelBold.copyWith(fontSize: 9, color: AppTheme.outline),
-                                    ),
-                                    const SizedBox(height: 2.0),
-                                    Text(
-                                      DateFormat('dd MMMM yyyy').format(_riceFlourBagSelectedDate),
-                                      style: AppTheme.labelBold.copyWith(fontSize: 14.0),
-                                    ),
-                                  ],
-                                ),
-                                const Spacer(),
-                                const Icon(Icons.chevron_right, color: AppTheme.outline),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16.0),
-
-                        TextField(
-                          controller: _riceFlourKgController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: false),
-                          textInputAction: TextInputAction.done,
-                          onSubmitted: (_) => _submitRiceFlourWeight(state),
-                          decoration: InputDecoration(
-                            labelText: "BAG SIZE / WEIGHT CAPACITY (KG)",
-                            labelStyle: AppTheme.labelBold.copyWith(fontSize: 10, color: AppTheme.outline),
-                            hintText: "e.g., 30, 45, 60...",
-                            suffixText: "KG",
-                            suffixStyle: AppTheme.labelBold.copyWith(color: AppTheme.onSurface),
-                            filled: true,
-                            fillColor: AppTheme.surface,
-                            errorText: _riceFlourKgError,
-                            enabledBorder: const UnderlineInputBorder(
-                              borderSide: BorderSide(color: AppTheme.outlineVariant, width: 1.5),
-                            ),
-                            focusedBorder: const UnderlineInputBorder(
-                              borderSide: BorderSide(color: AppTheme.primary, width: 2.0),
-                            ),
-                            errorBorder: const UnderlineInputBorder(
-                              borderSide: BorderSide(color: AppTheme.error, width: 1.5),
-                            ),
-                            focusedErrorBorder: const UnderlineInputBorder(
-                              borderSide: BorderSide(color: AppTheme.error, width: 2.0),
-                            ),
-                          ),
-                          style: AppTheme.headlineMd.copyWith(fontSize: 20.0),
-                        ),
-                        const SizedBox(height: 24.0),
-
-                        InkWell(
-                          onTap: _isSaving ? null : () => _submitRiceFlourWeight(state),
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 14.0),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primary,
-                              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                              boxShadow: !_isSaving ? AppTheme.hardShadowButton : null,
-                            ),
-                            child: Center(
-                              child: _isSaving
-                                  ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2.0,
-                                      ),
-                                    )
-                                  : Text(
-                                      "START NEW BAG CYCLE",
-                                      style: AppTheme.labelBold.copyWith(
-                                        color: Colors.white,
-                                        letterSpacing: 1.0,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 32.0),
 
                   // 3. RECENT EXPENDITURES
                   Row(
@@ -970,7 +832,94 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   const SizedBox(height: 32.0),
 
                   TotalExpenditureStatsWidget(
-                    expenses: state.expenses,
+                    expenses: state.currentBagExpensesList,
+                  ),
+                  const SizedBox(height: 32.0),
+
+                  // 4. EXPENDITURE HISTORY BY BATCH
+                  Text(
+                    "EXPENDITURE HISTORY BY BATCH",
+                    style: AppTheme.labelBold.copyWith(
+                      fontSize: 11.0,
+                      color: AppTheme.onSurfaceVariant,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 16.0),
+
+                  Builder(
+                    builder: (context) {
+                      final completedBags = state.riceBags
+                          .where((b) => b.status == "Completed")
+                          .toList()
+                        ..sort((a, b) => (b.bagNumber ?? 0).compareTo(a.bagNumber ?? 0));
+
+                      if (completedBags.isEmpty) {
+                        return const EmptyStateWidget(
+                          title: "No Completed Batches",
+                          message: "No completed batches found.",
+                          icon: Icons.history,
+                        );
+                      }
+
+                      return BentoCard(
+                        padding: const EdgeInsets.all(0),
+                        backgroundColor: AppTheme.surface,
+                        shadowStyle: ShadowStyle.light,
+                        child: ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: completedBags.length,
+                          separatorBuilder: (context, i) =>
+                              const Divider(height: 1, color: AppTheme.outlineVariant),
+                          itemBuilder: (context, idx) {
+                            final bag = completedBags[idx];
+                            final bagNum = bag.bagNumber ?? (completedBags.length - idx);
+                            final bagExpenses = state.getExpensesForBag(bag);
+                            final totalBagExpenses = bagExpenses.fold<double>(0.0, (sum, exp) => sum + exp.amount);
+                            
+                            String dateRangeText = bag.startDate;
+                            if (bag.endDate != null) {
+                              dateRangeText = "${bag.startDate} - ${bag.endDate}";
+                            }
+
+                            return ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: AppTheme.surfaceContainerHighest,
+                                radius: 18.0,
+                                child: const Icon(Icons.scale, color: AppTheme.primary, size: 16.0),
+                              ),
+                              title: Text(
+                                "Batch $bagNum (${bag.totalKg.toStringAsFixed(0)} KG)",
+                                style: AppTheme.labelBold.copyWith(fontSize: 14.0),
+                              ),
+                              subtitle: Text(
+                                dateRangeText,
+                                style: AppTheme.labelSm.copyWith(color: AppTheme.outline, fontSize: 10.0),
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    "₹${NumberFormat('#,##,###.00').format(totalBagExpenses)}",
+                                    style: AppTheme.dataTabular.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14.0,
+                                      color: AppTheme.primary,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8.0),
+                                  const Icon(Icons.chevron_right, color: AppTheme.outline, size: 20.0),
+                                ],
+                              ),
+                              onTap: () {
+                                _showBatchExpensesBottomSheet(context, bag, bagExpenses);
+                              },
+                            );
+                          },
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -1040,59 +989,139 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     );
   }
 
-  Future<void> _selectRiceFlourBagDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
+  void _showBatchExpensesBottomSheet(BuildContext context, RiceBag bag, List<ExpenseLog> bagExpenses) {
+    final bagNum = bag.bagNumber ?? 1;
+    final total = bagExpenses.fold<double>(0.0, (sum, exp) => sum + exp.amount);
+
+    showModalBottomSheet(
       context: context,
-      initialDate: _riceFlourBagSelectedDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppTheme.primary,
-              onPrimary: Colors.white,
-              onSurface: AppTheme.onSurface,
-            ),
+      isScrollControlled: true,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusLg)),
+      ),
+      builder: (context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.7,
+          padding: EdgeInsets.only(
+            left: 24.0,
+            right: 24.0,
+            top: 16.0,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24.0,
           ),
-          child: child!,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40.0,
+                  height: 5.0,
+                  decoration: BoxDecoration(
+                    color: AppTheme.outlineVariant,
+                    borderRadius: BorderRadius.circular(2.5),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16.0),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Batch $bagNum Expenditure",
+                          style: AppTheme.headlineMd.copyWith(color: AppTheme.primary),
+                        ),
+                        const SizedBox(height: 2.0),
+                        Text(
+                          "Bag size: ${bag.totalKg.toStringAsFixed(0)} KG | Started: ${bag.startDate}",
+                          style: AppTheme.labelSm.copyWith(color: AppTheme.outline),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16.0),
+
+              BentoCard(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+                backgroundColor: AppTheme.surface,
+                shadowStyle: ShadowStyle.light,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "TOTAL BATCH EXPENSES",
+                      style: AppTheme.labelBold.copyWith(fontSize: 11.0, color: AppTheme.onSurfaceVariant),
+                    ),
+                    Text(
+                      "₹${NumberFormat('#,##,###.00').format(total)}",
+                      style: AppTheme.headlineMd.copyWith(fontSize: 20.0, color: AppTheme.primary),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20.0),
+
+              Text(
+                "ITEMIZED EXPENDITURE LOG",
+                style: AppTheme.labelBold.copyWith(
+                  fontSize: 10.0,
+                  color: AppTheme.onSurfaceVariant,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 12.0),
+
+              Expanded(
+                child: bagExpenses.isEmpty
+                    ? const Center(
+                        child: Text(
+                          "No expenses recorded for this batch.",
+                          style: TextStyle(color: AppTheme.outline),
+                        ),
+                      )
+                    : ListView.separated(
+                        itemCount: bagExpenses.length,
+                        separatorBuilder: (context, i) =>
+                            const Divider(height: 1, color: AppTheme.outlineVariant),
+                        itemBuilder: (context, index) {
+                          final exp = bagExpenses[index];
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(
+                              exp.itemName,
+                              style: AppTheme.labelBold.copyWith(fontSize: 14.0),
+                            ),
+                            subtitle: Text(
+                              "${exp.date} | ${exp.category}",
+                              style: AppTheme.labelSm.copyWith(color: AppTheme.outline, fontSize: 10.0),
+                            ),
+                            trailing: Text(
+                              "₹${exp.amount.toStringAsFixed(0)}",
+                              style: AppTheme.dataTabular.copyWith(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14.0,
+                                color: Colors.black,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
         );
       },
     );
-    if (picked != null && picked != _riceFlourBagSelectedDate) {
-      setState(() {
-        _riceFlourBagSelectedDate = picked;
-      });
-    }
-  }
-
-  void _submitRiceFlourWeight(LedgerState state) {
-    final kgText = _riceFlourKgController.text.trim();
-    _validateRiceFlourKg(kgText);
-
-    if (_riceFlourKgError != null) {
-      return;
-    }
-
-    final kg = double.parse(kgText);
-
-    setState(() {
-      _isSaving = true;
-    });
-
-    Future.delayed(const Duration(milliseconds: 400), () {
-      if (mounted) {
-        final dateStr = DateFormat('dd MMMM yyyy').format(_riceFlourBagSelectedDate);
-
-        state.closeAndStartNewBag(totalKg: kg, date: dateStr);
-
-        CustomToast.showSuccess(context, "NEW FLOUR BAG LOADED: ${kg.toStringAsFixed(0)} KG");
-        _riceFlourKgController.clear();
-        setState(() {
-          _isSaving = false;
-        });
-      }
-    });
   }
 
 }
