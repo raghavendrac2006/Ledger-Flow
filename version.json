@@ -1,6 +1,6 @@
 {
-    "latest_version": "1.0.6",
-    "build_number": 7,
-    "apk_url": "https://github.com/raghavendrac2006/Delivery-pro/releases/download/v1.0.6/app-release.apk",
-    "release_notes": "Added batch-specific expense tracking and detailed Expenditure History by Batch in the Expenses Screen."
+    "latest_version": "1.0.7",
+    "build_number": 8,
+    "apk_url": "https://github.com/raghavendrac2006/Delivery-pro/releases/download/v1.0.7/app-release.apk",
+    "release_notes": "Added Cash-Basis Predictive Micro-Savings Advisor and multi-device real-time sync auto-dismissal safeguards."
 }
