@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' hide Transaction;
 
 import 'models/customer.dart';
 import 'models/transaction.dart';
@@ -96,7 +98,7 @@ class LedgerState extends ChangeNotifier {
   List<SavingsLog> get savingsLogs => _savingsLogs;
 
   double get totalSavings {
-    return _savingsLogs.fold(0.0, (sum, log) => sum + log.amount);
+    return _savingsLogs.fold(0.0, (accumulated, log) => accumulated + log.amount);
   }
 
   void _initFirestore() {
@@ -154,6 +156,8 @@ class LedgerState extends ChangeNotifier {
         debugPrint("Firestore savings recommendations stream error: $error");
       }
     );
+
+    _checkAndGenerateSavingsRecommendation(yesterdayDateStr);
 
 
     // 1. Seed Default Customers if Database is empty
@@ -1625,6 +1629,136 @@ class LedgerState extends ChangeNotifier {
       'skipped',
       null,
     );
+  }
+
+  Future<void> _checkAndGenerateSavingsRecommendation(String yesterdayDateStr) async {
+    try {
+      // 1. Check if recommendation document already exists in Firestore
+      final docSnap = await FirebaseFirestore.instance
+          .collection('savings_recommendations')
+          .doc(yesterdayDateStr)
+          .get();
+
+      if (docSnap.exists) {
+        debugPrint("Savings recommendation for $yesterdayDateStr already exists in Firestore.");
+        return;
+      }
+
+      debugPrint("Savings recommendation for $yesterdayDateStr not found. Generating in foreground...");
+
+      // 2. Fetch payload details for yesterday
+      final now = DateTime.now();
+      final yesterday = now.subtract(const Duration(days: 1));
+      final yesterdayStart = DateTime(yesterday.year, yesterday.month, yesterday.day, 0, 0, 0);
+      final yesterdayEnd = DateTime(yesterday.year, yesterday.month, yesterday.day, 23, 59, 59, 999);
+
+      final String startIso = yesterdayStart.toIso8601String();
+      final String endIso = yesterdayEnd.toIso8601String();
+
+      final logsSnapshot = await FirebaseFirestore.instance
+          .collection('deliveryLogs')
+          .where('dateTime', isGreaterThanOrEqualTo: startIso)
+          .where('dateTime', isLessThanOrEqualTo: endIso)
+          .get();
+
+      final expensesSnapshot = await FirebaseFirestore.instance
+          .collection('expenses')
+          .where('date', isEqualTo: yesterdayDateStr)
+          .get();
+
+      // 3. Aggregate Cash flow
+      double actualCashInHand = 0.0;
+      double salesPaid = 0.0;
+      double repaymentsIncoming = 0.0;
+
+      for (var doc in logsSnapshot.docs) {
+        final data = doc.data();
+        final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+        final isPaid = data['isPaid'] ?? false;
+        final isPayment = data['isPayment'] ?? false;
+
+        if (!isPayment && isPaid) {
+          salesPaid += amount;
+        } else if (isPayment) {
+          repaymentsIncoming += amount;
+        }
+      }
+      actualCashInHand = salesPaid + repaymentsIncoming;
+
+      double actualExpenses = 0.0;
+      for (var doc in expensesSnapshot.docs) {
+        final data = doc.data();
+        final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+        actualExpenses += amount;
+      }
+
+      double netLiquidMargin = actualCashInHand - actualExpenses;
+
+      // 4. Generate with Gemini
+      const String key = String.fromEnvironment('GEMINI_API_KEY');
+      if (key.isEmpty) {
+        debugPrint("Foreground Advisor Error: GEMINI_API_KEY is empty.");
+        return;
+      }
+
+      final model = GenerativeModel(
+        model: 'gemini-2.5-flash',
+        apiKey: key,
+      );
+
+      final savingsPrompt = Content.text(
+        "You are an on-the-ground cash flow analyst for a local distribution market. Analyze yesterday's true physical cash flow.\n\n"
+        "Yesterday's Financial Summary:\n"
+        "- Cash Received from Paid Sales: ₹$salesPaid\n"
+        "- Customer Repayments/Installments: ₹$repaymentsIncoming\n"
+        "- Total Cash-In-Hand: ₹$actualCashInHand\n"
+        "- Total Expenses: ₹$actualExpenses\n"
+        "- Net Liquid Margin (Surplus): ₹$netLiquidMargin\n\n"
+        "Rules:\n"
+        "1. If Net Liquid Margin is less than or equal to 0, return a recommended savings value of 0.\n"
+        "2. If positive, calculate a safe micro-savings recommendation between 10% to 20% of that physical cash surplus, rounded to the nearest 10 or 50 rupees.\n"
+        "3. You MUST return a clean, verified JSON structure matching exactly:\n"
+        "{\n"
+        "  \"suggested_savings\": <int>,\n"
+        "  \"conversational_reason\": \"<String brief summary in English describing the cash-in performance>\"\n"
+        "}\n\n"
+        "Do NOT return any markdown wrapping, code block tags, or extra text. Return ONLY the raw JSON string."
+      );
+
+      final savingsResponse = await model.generateContent([savingsPrompt]);
+      final savingsResponseText = savingsResponse.text?.trim() ?? "{\"suggested_savings\": 0, \"conversational_reason\": \"No response from advisor.\"}";
+
+      String cleanJsonText = savingsResponseText;
+      if (cleanJsonText.startsWith("```")) {
+        cleanJsonText = cleanJsonText.replaceAll(RegExp(r'^```[a-z]*\n|```$'), '');
+      }
+      cleanJsonText = cleanJsonText.trim();
+
+      int suggestedSavings = 0;
+      String conversationalReason = "Could not parse advisor response.";
+      try {
+        final parsed = jsonDecode(cleanJsonText) as Map<String, dynamic>;
+        suggestedSavings = (parsed['suggested_savings'] as num?)?.toInt() ?? 0;
+        conversationalReason = parsed['conversational_reason'] as String? ?? '';
+      } catch (e) {
+        debugPrint("Failed to parse foreground savings advisor JSON: $e");
+      }
+
+      await FirebaseFirestore.instance
+          .collection('savings_recommendations')
+          .doc(yesterdayDateStr)
+          .set({
+        'date': yesterdayDateStr,
+        'suggested_savings': suggestedSavings,
+        'conversational_reason': conversationalReason,
+        'status': 'pending',
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      debugPrint("Foreground generated recommendation for $yesterdayDateStr successfully saved to Firestore.");
+    } catch (e) {
+      debugPrint("Foreground advisor loop execution failed: $e");
+    }
   }
 }
 

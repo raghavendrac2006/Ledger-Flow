@@ -308,7 +308,7 @@ void main() async {
       frequency: const Duration(hours: 24),
       initialDelay: initialDelay,
       tag: "daily_financial_audit",
-      existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
     );
   }
 
