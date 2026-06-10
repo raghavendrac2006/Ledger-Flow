@@ -193,6 +193,23 @@ void callbackDispatcher() {
 
       double netLiquidMargin = actualCashInHand - actualExpenses;
 
+      // Fetch dynamic settings from Firestore
+      int minSavingsPct = 2;
+      int maxSavingsPct = 7;
+      try {
+        final settingsDoc = await FirebaseFirestore.instance
+            .collection('settings')
+            .doc('financeSettings')
+            .get();
+        if (settingsDoc.exists && settingsDoc.data() != null) {
+          final data = settingsDoc.data()!;
+          minSavingsPct = (data['min_savings_pct'] as num?)?.toInt() ?? 2;
+          maxSavingsPct = (data['max_savings_pct'] as num?)?.toInt() ?? 7;
+        }
+      } catch (e) {
+        debugPrint("Could not fetch remote finance settings in background: $e. Using default 2% to 7%.");
+      }
+
       final savingsPrompt = Content.text(
         "You are an on-the-ground cash flow analyst for a local distribution market. Analyze yesterday's true physical cash flow.\n\n"
         "Yesterday's Financial Summary:\n"
@@ -203,7 +220,7 @@ void callbackDispatcher() {
         "- Net Liquid Margin (Surplus): ₹$netLiquidMargin\n\n"
         "Rules:\n"
         "1. If Net Liquid Margin is less than or equal to 0, return a recommended savings value of 0.\n"
-        "2. If positive, calculate a safe micro-savings recommendation between 10% to 20% of that physical cash surplus, rounded to the nearest 10 or 50 rupees.\n"
+        "2. If positive, calculate a safe micro-savings recommendation between $minSavingsPct% to $maxSavingsPct% of that physical cash surplus, rounded to the nearest 10 or 50 rupees.\n"
         "3. You MUST return a clean, verified JSON structure matching exactly:\n"
         "{\n"
         "  \"suggested_savings\": <int>,\n"

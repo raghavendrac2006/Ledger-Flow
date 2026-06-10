@@ -372,6 +372,7 @@ class _HomeShellState extends State<HomeShell> {
             return StatefulBuilder(
               builder: (context, setState) {
                 return Dialog(
+                  insetPadding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppTheme.radiusLg),
                     side: const BorderSide(color: AppTheme.outlineVariant, width: 1.5),
@@ -388,11 +389,13 @@ class _HomeShellState extends State<HomeShell> {
                           children: [
                             const Icon(Icons.savings_outlined, color: AppTheme.primary, size: 24.0),
                             const SizedBox(width: 12.0),
-                            Text(
-                              "DAILY SAVINGS ADVISOR",
-                              style: AppTheme.headlineMd.copyWith(
-                                color: AppTheme.primary,
-                                letterSpacing: 1.0,
+                            Expanded(
+                              child: Text(
+                                "DAILY SAVINGS ADVISOR",
+                                style: AppTheme.headlineMd.copyWith(
+                                  color: AppTheme.primary,
+                                  letterSpacing: 1.0,
+                                ),
                               ),
                             ),
                           ],
@@ -421,6 +424,7 @@ class _HomeShellState extends State<HomeShell> {
                                     letterSpacing: 1.0,
                                     fontWeight: FontWeight.bold,
                                   ),
+                                  textAlign: TextAlign.center,
                                 ),
                               ],
                             ),
