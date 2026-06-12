@@ -801,6 +801,10 @@ class _SetupScreenState extends State<SetupScreen> {
   }
 
   void _handleStartRoundsWithAudit(LedgerState state, double usageKg) async {
+    if (state.isMockMode) {
+      _proceedWithStartRounds(state, usageKg);
+      return;
+    }
     setState(() {
       _isStarting = true;
     });

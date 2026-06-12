@@ -7,7 +7,6 @@ import 'package:workmanager/workmanager.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'firebase_options.dart';
 import 'package:stitch_daily_delivery_ledger/core/app_theme.dart';
 import 'package:stitch_daily_delivery_ledger/core/app_state.dart';
 import 'package:stitch_daily_delivery_ledger/core/ai_analyst_controller.dart';
@@ -17,6 +16,7 @@ import 'package:stitch_daily_delivery_ledger/core/repositories/firestore/firesto
 import 'package:stitch_daily_delivery_ledger/core/repositories/firestore/firestore_rice_bag_repository.dart';
 import 'package:stitch_daily_delivery_ledger/core/repositories/firestore/firestore_settings_repository.dart';
 import 'package:stitch_daily_delivery_ledger/core/repositories/firestore/firestore_owner_finance_repository.dart';
+import 'package:stitch_daily_delivery_ledger/core/repositories/mock_repositories.dart';
 import 'package:stitch_daily_delivery_ledger/screens/home_shell.dart';
 
 @pragma('vm:entry-point')
@@ -24,9 +24,7 @@ void callbackDispatcher() {
   Workmanager().executeTask((taskName, inputData) async {
     try {
       WidgetsFlutterBinding.ensureInitialized();
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
+      await Firebase.initializeApp();
 
       // 1. Programmatically calculate date range for the entire previous calendar day
       final now = DateTime.now();
@@ -307,55 +305,75 @@ void callbackDispatcher() {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  if (!kIsWeb) {
-    await Workmanager().initialize(
-      callbackDispatcher,
-    );
-
-    // Calculate the delay until the next midnight to align execution
-    final now = DateTime.now();
-    final nextMidnight = DateTime(now.year, now.month, now.day + 1, 0, 0, 0);
-    final initialDelay = nextMidnight.difference(now);
-
-    await Workmanager().registerPeriodicTask(
-      "daily_financial_audit", // uniqueName
-      "daily_financial_audit_task", // taskName
-      frequency: const Duration(hours: 24),
-      initialDelay: initialDelay,
-      tag: "daily_financial_audit",
-      existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
-    );
+  
+  bool isMockMode = false;
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint("Firebase initialization failed: $e. Falling back to local mock sandbox simulation.");
+    isMockMode = true;
   }
 
-  runApp(const MyApp());
+  if (!kIsWeb && !isMockMode) {
+    try {
+      await Workmanager().initialize(
+        callbackDispatcher,
+      );
+
+      // Calculate the delay until the next midnight to align execution
+      final now = DateTime.now();
+      final nextMidnight = DateTime(now.year, now.month, now.day + 1, 0, 0, 0);
+      final initialDelay = nextMidnight.difference(now);
+
+      await Workmanager().registerPeriodicTask(
+        "daily_financial_audit", // uniqueName
+        "daily_financial_audit_task", // taskName
+        frequency: const Duration(hours: 24),
+        initialDelay: initialDelay,
+        tag: "daily_financial_audit",
+        existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
+      );
+    } catch (e) {
+      debugPrint("Workmanager initialization failed: $e");
+    }
+  }
+
+  runApp(MyApp(isMockMode: isMockMode));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool isMockMode;
+  const MyApp({super.key, this.isMockMode = false});
 
   @override
   Widget build(BuildContext context) {
+    final customerRepo = isMockMode ? MockCustomerRepository() : FirestoreCustomerRepository();
+    final deliveryLogRepo = isMockMode ? MockDeliveryLogRepository() : FirestoreDeliveryLogRepository();
+    final expenseRepo = isMockMode ? MockExpenseRepository() : FirestoreExpenseRepository();
+    final riceBagRepo = isMockMode ? MockRiceBagRepository() : FirestoreRiceBagRepository();
+    final settingsRepo = isMockMode ? MockSettingsRepository() : FirestoreSettingsRepository();
+    final ownerFinanceRepo = isMockMode ? MockOwnerFinanceRepository() : FirestoreOwnerFinanceRepository();
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
           create: (_) => LedgerState(
-            customerRepository: FirestoreCustomerRepository(),
-            deliveryLogRepository: FirestoreDeliveryLogRepository(),
-            expenseRepository: FirestoreExpenseRepository(),
-            riceBagRepository: FirestoreRiceBagRepository(),
-            settingsRepository: FirestoreSettingsRepository(),
-            ownerFinanceRepository: FirestoreOwnerFinanceRepository(),
+            customerRepository: customerRepo,
+            deliveryLogRepository: deliveryLogRepo,
+            expenseRepository: expenseRepo,
+            riceBagRepository: riceBagRepo,
+            settingsRepository: settingsRepo,
+            ownerFinanceRepository: ownerFinanceRepo,
+            isMockMode: isMockMode,
           ),
         ),
         ChangeNotifierProvider(
           create: (_) => AIAnalystController(
-            customerRepository: FirestoreCustomerRepository(),
-            deliveryLogRepository: FirestoreDeliveryLogRepository(),
-            expenseRepository: FirestoreExpenseRepository(),
-            riceBagRepository: FirestoreRiceBagRepository(),
-            ownerFinanceRepository: FirestoreOwnerFinanceRepository(),
+            customerRepository: customerRepo,
+            deliveryLogRepository: deliveryLogRepo,
+            expenseRepository: expenseRepo,
+            riceBagRepository: riceBagRepo,
+            ownerFinanceRepository: ownerFinanceRepo,
           ),
         ),
       ],

@@ -36,6 +36,7 @@ class LedgerState extends ChangeNotifier {
   final RiceBagRepository riceBagRepository;
   final SettingsRepository settingsRepository;
   final OwnerFinanceRepository ownerFinanceRepository;
+  final bool isMockMode;
 
   LedgerState({
     required this.customerRepository,
@@ -44,6 +45,7 @@ class LedgerState extends ChangeNotifier {
     required this.riceBagRepository,
     required this.settingsRepository,
     required this.ownerFinanceRepository,
+    this.isMockMode = false,
   }) {
     _initFirestore();
     runSentenceCaseMigration();
@@ -1312,6 +1314,7 @@ class LedgerState extends ChangeNotifier {
     try {
       final payload = {
         "action": "syncAll",
+        "X-Auth-Token": const String.fromEnvironment('SHEETS_SECRET_TOKEN'),
         "deliveryLogs": _deliveryLogs.map((log) => log.toJson()).toList(),
         "expenses": _expenses.map((exp) => exp.toJson()).toList(),
         "riceBags": _riceBags.map((bag) => bag.toJson()).toList(),
@@ -1324,7 +1327,10 @@ class LedgerState extends ChangeNotifier {
       if (kIsWeb) {
         response = await http.post(
           Uri.parse(_googleSheetsUrl),
-          headers: {"Content-Type": "application/json"},
+          headers: {
+            "Content-Type": "application/json",
+            "X-Auth-Token": const String.fromEnvironment('SHEETS_SECRET_TOKEN'),
+          },
           body: bodyData,
         );
       } else {
@@ -1333,6 +1339,7 @@ class LedgerState extends ChangeNotifier {
 
         var request = http.Request('POST', Uri.parse(targetUrl))
           ..headers['Content-Type'] = 'application/json'
+          ..headers['X-Auth-Token'] = const String.fromEnvironment('SHEETS_SECRET_TOKEN')
           ..body = bodyData
           ..followRedirects = false;
 
@@ -1344,6 +1351,7 @@ class LedgerState extends ChangeNotifier {
           if (redirectUrl != null) {
             var redirectRequest = http.Request('POST', Uri.parse(redirectUrl))
               ..headers['Content-Type'] = 'application/json'
+              ..headers['X-Auth-Token'] = const String.fromEnvironment('SHEETS_SECRET_TOKEN')
               ..body = bodyData;
 
             var redirectStreamed = await client.send(redirectRequest);
@@ -1632,6 +1640,10 @@ class LedgerState extends ChangeNotifier {
   }
 
   Future<void> _checkAndGenerateSavingsRecommendation(String yesterdayDateStr) async {
+    if (isMockMode) {
+      debugPrint("Mock mode: Skipping background Firestore savings recommendation check.");
+      return;
+    }
     try {
       // 1. Check if recommendation document already exists in Firestore
       final docSnap = await FirebaseFirestore.instance

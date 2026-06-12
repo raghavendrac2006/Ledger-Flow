@@ -4,14 +4,23 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:stitch_daily_delivery_ledger/firebase_options.dart';
+// Removed compile-time dependency on firebase_options.dart to support repository isolation
 
 void main() {
   test('Audit Firestore calculations and report discrepancies', () async {
     WidgetsFlutterBinding.ensureInitialized();
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.windows,
-    );
+    try {
+      await Firebase.initializeApp();
+    } catch (_) {
+      await Firebase.initializeApp(
+        options: const FirebaseOptions(
+          apiKey: 'mock-api-key',
+          appId: '1:123456:web:123456',
+          messagingSenderId: '123456',
+          projectId: 'mock-project-id',
+        ),
+      );
+    }
 
     print("\n==========================================");
     print("STARTING FIRESTORE CALCULATIONS AUDIT");
