@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:stitch_daily_delivery_ledger/core/models/owner_finance_model.dart';
-import 'package:stitch_daily_delivery_ledger/core/repositories/owner_finance_repository.dart';
+import 'package:ledgerflow/core/models/owner_finance_model.dart';
+import 'package:ledgerflow/core/repositories/owner_finance_repository.dart';
 
 class FirestoreOwnerFinanceRepository implements OwnerFinanceRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

@@ -4,8 +4,8 @@ import 'repositories/customer_repository.dart';
 import 'repositories/delivery_log_repository.dart';
 import 'repositories/expense_repository.dart';
 import 'repositories/rice_bag_repository.dart';
-import 'package:stitch_daily_delivery_ledger/core/repositories/owner_finance_repository.dart';
-import 'package:stitch_daily_delivery_ledger/core/models/models.dart';
+import 'package:ledgerflow/core/repositories/owner_finance_repository.dart';
+import 'package:ledgerflow/core/models/models.dart';
 
 class ChatMessage {
   final String text;

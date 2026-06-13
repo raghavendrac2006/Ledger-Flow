@@ -1,17 +1,17 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:stitch_daily_delivery_ledger/core/models/customer.dart';
-import 'package:stitch_daily_delivery_ledger/core/models/delivery_log.dart';
-import 'package:stitch_daily_delivery_ledger/core/models/expense_log.dart';
-import 'package:stitch_daily_delivery_ledger/core/models/rice_bag.dart';
-import 'package:stitch_daily_delivery_ledger/core/models/daily_usage.dart';
-import 'package:stitch_daily_delivery_ledger/core/models/owner_finance_model.dart';
-import 'package:stitch_daily_delivery_ledger/core/repositories/customer_repository.dart';
-import 'package:stitch_daily_delivery_ledger/core/repositories/delivery_log_repository.dart';
-import 'package:stitch_daily_delivery_ledger/core/repositories/expense_repository.dart';
-import 'package:stitch_daily_delivery_ledger/core/repositories/rice_bag_repository.dart';
-import 'package:stitch_daily_delivery_ledger/core/repositories/settings_repository.dart';
-import 'package:stitch_daily_delivery_ledger/core/repositories/owner_finance_repository.dart';
+import 'package:ledgerflow/core/models/customer.dart';
+import 'package:ledgerflow/core/models/delivery_log.dart';
+import 'package:ledgerflow/core/models/expense_log.dart';
+import 'package:ledgerflow/core/models/rice_bag.dart';
+import 'package:ledgerflow/core/models/daily_usage.dart';
+import 'package:ledgerflow/core/models/owner_finance_model.dart';
+import 'package:ledgerflow/core/repositories/customer_repository.dart';
+import 'package:ledgerflow/core/repositories/delivery_log_repository.dart';
+import 'package:ledgerflow/core/repositories/expense_repository.dart';
+import 'package:ledgerflow/core/repositories/rice_bag_repository.dart';
+import 'package:ledgerflow/core/repositories/settings_repository.dart';
+import 'package:ledgerflow/core/repositories/owner_finance_repository.dart';
 
 class MockDb {
   static final List<Customer> customers = [

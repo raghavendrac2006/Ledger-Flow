@@ -8,6 +8,7 @@ api_keys.json
 
 # Miscellaneous
 *.class
+*.apk
 *.log
 *.pyc
 *.swp

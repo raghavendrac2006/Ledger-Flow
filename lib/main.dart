@@ -7,17 +7,17 @@ import 'package:workmanager/workmanager.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:stitch_daily_delivery_ledger/core/app_theme.dart';
-import 'package:stitch_daily_delivery_ledger/core/app_state.dart';
-import 'package:stitch_daily_delivery_ledger/core/ai_analyst_controller.dart';
-import 'package:stitch_daily_delivery_ledger/core/repositories/firestore/firestore_customer_repository.dart';
-import 'package:stitch_daily_delivery_ledger/core/repositories/firestore/firestore_delivery_log_repository.dart';
-import 'package:stitch_daily_delivery_ledger/core/repositories/firestore/firestore_expense_repository.dart';
-import 'package:stitch_daily_delivery_ledger/core/repositories/firestore/firestore_rice_bag_repository.dart';
-import 'package:stitch_daily_delivery_ledger/core/repositories/firestore/firestore_settings_repository.dart';
-import 'package:stitch_daily_delivery_ledger/core/repositories/firestore/firestore_owner_finance_repository.dart';
-import 'package:stitch_daily_delivery_ledger/core/repositories/mock_repositories.dart';
-import 'package:stitch_daily_delivery_ledger/screens/home_shell.dart';
+import 'package:ledgerflow/core/app_theme.dart';
+import 'package:ledgerflow/core/app_state.dart';
+import 'package:ledgerflow/core/ai_analyst_controller.dart';
+import 'package:ledgerflow/core/repositories/firestore/firestore_customer_repository.dart';
+import 'package:ledgerflow/core/repositories/firestore/firestore_delivery_log_repository.dart';
+import 'package:ledgerflow/core/repositories/firestore/firestore_expense_repository.dart';
+import 'package:ledgerflow/core/repositories/firestore/firestore_rice_bag_repository.dart';
+import 'package:ledgerflow/core/repositories/firestore/firestore_settings_repository.dart';
+import 'package:ledgerflow/core/repositories/firestore/firestore_owner_finance_repository.dart';
+import 'package:ledgerflow/core/repositories/mock_repositories.dart';
+import 'package:ledgerflow/screens/home_shell.dart';
 
 @pragma('vm:entry-point')
 void callbackDispatcher() {
@@ -378,7 +378,7 @@ class MyApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-        title: 'Sales Tracking',
+        title: 'LedgerFlow',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         home: const HomeShell(),

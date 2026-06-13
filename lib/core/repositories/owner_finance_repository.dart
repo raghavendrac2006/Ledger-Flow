@@ -1,4 +1,4 @@
-import 'package:stitch_daily_delivery_ledger/core/models/owner_finance_model.dart';
+import 'package:ledgerflow/core/models/owner_finance_model.dart';
 
 abstract class OwnerFinanceRepository {
   Stream<OwnerLoanConfig?> getActiveLoanStream();

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:stitch_daily_delivery_ledger/main.dart';
-import 'package:stitch_daily_delivery_ledger/screens/setup_screen.dart';
-import 'package:stitch_daily_delivery_ledger/screens/sales_entry_screen.dart';
+import 'package:ledgerflow/main.dart';
+import 'package:ledgerflow/screens/setup_screen.dart';
+import 'package:ledgerflow/screens/sales_entry_screen.dart';
 
 void main() {
   testWidgets('App loads and renders Route Initialization setup screen', (WidgetTester tester) async {

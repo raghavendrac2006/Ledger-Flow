@@ -1,4 +1,4 @@
-package com.antigravity.deliverypro.stitch_daily_delivery_ledger
+package com.antigravity.deliverypro.ledgerflow
 
 import io.flutter.embedding.android.FlutterActivity
 

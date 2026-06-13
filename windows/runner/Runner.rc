@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.antigravity.deliverypro" "\0"
-            VALUE "FileDescription", "stitch_daily_delivery_ledger" "\0"
+            VALUE "FileDescription", "LedgerFlow" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "stitch_daily_delivery_ledger" "\0"
+            VALUE "InternalName", "LedgerFlow" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.antigravity.deliverypro. All rights reserved." "\0"
-            VALUE "OriginalFilename", "stitch_daily_delivery_ledger.exe" "\0"
-            VALUE "ProductName", "stitch_daily_delivery_ledger" "\0"
+            VALUE "OriginalFilename", "LedgerFlow.exe" "\0"
+            VALUE "ProductName", "LedgerFlow" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
