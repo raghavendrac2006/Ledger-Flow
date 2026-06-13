@@ -7,6 +7,7 @@ import 'package:workmanager/workmanager.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ledgerflow/core/app_theme.dart';
 import 'package:ledgerflow/core/app_state.dart';
 import 'package:ledgerflow/core/ai_analyst_controller.dart';
@@ -19,12 +20,27 @@ import 'package:ledgerflow/core/repositories/firestore/firestore_owner_finance_r
 import 'package:ledgerflow/core/repositories/mock_repositories.dart';
 import 'package:ledgerflow/screens/home_shell.dart';
 
+import 'package:ledgerflow/firebase_options.dart';
+
 @pragma('vm:entry-point')
 void callbackDispatcher() {
   Workmanager().executeTask((taskName, inputData) async {
     try {
       WidgetsFlutterBinding.ensureInitialized();
-      await Firebase.initializeApp();
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+
+      final prefs = await SharedPreferences.getInstance();
+      final String businessId = prefs.getString('selected_business_id') ?? 'business_1';
+
+      String getCollectionPath(String collectionName) {
+        if (businessId == 'business_1') {
+          return collectionName;
+        } else {
+          return 'businesses/$businessId/$collectionName';
+        }
+      }
 
       // 1. Programmatically calculate date range for the entire previous calendar day
       final now = DateTime.now();
@@ -42,25 +58,27 @@ void callbackDispatcher() {
       // 2. Fetch yesterday-only payload
       // 2.1 Yesterday's transaction logs (delivery logs)
       final logsSnapshot = await FirebaseFirestore.instance
-          .collection('deliveryLogs')
+          .collection(getCollectionPath('deliveryLogs'))
           .where('dateTime', isGreaterThanOrEqualTo: startIso)
           .where('dateTime', isLessThanOrEqualTo: endIso)
           .get();
 
       // 2.2 Yesterday's expenses
       final expensesSnapshot = await FirebaseFirestore.instance
-          .collection('expenses')
+          .collection(getCollectionPath('expenses'))
           .where('date', isEqualTo: yesterdayDateStr)
           .get();
 
       // 2.3 Customers ledger balances
       final customersSnapshot = await FirebaseFirestore.instance
-          .collection('customers')
+          .collection(getCollectionPath('customers'))
           .get();
 
-      // 2.4 Owner repayments yesterday
+      // 2.4 Owner repayments yesterday (direct collection query scoped to business default loan)
       final repaymentsSnapshot = await FirebaseFirestore.instance
-          .collectionGroup('repayments')
+          .collection(getCollectionPath('owner_loans'))
+          .doc('default_owner_loan')
+          .collection('repayments')
           .where('repaymentDate', isGreaterThanOrEqualTo: startIso)
           .where('repaymentDate', isLessThanOrEqualTo: endIso)
           .get();
@@ -155,7 +173,7 @@ void callbackDispatcher() {
 
       // Save the audit result into Firestore so the app can fetch it next day
       await FirebaseFirestore.instance
-          .collection('audit_results')
+          .collection(getCollectionPath('audit_results'))
           .doc(yesterdayDateStr)
           .set({
         'date': yesterdayDateStr,
@@ -196,7 +214,7 @@ void callbackDispatcher() {
       int maxSavingsPct = 7;
       try {
         final settingsDoc = await FirebaseFirestore.instance
-            .collection('settings')
+            .collection(getCollectionPath('settings'))
             .doc('financeSettings')
             .get();
         if (settingsDoc.exists && settingsDoc.data() != null) {
@@ -247,7 +265,7 @@ void callbackDispatcher() {
       }
 
       await FirebaseFirestore.instance
-          .collection('savings_recommendations')
+          .collection(getCollectionPath('savings_recommendations'))
           .doc(yesterdayDateStr)
           .set({
         'date': yesterdayDateStr,
@@ -308,11 +326,16 @@ void main() async {
   
   bool isMockMode = false;
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
   } catch (e) {
     debugPrint("Firebase initialization failed: $e. Falling back to local mock sandbox simulation.");
     isMockMode = true;
   }
+
+  final prefs = await SharedPreferences.getInstance();
+  final String initialBusinessId = prefs.getString('selected_business_id') ?? 'business_1';
 
   if (!kIsWeb && !isMockMode) {
     try {
@@ -338,33 +361,70 @@ void main() async {
     }
   }
 
-  runApp(MyApp(isMockMode: isMockMode));
+  runApp(MyApp(isMockMode: isMockMode, initialBusinessId: initialBusinessId));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   final bool isMockMode;
-  const MyApp({super.key, this.isMockMode = false});
+  final String initialBusinessId;
+  const MyApp({super.key, this.isMockMode = false, this.initialBusinessId = 'business_1'});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late String _selectedBusinessId;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedBusinessId = widget.initialBusinessId;
+  }
+
+  void _updateBusiness(String newId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('selected_business_id', newId);
+    setState(() {
+      _selectedBusinessId = newId;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final customerRepo = isMockMode ? MockCustomerRepository() : FirestoreCustomerRepository();
-    final deliveryLogRepo = isMockMode ? MockDeliveryLogRepository() : FirestoreDeliveryLogRepository();
-    final expenseRepo = isMockMode ? MockExpenseRepository() : FirestoreExpenseRepository();
-    final riceBagRepo = isMockMode ? MockRiceBagRepository() : FirestoreRiceBagRepository();
-    final settingsRepo = isMockMode ? MockSettingsRepository() : FirestoreSettingsRepository();
-    final ownerFinanceRepo = isMockMode ? MockOwnerFinanceRepository() : FirestoreOwnerFinanceRepository();
+    final customerRepo = widget.isMockMode 
+        ? MockCustomerRepository(businessId: _selectedBusinessId) 
+        : FirestoreCustomerRepository(businessId: _selectedBusinessId);
+    final deliveryLogRepo = widget.isMockMode 
+        ? MockDeliveryLogRepository(businessId: _selectedBusinessId) 
+        : FirestoreDeliveryLogRepository(businessId: _selectedBusinessId);
+    final expenseRepo = widget.isMockMode 
+        ? MockExpenseRepository(businessId: _selectedBusinessId) 
+        : FirestoreExpenseRepository(businessId: _selectedBusinessId);
+    final riceBagRepo = widget.isMockMode 
+        ? MockRiceBagRepository(businessId: _selectedBusinessId) 
+        : FirestoreRiceBagRepository(businessId: _selectedBusinessId);
+    final settingsRepo = widget.isMockMode 
+        ? MockSettingsRepository(businessId: _selectedBusinessId) 
+        : FirestoreSettingsRepository(businessId: _selectedBusinessId);
+    final ownerFinanceRepo = widget.isMockMode 
+        ? MockOwnerFinanceRepository(businessId: _selectedBusinessId) 
+        : FirestoreOwnerFinanceRepository(businessId: _selectedBusinessId);
 
     return MultiProvider(
+      key: ValueKey(_selectedBusinessId),
       providers: [
         ChangeNotifierProvider(
           create: (_) => LedgerState(
+            businessId: _selectedBusinessId,
+            onBusinessChanged: _updateBusiness,
             customerRepository: customerRepo,
             deliveryLogRepository: deliveryLogRepo,
             expenseRepository: expenseRepo,
             riceBagRepository: riceBagRepo,
             settingsRepository: settingsRepo,
             ownerFinanceRepository: ownerFinanceRepo,
-            isMockMode: isMockMode,
+            isMockMode: widget.isMockMode,
           ),
         ),
         ChangeNotifierProvider(

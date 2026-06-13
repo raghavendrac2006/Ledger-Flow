@@ -4,10 +4,21 @@ import '../delivery_log_repository.dart';
 
 class FirestoreDeliveryLogRepository implements DeliveryLogRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final String businessId;
+
+  FirestoreDeliveryLogRepository({required this.businessId});
+
+  String _getCollectionPath(String collectionName) {
+    if (businessId == 'business_1') {
+      return collectionName;
+    } else {
+      return 'businesses/$businessId/$collectionName';
+    }
+  }
 
   @override
   Stream<List<DeliveryLog>> getDeliveryLogsStream() {
-    return _firestore.collection('deliveryLogs').snapshots().map((snapshot) {
+    return _firestore.collection(_getCollectionPath('deliveryLogs')).snapshots().map((snapshot) {
       return snapshot.docs.map((doc) {
         return DeliveryLog.fromJson(doc.data(), id: doc.id);
       }).toList();
@@ -16,7 +27,7 @@ class FirestoreDeliveryLogRepository implements DeliveryLogRepository {
 
   @override
   Stream<Map<String, double>> getMonthlyStatsStream() {
-    return _firestore.collection('monthlyStats').snapshots().map((snapshot) {
+    return _firestore.collection(_getCollectionPath('monthlyStats')).snapshots().map((snapshot) {
       final Map<String, double> stats = {};
       for (var doc in snapshot.docs) {
         final data = doc.data();
@@ -32,22 +43,22 @@ class FirestoreDeliveryLogRepository implements DeliveryLogRepository {
     final docId = log.isPayment 
         ? "PAY_${DateTime.now().millisecondsSinceEpoch}"
         : "LOG_${DateTime.now().millisecondsSinceEpoch}";
-    await _firestore.collection('deliveryLogs').doc(docId).set(log.toJson());
+    await _firestore.collection(_getCollectionPath('deliveryLogs')).doc(docId).set(log.toJson());
   }
 
   @override
   Future<void> updateDeliveryLog(String logId, Map<String, dynamic> data) async {
-    await _firestore.collection('deliveryLogs').doc(logId).update(data);
+    await _firestore.collection(_getCollectionPath('deliveryLogs')).doc(logId).update(data);
   }
 
   @override
   Future<void> deleteDeliveryLog(String logId) async {
-    await _firestore.collection('deliveryLogs').doc(logId).delete();
+    await _firestore.collection(_getCollectionPath('deliveryLogs')).doc(logId).delete();
   }
 
   @override
   Future<List<DeliveryLog>> getLogsForCustomer(String customerName) async {
-    final snapshot = await _firestore.collection('deliveryLogs')
+    final snapshot = await _firestore.collection(_getCollectionPath('deliveryLogs'))
         .where('customerName', isEqualTo: customerName)
         .get();
     return snapshot.docs.map((doc) => DeliveryLog.fromJson(doc.data(), id: doc.id)).toList();
@@ -55,13 +66,13 @@ class FirestoreDeliveryLogRepository implements DeliveryLogRepository {
 
   @override
   Future<List<DeliveryLog>> getAllLogs() async {
-    final snapshot = await _firestore.collection('deliveryLogs').get();
+    final snapshot = await _firestore.collection(_getCollectionPath('deliveryLogs')).get();
     return snapshot.docs.map((doc) => DeliveryLog.fromJson(doc.data(), id: doc.id)).toList();
   }
 
   @override
   Future<void> deleteLogBySerialNo(int serialNo) async {
-    final query = await _firestore.collection('deliveryLogs')
+    final query = await _firestore.collection(_getCollectionPath('deliveryLogs'))
         .where('serialNo', isEqualTo: serialNo)
         .limit(1)
         .get();
@@ -72,7 +83,7 @@ class FirestoreDeliveryLogRepository implements DeliveryLogRepository {
 
   @override
   Future<void> updateLogBySerialNo(int serialNo, String newDetails, double newAmount) async {
-    final query = await _firestore.collection('deliveryLogs')
+    final query = await _firestore.collection(_getCollectionPath('deliveryLogs'))
         .where('serialNo', isEqualTo: serialNo)
         .limit(1)
         .get();
@@ -86,7 +97,7 @@ class FirestoreDeliveryLogRepository implements DeliveryLogRepository {
 
   @override
   Future<void> purgeLogsOlderThan(DateTime date) async {
-    final snapshot = await _firestore.collection('deliveryLogs')
+    final snapshot = await _firestore.collection(_getCollectionPath('deliveryLogs'))
         .where('dateTime', isLessThan: date.toIso8601String())
         .get();
     if (snapshot.docs.isEmpty) return;
@@ -118,7 +129,7 @@ class FirestoreDeliveryLogRepository implements DeliveryLogRepository {
         }
       }
 
-      await _firestore.collection('monthlyStats').doc(monthKey).set({
+      await _firestore.collection(_getCollectionPath('monthlyStats')).doc(monthKey).set({
         'sales': FieldValue.increment(monthlySales),
         'deliveriesCount': FieldValue.increment(logs.length),
       }, SetOptions(merge: true));

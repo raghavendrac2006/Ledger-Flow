@@ -5,10 +5,21 @@ import '../customer_repository.dart';
 
 class FirestoreCustomerRepository implements CustomerRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final String businessId;
+
+  FirestoreCustomerRepository({required this.businessId});
+
+  String _getCollectionPath(String collectionName) {
+    if (businessId == 'business_1') {
+      return collectionName;
+    } else {
+      return 'businesses/$businessId/$collectionName';
+    }
+  }
 
   @override
   Stream<List<Customer>> getCustomersStream(IconData Function(String?) getIcon) {
-    return _firestore.collection('customers').snapshots().map((snapshot) {
+    return _firestore.collection(_getCollectionPath('customers')).snapshots().map((snapshot) {
       return snapshot.docs.map((doc) {
         final data = doc.data();
         return Customer.fromJson(data, getIcon);
@@ -18,29 +29,29 @@ class FirestoreCustomerRepository implements CustomerRepository {
 
   @override
   Future<void> addCustomer(Customer customer) async {
-    await _firestore.collection('customers').doc(customer.name).set(customer.toJson());
+    await _firestore.collection(_getCollectionPath('customers')).doc(customer.name).set(customer.toJson());
   }
 
   @override
   Future<void> updateCustomerOutstanding(String customerName, double amount) async {
-    await _firestore.collection('customers').doc(customerName).update({
+    await _firestore.collection(_getCollectionPath('customers')).doc(customerName).update({
       'outstanding': FieldValue.increment(amount),
     });
   }
 
   @override
   Future<void> saveCustomer(Customer customer) async {
-    await _firestore.collection('customers').doc(customer.name).set(customer.toJson());
+    await _firestore.collection(_getCollectionPath('customers')).doc(customer.name).set(customer.toJson());
   }
 
   @override
   Future<void> deleteCustomer(String customerName) async {
-    await _firestore.collection('customers').doc(customerName).delete();
+    await _firestore.collection(_getCollectionPath('customers')).doc(customerName).delete();
   }
 
   @override
   Future<List<Customer>> getAllCustomers(IconData Function(String?) getIcon) async {
-    final snapshot = await _firestore.collection('customers').get();
+    final snapshot = await _firestore.collection(_getCollectionPath('customers')).get();
     return snapshot.docs.map((doc) {
       return Customer.fromJson(doc.data(), getIcon);
     }).toList();

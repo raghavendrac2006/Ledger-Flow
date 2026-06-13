@@ -4,11 +4,22 @@ import 'package:ledgerflow/core/repositories/owner_finance_repository.dart';
 
 class FirestoreOwnerFinanceRepository implements OwnerFinanceRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final String businessId;
+
+  FirestoreOwnerFinanceRepository({required this.businessId});
+
+  String _getCollectionPath(String collectionName) {
+    if (businessId == 'business_1') {
+      return collectionName;
+    } else {
+      return 'businesses/$businessId/$collectionName';
+    }
+  }
 
   @override
   Stream<OwnerLoanConfig?> getActiveLoanStream() {
     return _firestore
-        .collection('owner_loans')
+        .collection(_getCollectionPath('owner_loans'))
         .doc('default_owner_loan')
         .snapshots()
         .map((snapshot) {
@@ -21,14 +32,14 @@ class FirestoreOwnerFinanceRepository implements OwnerFinanceRepository {
 
   @override
   Future<void> updateNotes(String loanId, String notes) async {
-    await _firestore.collection('owner_loans').doc(loanId).update({
+    await _firestore.collection(_getCollectionPath('owner_loans')).doc(loanId).update({
       'notes': notes,
     });
   }
 
   @override
   Future<void> addRepayment(String loanId, RepaymentLog repayment) async {
-    final loanRef = _firestore.collection('owner_loans').doc(loanId);
+    final loanRef = _firestore.collection(_getCollectionPath('owner_loans')).doc(loanId);
     final repaymentRef = loanRef.collection('repayments').doc(repayment.id);
 
     final batch = _firestore.batch();
@@ -41,7 +52,7 @@ class FirestoreOwnerFinanceRepository implements OwnerFinanceRepository {
 
   @override
   Future<void> updateTotalBorrowed(String loanId, double totalBorrowed) async {
-    await _firestore.collection('owner_loans').doc(loanId).update({
+    await _firestore.collection(_getCollectionPath('owner_loans')).doc(loanId).update({
       'totalBorrowed': totalBorrowed,
     });
   }
@@ -49,7 +60,7 @@ class FirestoreOwnerFinanceRepository implements OwnerFinanceRepository {
   @override
   Stream<List<RepaymentLog>> getRepaymentsStream(String loanId) {
     return _firestore
-        .collection('owner_loans')
+        .collection(_getCollectionPath('owner_loans'))
         .doc(loanId)
         .collection('repayments')
         .snapshots()
@@ -63,7 +74,7 @@ class FirestoreOwnerFinanceRepository implements OwnerFinanceRepository {
 
   @override
   Future<void> initDefaultLoanConfigIfEmpty() async {
-    final docRef = _firestore.collection('owner_loans').doc('default_owner_loan');
+    final docRef = _firestore.collection(_getCollectionPath('owner_loans')).doc('default_owner_loan');
     final snapshot = await docRef.get();
     if (!snapshot.exists) {
       final defaultLoan = OwnerLoanConfig(
@@ -90,7 +101,7 @@ class FirestoreOwnerFinanceRepository implements OwnerFinanceRepository {
   @override
   Future<OwnerLoanConfig?> getActiveLoan() async {
     final snapshot = await _firestore
-        .collection('owner_loans')
+        .collection(_getCollectionPath('owner_loans'))
         .doc('default_owner_loan')
         .get();
     if (!snapshot.exists || snapshot.data() == null) {
@@ -102,7 +113,7 @@ class FirestoreOwnerFinanceRepository implements OwnerFinanceRepository {
   @override
   Future<List<RepaymentLog>> getRepayments(String loanId) async {
     final snapshot = await _firestore
-        .collection('owner_loans')
+        .collection(_getCollectionPath('owner_loans'))
         .doc(loanId)
         .collection('repayments')
         .get();
@@ -115,7 +126,7 @@ class FirestoreOwnerFinanceRepository implements OwnerFinanceRepository {
   @override
   Stream<List<SavingsLog>> getSavingsLogsStream() {
     return _firestore
-        .collection('savings_logs')
+        .collection(_getCollectionPath('savings_logs'))
         .snapshots()
         .map((snapshot) {
       final list = snapshot.docs.map((doc) => SavingsLog.fromJson(doc.data())).toList();
@@ -128,7 +139,7 @@ class FirestoreOwnerFinanceRepository implements OwnerFinanceRepository {
   @override
   Future<void> addSavingsLog(SavingsLog log) async {
     await _firestore
-        .collection('savings_logs')
+        .collection(_getCollectionPath('savings_logs'))
         .doc(log.id)
         .set(log.toJson());
   }
@@ -136,7 +147,7 @@ class FirestoreOwnerFinanceRepository implements OwnerFinanceRepository {
   @override
   Stream<SavingsRecommendation?> getPendingSavingsRecommendationStream(String date) {
     return _firestore
-        .collection('savings_recommendations')
+        .collection(_getCollectionPath('savings_recommendations'))
         .doc(date)
         .snapshots()
         .map((snapshot) {
@@ -162,7 +173,7 @@ class FirestoreOwnerFinanceRepository implements OwnerFinanceRepository {
       updates['transferred_amount'] = transferredAmount;
     }
     await _firestore
-        .collection('savings_recommendations')
+        .collection(_getCollectionPath('savings_recommendations'))
         .doc(date)
         .update(updates);
   }

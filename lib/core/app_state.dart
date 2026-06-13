@@ -30,6 +30,8 @@ String toSentenceCase(String text) {
 }
 
 class LedgerState extends ChangeNotifier {
+  final String businessId;
+  final Function(String) onBusinessChanged;
   final CustomerRepository customerRepository;
   final DeliveryLogRepository deliveryLogRepository;
   final ExpenseRepository expenseRepository;
@@ -39,6 +41,8 @@ class LedgerState extends ChangeNotifier {
   final bool isMockMode;
 
   LedgerState({
+    required this.businessId,
+    required this.onBusinessChanged,
     required this.customerRepository,
     required this.deliveryLogRepository,
     required this.expenseRepository,
@@ -56,6 +60,14 @@ class LedgerState extends ChangeNotifier {
         notifyListeners();
       }
     });
+  }
+
+  String _getCollectionPath(String collectionName) {
+    if (businessId == 'business_1') {
+      return collectionName;
+    } else {
+      return 'businesses/$businessId/$collectionName';
+    }
   }
 
   bool _isLoading = true;
@@ -1647,7 +1659,7 @@ class LedgerState extends ChangeNotifier {
     try {
       // 1. Check if recommendation document already exists in Firestore
       final docSnap = await FirebaseFirestore.instance
-          .collection('savings_recommendations')
+          .collection(_getCollectionPath('savings_recommendations'))
           .doc(yesterdayDateStr)
           .get();
 
@@ -1668,13 +1680,13 @@ class LedgerState extends ChangeNotifier {
       final String endIso = yesterdayEnd.toIso8601String();
 
       final logsSnapshot = await FirebaseFirestore.instance
-          .collection('deliveryLogs')
+          .collection(_getCollectionPath('deliveryLogs'))
           .where('dateTime', isGreaterThanOrEqualTo: startIso)
           .where('dateTime', isLessThanOrEqualTo: endIso)
           .get();
 
       final expensesSnapshot = await FirebaseFirestore.instance
-          .collection('expenses')
+          .collection(_getCollectionPath('expenses'))
           .where('date', isEqualTo: yesterdayDateStr)
           .get();
 
@@ -1711,7 +1723,7 @@ class LedgerState extends ChangeNotifier {
       int maxSavingsPct = 7;
       try {
         final settingsDoc = await FirebaseFirestore.instance
-            .collection('settings')
+            .collection(_getCollectionPath('settings'))
             .doc('financeSettings')
             .get();
         if (settingsDoc.exists && settingsDoc.data() != null) {
@@ -1774,7 +1786,7 @@ class LedgerState extends ChangeNotifier {
       }
 
       await FirebaseFirestore.instance
-          .collection('savings_recommendations')
+          .collection(_getCollectionPath('savings_recommendations'))
           .doc(yesterdayDateStr)
           .set({
         'date': yesterdayDateStr,

@@ -94,7 +94,7 @@ class _HomeShellState extends State<HomeShell> {
               ),
               child: Center(
                 child: Text(
-                  "Delivery Pro".toUpperCase(),
+                  "LedgerFlow".toUpperCase(),
                   style: AppTheme.headlineLg.copyWith(color: Colors.white, letterSpacing: 1.5),
                 ),
               ),
@@ -108,13 +108,35 @@ class _HomeShellState extends State<HomeShell> {
             _buildDrawerTile(6, "AI Analyst", Icons.psychology),
             const Spacer(),
             const Divider(color: Colors.white10),
-            _buildDrawerTile(-1, "Reset Rounds", Icons.refresh, onTap: () {
-              state.resetRounds();
-              setState(() {
-                _currentIndex = 0;
-              });
-              Navigator.pop(context);
-            }),
+            PopupMenuButton<String>(
+              offset: const Offset(20, -100),
+              color: const Color(0xFF1E293B),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                side: const BorderSide(color: Colors.white10),
+              ),
+              onSelected: (val) {
+                state.onBusinessChanged(val);
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'business_1',
+                  child: Text('Business 1', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+                const PopupMenuItem(
+                  value: 'business_2',
+                  child: Text('Business 2', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ],
+              child: IgnorePointer(
+                child: _buildDrawerTile(
+                  -2,
+                  state.businessId == 'business_1' ? 'Business 1' : 'Business 2',
+                  Icons.swap_horiz,
+                  onTap: () {},
+                ),
+              ),
+            ),
             const SizedBox(height: 16.0),
           ],
         ),
@@ -168,7 +190,7 @@ class _HomeShellState extends State<HomeShell> {
                     child: Padding(
                       padding: const EdgeInsets.all(24.0),
                       child: Text(
-                        "Delivery Pro".toUpperCase(),
+                        "LedgerFlow".toUpperCase(),
                         style: AppTheme.headlineLg.copyWith(color: Colors.white, letterSpacing: 1.5),
                       ),
                     ),
@@ -192,12 +214,35 @@ class _HomeShellState extends State<HomeShell> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         const Divider(color: Colors.white10),
-                        _buildSidebarItem(-1, "Reset Rounds", Icons.refresh, onTap: () {
-                          state.resetRounds();
-                          setState(() {
-                            _currentIndex = 0;
-                          });
-                        }),
+                        PopupMenuButton<String>(
+                          offset: const Offset(20, -100),
+                          color: const Color(0xFF1E293B),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                            side: const BorderSide(color: Colors.white10),
+                          ),
+                          onSelected: (val) {
+                            state.onBusinessChanged(val);
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 'business_1',
+                              child: Text('Business 1', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            ),
+                            const PopupMenuItem(
+                              value: 'business_2',
+                              child: Text('Business 2', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                          child: IgnorePointer(
+                            child: _buildSidebarItem(
+                              -2,
+                              state.businessId == 'business_1' ? 'Business 1' : 'Business 2',
+                              Icons.swap_horiz,
+                              onTap: () {},
+                            ),
+                          ),
+                        ),
                         const SizedBox(height: 24.0),
                       ],
                     ),
@@ -275,7 +320,7 @@ class _HomeShellState extends State<HomeShell> {
       case 6:
         return "AI Analyst";
       default:
-        return "Delivery Pro";
+        return "LedgerFlow";
     }
   }
 
@@ -293,9 +338,11 @@ class _HomeShellState extends State<HomeShell> {
       selected: isSelected,
       selectedTileColor: AppTheme.primaryContainer,
       onTap: onTap ?? () {
-        setState(() {
-          _currentIndex = index;
-        });
+        if (index >= 0) {
+          setState(() {
+            _currentIndex = index;
+          });
+        }
         Navigator.pop(context);
       },
     );
@@ -307,9 +354,11 @@ class _HomeShellState extends State<HomeShell> {
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
       child: InkWell(
         onTap: onTap ?? () {
-          setState(() {
-            _currentIndex = index;
-          });
+          if (index >= 0) {
+            setState(() {
+              _currentIndex = index;
+            });
+          }
         },
         borderRadius: BorderRadius.circular(AppTheme.radiusXl),
         child: Container(

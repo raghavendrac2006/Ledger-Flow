@@ -1,0 +1,1226 @@
+{
+  "customers": [
+    {
+      "_doc_id": "Amma",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/customers/Amma",
+      "type": "RETAIL",
+      "status": "Active Client",
+      "area": "Custom Area",
+      "location": "Added via Sales",
+      "name": "Amma",
+      "outstanding": 100.0
+    },
+    {
+      "_doc_id": "Anji",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/customers/Anji",
+      "name": "Anji",
+      "location": "Added via Sales",
+      "area": "Custom Area",
+      "status": "Active Client",
+      "type": "RETAIL",
+      "outstanding": 0.0
+    },
+    {
+      "_doc_id": "Avr",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/customers/Avr",
+      "status": "Active Client",
+      "area": "Custom Area",
+      "location": "Added via Sales",
+      "name": "Avr",
+      "type": "RETAIL",
+      "outstanding": 0.0
+    },
+    {
+      "_doc_id": "Bakery pes",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/customers/Bakery pes",
+      "outstanding": 800.0,
+      "status": "Active Client",
+      "area": "",
+      "location": "",
+      "name": "Bakery pes",
+      "type": ""
+    },
+    {
+      "_doc_id": "Balu",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/customers/Balu",
+      "outstanding": 0.0,
+      "status": "Active Client",
+      "name": "Balu",
+      "location": "Added via Sales",
+      "area": "Custom Area",
+      "type": "RETAIL"
+    },
+    {
+      "_doc_id": "Bava",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/customers/Bava",
+      "area": "",
+      "name": "Bava",
+      "location": "",
+      "status": "Active Client",
+      "type": "",
+      "outstanding": 200.0
+    },
+    {
+      "_doc_id": "Divya",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/customers/Divya",
+      "outstanding": 0.0,
+      "status": "Active Client",
+      "name": "Divya",
+      "location": "Added via Sales",
+      "area": "Custom Area",
+      "type": "RETAIL"
+    },
+    {
+      "_doc_id": "Down shop pes",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/customers/Down shop pes",
+      "status": "Active Client",
+      "location": "",
+      "name": "Down shop pes",
+      "area": "",
+      "type": "",
+      "outstanding": 200.0
+    },
+    {
+      "_doc_id": "Factory",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/customers/Factory",
+      "outstanding": 200.0,
+      "status": "Active Client",
+      "area": "",
+      "location": "",
+      "name": "Factory",
+      "type": ""
+    },
+    {
+      "_doc_id": "Lachy",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/customers/Lachy",
+      "name": "Lachy",
+      "location": "",
+      "area": "",
+      "status": "Active Client",
+      "type": "",
+      "outstanding": 0.0
+    },
+    {
+      "_doc_id": "Lakshmi puram",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/customers/Lakshmi puram",
+      "type": "",
+      "area": "",
+      "location": "",
+      "name": "Lakshmi puram",
+      "status": "Active Client",
+      "outstanding": 0.0
+    },
+    {
+      "_doc_id": "Milk",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/customers/Milk",
+      "outstanding": 0.0,
+      "status": "Active Client",
+      "area": "",
+      "location": "",
+      "name": "Milk",
+      "type": ""
+    },
+    {
+      "_doc_id": "Mohan",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/customers/Mohan",
+      "outstanding": 0.0,
+      "status": "Active Client",
+      "area": "Custom Area",
+      "name": "Mohan",
+      "location": "Added via Sales",
+      "type": "RETAIL"
+    },
+    {
+      "_doc_id": "Murali pes",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/customers/Murali pes",
+      "outstanding": 0.0,
+      "type": "",
+      "status": "Active Client",
+      "location": "",
+      "name": "Murali pes",
+      "area": ""
+    },
+    {
+      "_doc_id": "Muslim",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/customers/Muslim",
+      "status": "Active Client",
+      "area": "",
+      "name": "Muslim",
+      "location": "Downtown Market",
+      "type": "RETAIL",
+      "outstanding": 0.0
+    },
+    {
+      "_doc_id": "Ramchandra",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/customers/Ramchandra",
+      "outstanding": 200.0,
+      "status": "Active Client",
+      "name": "Ramchandra",
+      "location": "",
+      "area": "",
+      "type": ""
+    },
+    {
+      "_doc_id": "Santosh",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/customers/Santosh",
+      "status": "Active Client",
+      "area": "",
+      "location": "",
+      "name": "Santosh",
+      "type": "",
+      "outstanding": 0.0
+    },
+    {
+      "_doc_id": "Showkath",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/customers/Showkath",
+      "type": "",
+      "area": "",
+      "location": "",
+      "name": "Showkath",
+      "status": "Active Client",
+      "outstanding": 0.0
+    },
+    {
+      "_doc_id": "Somu",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/customers/Somu",
+      "outstanding": 0.0,
+      "status": "Active Client",
+      "area": "Custom Area",
+      "location": "Added via Sales",
+      "name": "Somu",
+      "type": "RETAIL"
+    },
+    {
+      "_doc_id": "Supermarket pes",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/customers/Supermarket pes",
+      "status": "Active Client",
+      "area": "",
+      "name": "Supermarket pes",
+      "location": "",
+      "type": "",
+      "outstanding": 0.0
+    },
+    {
+      "_doc_id": "Venkatesh",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/customers/Venkatesh",
+      "outstanding": 0.0,
+      "type": "RETAIL",
+      "area": "Custom Area",
+      "location": "Added via Sales",
+      "name": "Venkatesh",
+      "status": "Active Client"
+    }
+  ],
+  "deliveryLogs": [
+    {
+      "_doc_id": "LOG_1779890301982",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1779890301982",
+      "customerName": "Bakery pes",
+      "associatedBagId": "BAG_1779890210430",
+      "isPayment": false,
+      "serialNo": 1002,
+      "dateTime": "2026-05-27T19:26:23.027663",
+      "itemName": "1 rs. chakli",
+      "isPaid": true,
+      "amount": 800.0,
+      "date": "27 May 2026"
+    },
+    {
+      "_doc_id": "LOG_1779890321035",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1779890321035",
+      "isPayment": false,
+      "serialNo": 1003,
+      "customerName": "Venkatesh",
+      "associatedBagId": "BAG_1779890210430",
+      "date": "27 May 2026",
+      "dateTime": "2026-05-27T19:26:23.027663",
+      "itemName": "1 rs. chakli",
+      "isPaid": true,
+      "amount": 85.0
+    },
+    {
+      "_doc_id": "LOG_1779959553955",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1779959553955",
+      "date": "28 May 2026",
+      "isPaid": true,
+      "amount": 150.0,
+      "dateTime": "2026-05-28T14:40:51.355131",
+      "itemName": "Rs.5 chakli",
+      "serialNo": 1004,
+      "isPayment": false,
+      "associatedBagId": "BAG_1779890210430",
+      "customerName": "Ramchandra"
+    },
+    {
+      "_doc_id": "LOG_1779959575062",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1779959575062",
+      "serialNo": 1005,
+      "isPayment": false,
+      "associatedBagId": "BAG_1779890210430",
+      "customerName": "Lachy",
+      "date": "28 May 2026",
+      "isPaid": true,
+      "amount": 100.0,
+      "itemName": "Rs.5 chakli",
+      "dateTime": "2026-05-28T14:40:51.355131"
+    },
+    {
+      "_doc_id": "LOG_1780547295643",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1780547295643",
+      "isPayment": false,
+      "serialNo": 1006,
+      "customerName": "Bakery pes",
+      "associatedBagId": "BAG_1779890210430",
+      "date": "4 Jun 2026",
+      "dateTime": "2026-06-04T09:56:26.974788",
+      "itemName": "1 rs. chakli",
+      "isPaid": false,
+      "amount": 1000.0
+    },
+    {
+      "_doc_id": "LOG_1780547314926",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1780547314926",
+      "customerName": "Down shop pes",
+      "associatedBagId": "BAG_1779890210430",
+      "isPayment": false,
+      "serialNo": 1007,
+      "itemName": "1 rs. chakli",
+      "dateTime": "2026-06-04T09:56:26.974788",
+      "amount": 200.0,
+      "isPaid": true,
+      "date": "4 Jun 2026"
+    },
+    {
+      "_doc_id": "LOG_1780547330745",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1780547330745",
+      "date": "4 Jun 2026",
+      "isPaid": true,
+      "amount": 200.0,
+      "dateTime": "2026-06-04T09:56:26.974788",
+      "itemName": "1 rs. chakli",
+      "serialNo": 1008,
+      "isPayment": false,
+      "associatedBagId": "BAG_1779890210430",
+      "customerName": "Murali pes"
+    },
+    {
+      "_doc_id": "LOG_1780547358775",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1780547358775",
+      "customerName": "Mohan",
+      "associatedBagId": "BAG_1779890210430",
+      "serialNo": 1009,
+      "isPayment": false,
+      "amount": 100.0,
+      "isPaid": true,
+      "itemName": "1 rs. chakli",
+      "dateTime": "2026-06-04T09:56:26.974788",
+      "date": "4 Jun 2026"
+    },
+    {
+      "_doc_id": "LOG_1780547412430",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1780547412430",
+      "date": "4 Jun 2026",
+      "itemName": "1 rs. chakli",
+      "dateTime": "2026-06-04T09:56:26.974788",
+      "amount": 170.0,
+      "isPaid": true,
+      "isPayment": false,
+      "serialNo": 1011,
+      "associatedBagId": "BAG_1779890210430",
+      "customerName": "Venkatesh"
+    },
+    {
+      "_doc_id": "LOG_1780633286517",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1780633286517",
+      "amount": 200.0,
+      "isPaid": false,
+      "dateTime": "2026-06-05T09:50:49.118933",
+      "itemName": "1 \u20b9 chakli",
+      "date": "5 Jun 2026",
+      "associatedBagId": "BAG_1779890210430",
+      "customerName": "Supermarket pes",
+      "serialNo": 1025,
+      "isPayment": false
+    },
+    {
+      "_doc_id": "LOG_1780633311647",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1780633311647",
+      "date": "5 Jun 2026",
+      "dateTime": "2026-06-05T09:50:49.118933",
+      "itemName": "1 \u20b9 chakli",
+      "amount": 300.0,
+      "isPaid": true,
+      "isPayment": false,
+      "serialNo": 1027,
+      "associatedBagId": "BAG_1779890210430",
+      "customerName": "Lakshmi puram"
+    },
+    {
+      "_doc_id": "LOG_1780633328077",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1780633328077",
+      "isPaid": true,
+      "amount": 100.0,
+      "itemName": "1 \u20b9 chakli",
+      "dateTime": "2026-06-05T09:50:49.118933",
+      "date": "5 Jun 2026",
+      "associatedBagId": "BAG_1779890210430",
+      "customerName": "Showkath",
+      "serialNo": 1029,
+      "isPayment": false
+    },
+    {
+      "_doc_id": "LOG_1780633358100",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1780633358100",
+      "serialNo": 1031,
+      "isPayment": false,
+      "associatedBagId": "BAG_1779890210430",
+      "customerName": "Milk",
+      "date": "5 Jun 2026",
+      "isPaid": false,
+      "amount": 400.0,
+      "itemName": "1 \u20b9 chakli",
+      "dateTime": "2026-06-05T09:50:49.118933"
+    },
+    {
+      "_doc_id": "LOG_1780633374881",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1780633374881",
+      "associatedBagId": "BAG_1779890210430",
+      "customerName": "Ramchandra",
+      "isPayment": false,
+      "serialNo": 1033,
+      "dateTime": "2026-06-05T09:50:49.118933",
+      "itemName": "1 \u20b9 chakli",
+      "isPaid": true,
+      "amount": 200.0,
+      "date": "5 Jun 2026"
+    },
+    {
+      "_doc_id": "LOG_1780633395714",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1780633395714",
+      "isPaid": true,
+      "amount": 170.0,
+      "itemName": "1 \u20b9 chakli",
+      "dateTime": "2026-06-05T09:50:49.118933",
+      "date": "5 Jun 2026",
+      "associatedBagId": "BAG_1779890210430",
+      "customerName": "Somu",
+      "serialNo": 1035,
+      "isPayment": false
+    },
+    {
+      "_doc_id": "LOG_1780633418057",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1780633418057",
+      "date": "5 Jun 2026",
+      "itemName": "1 \u20b9 chakli",
+      "dateTime": "2026-06-05T09:50:49.118933",
+      "amount": 200.0,
+      "isPaid": true,
+      "isPayment": false,
+      "serialNo": 1037,
+      "associatedBagId": "BAG_1779890210430",
+      "customerName": "Bava"
+    },
+    {
+      "_doc_id": "LOG_1780653933963",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1780653933963",
+      "isPayment": false,
+      "serialNo": 1038,
+      "customerName": "Divya",
+      "associatedBagId": "BAG_1779890210430",
+      "date": "5 Jun 2026",
+      "itemName": "1 \u20b9 chakli",
+      "dateTime": "2026-06-05T15:34:30.712",
+      "amount": 40,
+      "isPaid": true
+    },
+    {
+      "_doc_id": "LOG_1780882948859",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1780882948859",
+      "date": "5 Jun 2026",
+      "isPaid": true,
+      "amount": 200.0,
+      "itemName": "1 \u20b9 chakli",
+      "dateTime": "2026-06-05T00:00:00.000",
+      "serialNo": 1039,
+      "isPayment": false,
+      "associatedBagId": "BAG_1779890210430",
+      "customerName": "Balu"
+    },
+    {
+      "_doc_id": "LOG_1780883020227",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1780883020227",
+      "date": "5 Jun 2026",
+      "itemName": "\u20b95 chakli",
+      "dateTime": "2026-06-05T00:00:00.000",
+      "isPaid": true,
+      "amount": 100.0,
+      "isPayment": false,
+      "serialNo": 1041,
+      "associatedBagId": "BAG_1779890210430",
+      "customerName": "Balu"
+    },
+    {
+      "_doc_id": "LOG_1780883029911",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1780883029911",
+      "isPayment": false,
+      "serialNo": 1043,
+      "customerName": "Ramchandra",
+      "associatedBagId": "BAG_1779890210430",
+      "date": "5 Jun 2026",
+      "itemName": "\u20b95 chakli",
+      "dateTime": "2026-06-05T00:00:00.000",
+      "isPaid": true,
+      "amount": 300.0
+    },
+    {
+      "_doc_id": "LOG_1780883077871",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1780883077871",
+      "date": "6 Jun 2026",
+      "itemName": "1 \u20b9 chakli",
+      "dateTime": "2026-06-06T00:00:00.000",
+      "isPaid": false,
+      "amount": 300.0,
+      "isPayment": false,
+      "serialNo": 1045,
+      "associatedBagId": "BAG_1779890210430",
+      "customerName": "Balu"
+    },
+    {
+      "_doc_id": "LOG_1780883104727",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1780883104727",
+      "serialNo": 1049,
+      "isPayment": false,
+      "customerName": "Anji",
+      "associatedBagId": "BAG_1779890210430",
+      "date": "6 Jun 2026",
+      "amount": 100.0,
+      "isPaid": true,
+      "dateTime": "2026-06-06T00:00:00.000",
+      "itemName": "1 \u20b9 chakli"
+    },
+    {
+      "_doc_id": "LOG_1780883116819",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1780883116819",
+      "associatedBagId": "BAG_1779890210430",
+      "customerName": "Santosh",
+      "isPayment": false,
+      "serialNo": 1051,
+      "dateTime": "2026-06-06T00:00:00.000",
+      "itemName": "1 \u20b9 chakli",
+      "amount": 500.0,
+      "isPaid": true,
+      "date": "6 Jun 2026"
+    },
+    {
+      "_doc_id": "LOG_1780883127006",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1780883127006",
+      "customerName": "Factory",
+      "associatedBagId": "BAG_1779890210430",
+      "serialNo": 1053,
+      "isPayment": false,
+      "isPaid": false,
+      "amount": 200.0,
+      "itemName": "1 \u20b9 chakli",
+      "dateTime": "2026-06-06T00:00:00.000",
+      "date": "6 Jun 2026"
+    },
+    {
+      "_doc_id": "LOG_1780883136102",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1780883136102",
+      "date": "6 Jun 2026",
+      "amount": 200.0,
+      "isPaid": true,
+      "dateTime": "2026-06-06T00:00:00.000",
+      "itemName": "1 \u20b9 chakli",
+      "serialNo": 1055,
+      "isPayment": false,
+      "customerName": "Factory",
+      "associatedBagId": "BAG_1779890210430"
+    },
+    {
+      "_doc_id": "LOG_1780903500870",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1780903500870",
+      "serialNo": 1062,
+      "isPayment": false,
+      "customerName": "Down shop pes",
+      "associatedBagId": "BAG_1779890210430",
+      "date": "8 Jun 2026",
+      "amount": 200.0,
+      "isPaid": true,
+      "itemName": "1 \u20b9 chakli",
+      "dateTime": "2026-06-08T12:54:01.355285"
+    },
+    {
+      "_doc_id": "LOG_1780903507924",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1780903507924",
+      "customerName": "Murali pes",
+      "associatedBagId": "BAG_1779890210430",
+      "serialNo": 1064,
+      "isPayment": false,
+      "amount": 300.0,
+      "isPaid": false,
+      "itemName": "1 \u20b9 chakli",
+      "dateTime": "2026-06-08T12:54:01.355285",
+      "date": "8 Jun 2026"
+    },
+    {
+      "_doc_id": "LOG_1780922341094",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1780922341094",
+      "associatedBagId": "BAG_1779890210430",
+      "customerName": "Bakery pes",
+      "isPayment": false,
+      "serialNo": 1066,
+      "itemName": "1 \u20b9 chakli",
+      "dateTime": "2026-06-08T18:08:49.139355",
+      "isPaid": false,
+      "amount": 1500.0,
+      "date": "8 Jun 2026"
+    },
+    {
+      "_doc_id": "LOG_1781064326436",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1781064326436",
+      "isPaid": true,
+      "amount": 700.0,
+      "dateTime": "2026-06-10T09:34:53.041157",
+      "itemName": "1 \u20b9 chakli",
+      "date": "10 Jun 2026",
+      "associatedBagId": "BAG_1780969424862",
+      "customerName": "Bakery pes",
+      "serialNo": 1072,
+      "isPayment": false
+    },
+    {
+      "_doc_id": "LOG_1781064335453",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1781064335453",
+      "amount": 300.0,
+      "isPaid": true,
+      "itemName": "1 \u20b9 chakli",
+      "dateTime": "2026-06-10T09:34:53.041157",
+      "date": "10 Jun 2026",
+      "associatedBagId": "BAG_1780969424862",
+      "customerName": "Down shop pes",
+      "serialNo": 1074,
+      "isPayment": false
+    },
+    {
+      "_doc_id": "LOG_1781079664146",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1781079664146",
+      "serialNo": 1075,
+      "isPayment": false,
+      "associatedBagId": "BAG_1780969424862",
+      "customerName": "Lachy",
+      "date": "10 Jun 2026",
+      "isPaid": false,
+      "amount": 220.0,
+      "itemName": "1 \u20b9 chakli",
+      "dateTime": "2026-06-10T13:50:06.847972"
+    },
+    {
+      "_doc_id": "LOG_1781150113466",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1781150113466",
+      "serialNo": 1078,
+      "isPayment": false,
+      "associatedBagId": "BAG_1780969424862",
+      "customerName": "Milk",
+      "date": "11 Jun 2026",
+      "amount": 300.0,
+      "isPaid": true,
+      "itemName": "1 \u20b9 chakli",
+      "dateTime": "2026-06-11T09:24:28.895352"
+    },
+    {
+      "_doc_id": "LOG_1781150123145",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1781150123145",
+      "isPayment": false,
+      "serialNo": 1080,
+      "customerName": "Avr",
+      "associatedBagId": "BAG_1780969424862",
+      "date": "11 Jun 2026",
+      "dateTime": "2026-06-11T09:24:28.895352",
+      "itemName": "1 \u20b9 chakli",
+      "amount": 200.0,
+      "isPaid": true
+    },
+    {
+      "_doc_id": "LOG_1781150133101",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1781150133101",
+      "associatedBagId": "BAG_1780969424862",
+      "customerName": "Ramchandra",
+      "isPayment": false,
+      "serialNo": 1082,
+      "dateTime": "2026-06-11T09:24:28.895352",
+      "itemName": "1 \u20b9 chakli",
+      "amount": 200.0,
+      "isPaid": false,
+      "date": "11 Jun 2026"
+    },
+    {
+      "_doc_id": "LOG_1781158111008",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1781158111008",
+      "date": "11 Jun 2026",
+      "itemName": "1 \u20b9 chakli",
+      "dateTime": "2026-06-11T11:38:05.183269",
+      "isPaid": true,
+      "amount": 200.0,
+      "isPayment": false,
+      "serialNo": 1083,
+      "customerName": "Supermarket pes",
+      "associatedBagId": "BAG_1780969424862"
+    },
+    {
+      "_doc_id": "LOG_1781158119292",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1781158119292",
+      "isPayment": false,
+      "serialNo": 1085,
+      "associatedBagId": "BAG_1780969424862",
+      "customerName": "Murali pes",
+      "date": "11 Jun 2026",
+      "dateTime": "2026-06-11T11:38:05.183269",
+      "itemName": "1 \u20b9 chakli",
+      "amount": 200.0,
+      "isPaid": true
+    },
+    {
+      "_doc_id": "LOG_1781325456129",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1781325456129",
+      "customerName": "Bakery pes",
+      "associatedBagId": "BAG_1780969424862",
+      "isPayment": false,
+      "serialNo": 1086,
+      "itemName": "1 \u20b9 chakli",
+      "dateTime": "2026-06-13T10:07:09.312233",
+      "amount": 800.0,
+      "isPaid": false,
+      "date": "13 Jun 2026"
+    },
+    {
+      "_doc_id": "LOG_1781325466150",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1781325466150",
+      "date": "13 Jun 2026",
+      "dateTime": "2026-06-13T10:07:09.312233",
+      "itemName": "1 \u20b9 chakli",
+      "amount": 200.0,
+      "isPaid": false,
+      "isPayment": false,
+      "serialNo": 1088,
+      "customerName": "Down shop pes",
+      "associatedBagId": "BAG_1780969424862"
+    },
+    {
+      "_doc_id": "LOG_1781325477413",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_1781325477413",
+      "associatedBagId": "BAG_1780969424862",
+      "customerName": "Amma",
+      "isPayment": false,
+      "serialNo": 1090,
+      "itemName": "1 \u20b9 chakli",
+      "dateTime": "2026-06-13T10:07:09.312233",
+      "isPaid": false,
+      "amount": 100.0,
+      "date": "13 Jun 2026"
+    },
+    {
+      "_doc_id": "LOG_Muslim_New_80",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/LOG_Muslim_New_80",
+      "dateTime": "2026-06-08T13:58:48.000Z",
+      "itemName": "Standard delivery",
+      "amount": 80.0,
+      "isPaid": false,
+      "customerName": "Muslim",
+      "isPayment": false,
+      "serialNo": 1047,
+      "date": "08 Jun 2026"
+    },
+    {
+      "_doc_id": "PAY_1780883156722",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/PAY_1780883156722",
+      "associatedBagId": null,
+      "customerName": "Bakery pes",
+      "isPayment": true,
+      "serialNo": 1057,
+      "itemName": "Cash Collected",
+      "dateTime": "2026-06-08T07:15:54.062647",
+      "isPaid": true,
+      "amount": 1000.0,
+      "date": "8 Jun 2026"
+    },
+    {
+      "_doc_id": "PAY_1780883208124",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/PAY_1780883208124",
+      "isPayment": true,
+      "serialNo": 1059,
+      "customerName": "Supermarket pes",
+      "associatedBagId": null,
+      "date": "8 Jun 2026",
+      "itemName": "Cash Collected",
+      "dateTime": "2026-06-08T07:16:46.204810",
+      "amount": 200.0,
+      "isPaid": true
+    },
+    {
+      "_doc_id": "PAY_1780922226242",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/PAY_1780922226242",
+      "associatedBagId": null,
+      "customerName": "Murali pes",
+      "isPayment": true,
+      "serialNo": 1065,
+      "itemName": "Cash Collected",
+      "dateTime": "2026-06-08T18:07:01.207723",
+      "isPaid": true,
+      "amount": 300.0,
+      "date": "8 Jun 2026"
+    },
+    {
+      "_doc_id": "PAY_1780926324737",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/PAY_1780926324737",
+      "associatedBagId": null,
+      "customerName": "Milk",
+      "isPayment": true,
+      "serialNo": 1067,
+      "dateTime": "2026-06-08T19:15:23.164193",
+      "itemName": "Cash Collected",
+      "amount": 200.0,
+      "isPaid": true,
+      "date": "8 Jun 2026"
+    },
+    {
+      "_doc_id": "PAY_1780929189484",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/PAY_1780929189484",
+      "isPaid": true,
+      "amount": 80.0,
+      "itemName": "Cash Collected",
+      "dateTime": "2026-06-08T20:02:58.718849",
+      "date": "8 Jun 2026",
+      "customerName": "Muslim",
+      "associatedBagId": null,
+      "serialNo": 1068,
+      "isPayment": true
+    },
+    {
+      "_doc_id": "PAY_1781010161261",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/PAY_1781010161261",
+      "date": "9 Jun 2026",
+      "dateTime": "2026-06-09T18:32:29.438910",
+      "itemName": "Cash Collected",
+      "amount": 1500.0,
+      "isPaid": true,
+      "isPayment": true,
+      "serialNo": 1069,
+      "customerName": "Bakery pes",
+      "associatedBagId": null
+    },
+    {
+      "_doc_id": "PAY_1781010194106",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/PAY_1781010194106",
+      "associatedBagId": null,
+      "customerName": "Balu",
+      "serialNo": 1071,
+      "isPayment": true,
+      "isPaid": true,
+      "amount": 300.0,
+      "itemName": "Cash Collected",
+      "dateTime": "2026-06-09T18:33:05.772436",
+      "date": "9 Jun 2026"
+    },
+    {
+      "_doc_id": "PAY_1781094510189",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/PAY_1781094510189",
+      "dateTime": "2026-06-10T17:58:27.956105",
+      "itemName": "Cash Collected",
+      "amount": 220.0,
+      "isPaid": true,
+      "date": "10 Jun 2026",
+      "associatedBagId": null,
+      "customerName": "Lachy",
+      "isPayment": true,
+      "serialNo": 1076
+    },
+    {
+      "_doc_id": "PAY_1781098103855",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/deliveryLogs/PAY_1781098103855",
+      "customerName": "Milk",
+      "associatedBagId": null,
+      "isPayment": true,
+      "serialNo": 1077,
+      "itemName": "Cash Collected",
+      "dateTime": "2026-06-10T18:58:19.709879",
+      "amount": 200.0,
+      "isPaid": true,
+      "date": "10 Jun 2026"
+    }
+  ],
+  "expenses": [
+    {
+      "_doc_id": "EXP_1779890357945",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1779890357945",
+      "amount": 600,
+      "category": "Cylinders",
+      "itemName": "Oil",
+      "date": "2026-05-27"
+    },
+    {
+      "_doc_id": "EXP_1779890383552",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1779890383552",
+      "date": "2026-05-27",
+      "category": "Cylinders",
+      "itemName": "Labour vegetables",
+      "amount": 100.0
+    },
+    {
+      "_doc_id": "EXP_1779959695691",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1779959695691",
+      "category": "Cylinders",
+      "itemName": "Labour medicine",
+      "date": "2026-05-28",
+      "amount": 100.0
+    },
+    {
+      "_doc_id": "EXP_1780487306828",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1780487306828",
+      "amount": 266.0,
+      "date": "2026-06-03",
+      "category": "Cylinders",
+      "itemName": "Oil"
+    },
+    {
+      "_doc_id": "EXP_1780487330682",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1780487330682",
+      "date": "2026-06-03",
+      "itemName": "Covers",
+      "category": "Cylinders",
+      "amount": 240.0
+    },
+    {
+      "_doc_id": "EXP_1780547518888",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1780547518888",
+      "date": "2026-06-04",
+      "category": "Cylinders",
+      "itemName": "Oil",
+      "amount": 635
+    },
+    {
+      "_doc_id": "EXP_1780622432380",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1780622432380",
+      "amount": 70.0,
+      "associatedBagId": "BAG_1779890210430",
+      "itemName": "Labour vegetables",
+      "date": "2026-06-04",
+      "category": "General"
+    },
+    {
+      "_doc_id": "EXP_1780628648699",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1780628648699",
+      "amount": 731.0,
+      "date": "2026-05-23",
+      "associatedBagId": "BAG_1779890210430",
+      "itemName": "Gas cylinder domestic",
+      "category": "General"
+    },
+    {
+      "_doc_id": "EXP_1780883292832",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1780883292832",
+      "date": "2026-06-06",
+      "associatedBagId": "BAG_1779890210430",
+      "itemName": "Oil",
+      "amount": 630.0,
+      "category": "General"
+    },
+    {
+      "_doc_id": "EXP_1780883314976",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1780883314976",
+      "category": "General",
+      "amount": 160.0,
+      "date": "2026-06-06",
+      "associatedBagId": "BAG_1779890210430",
+      "itemName": "Labour home"
+    },
+    {
+      "_doc_id": "EXP_1780883335331",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1780883335331",
+      "category": "General",
+      "amount": 160.0,
+      "associatedBagId": "BAG_1779890210430",
+      "itemName": "Labour home",
+      "date": "2026-06-08"
+    },
+    {
+      "_doc_id": "EXP_1780883355167",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1780883355167",
+      "category": "General",
+      "itemName": "Oil",
+      "associatedBagId": "BAG_1779890210430",
+      "date": "2026-06-08",
+      "amount": 528.0
+    },
+    {
+      "_doc_id": "EXP_1780883363793",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1780883363793",
+      "date": "2026-06-08",
+      "associatedBagId": "BAG_1779890210430",
+      "itemName": "Labour vegetables",
+      "amount": 100.0,
+      "category": "General"
+    },
+    {
+      "_doc_id": "EXP_1780883390056",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1780883390056",
+      "category": "General",
+      "amount": 100.0,
+      "associatedBagId": "BAG_1779890210430",
+      "itemName": "Labour home",
+      "date": "2026-06-08"
+    },
+    {
+      "_doc_id": "EXP_1780903543059",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1780903543059",
+      "amount": 570.0,
+      "associatedBagId": "BAG_1779890210430",
+      "itemName": "Kadale pappu",
+      "date": "2026-06-08",
+      "category": "General"
+    },
+    {
+      "_doc_id": "EXP_1780903553931",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1780903553931",
+      "date": "2026-06-08",
+      "associatedBagId": "BAG_1779890210430",
+      "itemName": "Chilli",
+      "amount": 220.0,
+      "category": "General"
+    },
+    {
+      "_doc_id": "EXP_1780969525695",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1780969525695",
+      "category": "General",
+      "date": "2026-06-09",
+      "itemName": "Machine cooli",
+      "associatedBagId": "BAG_1780969424862",
+      "amount": 315.0
+    },
+    {
+      "_doc_id": "EXP_1780982820114",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1780982820114",
+      "category": "General",
+      "date": "2026-06-09",
+      "associatedBagId": "BAG_1780969424862",
+      "itemName": "Oil",
+      "amount": 532.0
+    },
+    {
+      "_doc_id": "EXP_1781064392988",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1781064392988",
+      "amount": 1500.0,
+      "associatedBagId": "BAG_1780969424862",
+      "itemName": "Labour drinking milk",
+      "date": "2026-06-10",
+      "category": "General"
+    },
+    {
+      "_doc_id": "EXP_1781098137732",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1781098137732",
+      "date": "2026-06-10",
+      "associatedBagId": "BAG_1780969424862",
+      "itemName": "Oil",
+      "amount": 532.0,
+      "category": "General"
+    },
+    {
+      "_doc_id": "EXP_1781104790192",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1781104790192",
+      "category": "General",
+      "amount": 240.0,
+      "date": "2026-06-10",
+      "associatedBagId": "BAG_1780969424862",
+      "itemName": "Cover"
+    },
+    {
+      "_doc_id": "EXP_1781150179256",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1781150179256",
+      "category": "General",
+      "amount": 60.0,
+      "associatedBagId": "BAG_1780969424862",
+      "itemName": "Labour home",
+      "date": "2026-06-11"
+    },
+    {
+      "_doc_id": "EXP_1781267545776",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1781267545776",
+      "category": "General",
+      "itemName": "Labour home",
+      "associatedBagId": "BAG_1780969424862",
+      "date": "2026-06-12",
+      "amount": 410.0
+    },
+    {
+      "_doc_id": "EXP_1781267555802",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1781267555802",
+      "category": "General",
+      "associatedBagId": "BAG_1780969424862",
+      "itemName": "Oil",
+      "date": "2026-06-12",
+      "amount": 532.0
+    },
+    {
+      "_doc_id": "EXP_1781315629435",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1781315629435",
+      "amount": 239.0,
+      "date": "2026-05-23",
+      "associatedBagId": "BAG_1780969424862",
+      "itemName": "Labour gas",
+      "category": "General"
+    },
+    {
+      "_doc_id": "EXP_1781325534477",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1781325534477",
+      "itemName": "Oil",
+      "associatedBagId": "BAG_1780969424862",
+      "date": "2026-06-13",
+      "amount": 528.0,
+      "category": "General"
+    },
+    {
+      "_doc_id": "EXP_1781325546905",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/expenses/EXP_1781325546905",
+      "category": "General",
+      "associatedBagId": "BAG_1780969424862",
+      "itemName": "Eligaram",
+      "date": "2026-06-13",
+      "amount": 60.0
+    }
+  ],
+  "monthlyStats": [
+    {
+      "_doc_id": "2026-05",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/monthlyStats/2026-05",
+      "deliveriesCount": 5,
+      "sales": 1265.0
+    },
+    {
+      "_doc_id": "2026-06",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/monthlyStats/2026-06",
+      "deliveriesCount": 6,
+      "sales": 1770.0
+    }
+  ],
+  "owner_loans": [
+    {
+      "_doc_id": "default_owner_loan",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/owner_loans/default_owner_loan",
+      "createdAt": "2026-06-05T11:10:50.148",
+      "totalBorrowed": 900.0,
+      "amountRepaid": 300.0,
+      "notes": "",
+      "id": "default_owner_loan",
+      "description": "Owner Capital Fund"
+    }
+  ],
+  "owner_loans_repayments": {
+    "default_owner_loan": [
+      {
+        "_doc_id": "1781057937817",
+        "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/owner_loans/default_owner_loan/repayments/1781057937817",
+        "amountPaid": 300.0,
+        "id": "1781057937817",
+        "repaymentDate": "2026-06-10T07:48:57.817047"
+      }
+    ]
+  },
+  "savings_logs": [
+    {
+      "_doc_id": "SAV_1781057958684",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/savings_logs/SAV_1781057958684",
+      "notes": "Deposit to Savings",
+      "amount": 100.0,
+      "id": "SAV_1781057958684",
+      "date": "2026-06-10T07:49:18.684615",
+      "type": "deposit"
+    },
+    {
+      "_doc_id": "SAV_REC_2026-06-11",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/savings_logs/SAV_REC_2026-06-11",
+      "id": "SAV_REC_2026-06-11",
+      "date": "2026-06-12T06:32:56.007700",
+      "type": "deposit",
+      "amount": 30.0,
+      "notes": "Transfer from Daily Surplus Recommendation"
+    }
+  ],
+  "savings_recommendations": [
+    {
+      "_doc_id": "2026-06-09",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/savings_recommendations/2026-06-09",
+      "timestamp": "2026-06-10T01:55:58.655Z",
+      "processed_at": "2026-06-10T07:26:45.037886",
+      "status": "skipped",
+      "suggested_savings": 150,
+      "date": "2026-06-09",
+      "conversational_reason": "Yesterday's cash flow was positive, driven entirely by customer repayments as there were no new cash sales. Expenses were comfortably covered, resulting in a healthy surplus."
+    },
+    {
+      "_doc_id": "2026-06-10",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/savings_recommendations/2026-06-10",
+      "transferred_amount": 0,
+      "status": "transferred",
+      "suggested_savings": 0,
+      "date": "2026-06-10",
+      "conversational_reason": "Yesterday's cash-in performance was weak, with no cash received from new sales. Although customer repayments brought in \u20b9420, it was far from enough to cover the \u20b92272 in expenses, leading to a substantial negative net liquid margin of \u20b9-1852.",
+      "timestamp": "2026-06-11T01:13:47.455Z",
+      "processed_at": "2026-06-11T06:44:10.332475"
+    },
+    {
+      "_doc_id": "2026-06-11",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/savings_recommendations/2026-06-11",
+      "processed_at": "2026-06-12T06:32:56.195489",
+      "timestamp": "2026-06-12T01:02:33.576Z",
+      "suggested_savings": 30,
+      "status": "transferred",
+      "date": "2026-06-11",
+      "conversational_reason": "Yesterday was a solid day for cash flow. You brought in a healthy \u20b9600 from sales and, after covering your \u20b960 in expenses, you're left with a very good \u20b9540 surplus. This demonstrates strong operational cash generation.",
+      "transferred_amount": 30
+    },
+    {
+      "_doc_id": "2026-06-12",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/savings_recommendations/2026-06-12",
+      "timestamp": "2026-06-13T01:01:57.265Z",
+      "processed_at": "2026-06-13T06:31:59.050437",
+      "suggested_savings": 0,
+      "status": "transferred",
+      "date": "2026-06-12",
+      "conversational_reason": "Our cash-in performance yesterday was nil, with no funds received from sales or customer repayments. This led to a negative net liquid margin as expenses were incurred without any incoming cash.",
+      "transferred_amount": 0
+    }
+  ],
+  "settings": [
+    {
+      "_doc_id": "expenseItems",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/settings/expenseItems",
+      "items": [
+        "Gas cylinder commercial",
+        "Gas cylinder domestic",
+        "Petrol for scooter",
+        "Diesel for auto",
+        "Salt bag",
+        "Vehicle repair",
+        "Delivery box roll",
+        "Thread pack",
+        "Labour vegetables",
+        "Oil",
+        "Eligaram"
+      ]
+    },
+    {
+      "_doc_id": "financeSettings",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/settings/financeSettings",
+      "min_savings_pct": 2,
+      "max_savings_pct": 7
+    },
+    {
+      "_doc_id": "googleSheets",
+      "_doc_path": "projects/daily-sales-record-5d41b/databases/(default)/documents/settings/googleSheets",
+      "url": "https://script.google.com/macros/s/AKfycbwbBwZ63At8rCC-T7UKzI6XRizfA8bNEKMSFfFfWIWdeKZRpqbhpEU3OxNIC93gYTVlNg/exec"
+    }
+  ],
+  "audit_results": [],
+  "businesses": [],
+  "businesses_data": {}
+}

@@ -814,7 +814,9 @@ class _SetupScreenState extends State<SetupScreen> {
       final auditDateStr = DateFormat('yyyy-MM-dd').format(auditDate);
 
       final auditDoc = await FirebaseFirestore.instance
-          .collection('audit_results')
+          .collection(state.businessId == 'business_1'
+              ? 'audit_results'
+              : 'businesses/${state.businessId}/audit_results')
           .doc(auditDateStr)
           .get();
 
