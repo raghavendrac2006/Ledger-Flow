@@ -7,7 +7,7 @@ import '../app_theme.dart';
 
 class UpdateService {
   // Target raw URL for GitHub releases tracking
-  static const String versionUrl = "https://raw.githubusercontent.com/raghavendrac2006/Delivery-pro/main/version.json";
+  static const String versionUrl = "https://raw.githubusercontent.com/raghavendrac2006/Ledger-Flow/main/version.json";
 
   static Future<void> checkForUpdate(BuildContext context) async {
     try {
