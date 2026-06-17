@@ -874,10 +874,6 @@ class LedgerState extends ChangeNotifier {
       date: date,
       associatedBagId: activeBag?.bagId,
     ));
-    
-    if (category == "Rice Flour" && totalKg > 0.0) {
-      await addRiceFlourBag(totalKg: totalKg, cost: amount, date: date);
-    }
   }
 
   Future<void> updateExpense({
@@ -1046,23 +1042,15 @@ class LedgerState extends ChangeNotifier {
       date: date,
       usedKg: usedKg,
     ));
-
     final newUsed = activeBag.usedKg + usedKg;
     final newRemaining = activeBag.remainingKg - usedKg;
 
-    if (newRemaining <= 0.0) {
-      await _completeBag(activeBag, date, {
-        'usedKg': newUsed,
-        'remainingKg': 0.0,
-      });
-    } else {
-      final updatedBag = activeBag.copyWith(
-        usedKg: newUsed,
-        remainingKg: newRemaining,
-        status: 'Active',
-      );
-      await riceBagRepository.saveRiceBag(updatedBag);
-    }
+    final updatedBag = activeBag.copyWith(
+      usedKg: newUsed,
+      remainingKg: newRemaining < 0.0 ? 0.0 : newRemaining,
+      status: 'Active',
+    );
+    await riceBagRepository.saveRiceBag(updatedBag);
   }
 
   Future<void> closeAndStartNewBag({

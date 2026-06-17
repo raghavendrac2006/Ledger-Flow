@@ -378,7 +378,7 @@ class _SetupScreenState extends State<SetupScreen> {
                             const SizedBox(width: 16.0),
                             Expanded(
                               child: Text(
-                                "No active rice flour bag cycle started yet. Log RICE FLOUR cost in Expenses tab to initialize a bag.",
+                                "No active rice flour bag cycle started yet. Go to Summary tab and click 'Start New Bag Cycle' to initialize a bag.",
                                 style: AppTheme.labelSm.copyWith(color: AppTheme.error, fontWeight: FontWeight.bold),
                               ),
                             ),

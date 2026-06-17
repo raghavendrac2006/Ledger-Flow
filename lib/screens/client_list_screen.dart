@@ -93,7 +93,7 @@ class _ClientListScreenState extends State<ClientListScreen> {
     // Calculate dynamic stats
     final totalClients = customers.length;
     final pendingCount = customers.where((c) => c.outstanding > 0).length;
-    final totalOutstanding = customers.fold<double>(0.0, (sum, c) => sum + c.outstanding);
+    final totalOutstanding = customers.where((c) => c.outstanding > 0).fold<double>(0.0, (sum, c) => sum + c.outstanding);
     final activeCount = totalClients - pendingCount;
 
     // Filter customers
