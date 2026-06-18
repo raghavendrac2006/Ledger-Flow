@@ -11,9 +11,10 @@ class PdfService {
     required DateTimeRange dateRange,
     required List<DeliveryLog> allLogs,
   }) async {
+    final isAll = productName.toLowerCase() == 'all';
     // 1. Filter Logs by Product and Date Range (Inclusive of boundaries)
     final filteredLogs = allLogs.where((log) {
-      final matchesProduct = log.itemName.toLowerCase() == productName.toLowerCase();
+      final matchesProduct = isAll ? !log.isPayment : (log.itemName.toLowerCase() == productName.toLowerCase());
       
       // Clean dates to exclude time component
       final logDate = DateTime(log.dateTime.year, log.dateTime.month, log.dateTime.day);
@@ -128,7 +129,7 @@ class PdfService {
                           ),
                           pw.SizedBox(height: 2.0),
                           pw.Text(
-                            productName.toUpperCase(),
+                            isAll ? "ALL PRODUCTS" : productName.toUpperCase(),
                             style: pw.TextStyle(
                               fontSize: 14.0,
                               fontWeight: pw.FontWeight.bold,
@@ -245,13 +246,22 @@ class PdfService {
                   )
                 : pw.Table(
                     border: pw.TableBorder.all(color: borderColor, width: 1.5),
-                    columnWidths: {
-                      0: const pw.FlexColumnWidth(1.2), // Serial
-                      1: const pw.FlexColumnWidth(2.0), // Date
-                      2: const pw.FlexColumnWidth(3.8), // Client
-                      3: const pw.FlexColumnWidth(2.0), // Value
-                      4: const pw.FlexColumnWidth(1.8), // Status
-                    },
+                    columnWidths: isAll
+                        ? {
+                            0: const pw.FlexColumnWidth(1.0), // Serial
+                            1: const pw.FlexColumnWidth(1.8), // Date
+                            2: const pw.FlexColumnWidth(3.0), // Client
+                            3: const pw.FlexColumnWidth(2.2), // Product
+                            4: const pw.FlexColumnWidth(1.8), // Value
+                            5: const pw.FlexColumnWidth(1.5), // Status
+                          }
+                        : {
+                            0: const pw.FlexColumnWidth(1.2), // Serial
+                            1: const pw.FlexColumnWidth(2.0), // Date
+                            2: const pw.FlexColumnWidth(3.8), // Client
+                            3: const pw.FlexColumnWidth(2.0), // Value
+                            4: const pw.FlexColumnWidth(1.8), // Status
+                          },
                     children: [
                       // Header Row
                       pw.TableRow(
@@ -260,6 +270,7 @@ class PdfService {
                           tableCell("SERIAL", isHeader: true),
                           tableCell("DATE", isHeader: true),
                           tableCell("CLIENT NAME", isHeader: true),
+                          if (isAll) tableCell("PRODUCT", isHeader: true),
                           tableCell("SALES VALUE", isHeader: true, isRight: true),
                           tableCell("STATUS", isHeader: true),
                         ],
@@ -271,6 +282,7 @@ class PdfService {
                             tableCell("#${log.serialNo}"),
                             tableCell(log.date),
                             tableCell(log.customerName),
+                            if (isAll) tableCell(log.itemName),
                             tableCell("INR ${log.amount.toStringAsFixed(2)}", isRight: true),
                             pw.Padding(
                               padding: const pw.EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
@@ -358,7 +370,7 @@ class PdfService {
     final bytes = await pdf.save();
     final cleanFileName = "${productName.replaceAll(' ', '_')}_Sales_Report_${formattedStart.replaceAll(' ', '_')}_to_${formattedEnd.replaceAll(' ', '_')}.pdf";
     
-    savePdfFile(bytes, cleanFileName);
+    await savePdfFile(bytes, cleanFileName);
   }
 }
 

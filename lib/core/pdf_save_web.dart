@@ -2,7 +2,7 @@
 
 import 'dart:html' as html;
 
-void savePdfFile(List<int> bytes, String fileName) {
+Future<void> savePdfFile(List<int> bytes, String fileName) async {
   final blob = html.Blob([bytes], 'application/pdf');
   final url = html.Url.createObjectUrlFromBlob(blob);
   
