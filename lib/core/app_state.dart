@@ -52,7 +52,7 @@ class LedgerState extends ChangeNotifier {
     this.isMockMode = false,
   }) {
     _initFirestore();
-    runSentenceCaseMigration();
+    // runSentenceCaseMigration(); // Disabled to prevent heavy Firestore scans on every app startup
     // Safety timer to prevent getting stuck in loading state forever
     Timer(const Duration(seconds: 4), () {
       if (_isLoading) {
