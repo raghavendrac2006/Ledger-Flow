@@ -115,6 +115,18 @@ class LedgerState extends ChangeNotifier {
     return _savingsLogs.fold(0.0, (accumulated, log) => accumulated + log.amount);
   }
 
+  DateTime _parseBagDate(String dateStr) {
+    try {
+      return DateFormat('dd MMMM yyyy').parse(dateStr);
+    } catch (_) {
+      try {
+        return DateTime.parse(dateStr);
+      } catch (_) {
+        return DateTime.fromMillisecondsSinceEpoch(0);
+      }
+    }
+  }
+
   void _initFirestore() {
     debugPrint("--- INITIALIZING REAL-TIME CLOUD FIRESTORE ---");
 
@@ -258,8 +270,8 @@ class LedgerState extends ChangeNotifier {
       (snapshot) {
         _riceBags.clear();
         _riceBags.addAll(snapshot);
-        // Sort in memory by startDate descending
-        _riceBags.sort((a, b) => b.startDate.compareTo(a.startDate));
+        // Sort in memory by startDate descending using actual DateTime parsing
+        _riceBags.sort((a, b) => _parseBagDate(b.startDate).compareTo(_parseBagDate(a.startDate)));
         _onStreamLoaded('bags');
         notifyListeners();
       },
@@ -947,6 +959,39 @@ class LedgerState extends ChangeNotifier {
     return null;
   }
 
+  // Getters for Last Bag (1st most recently completed) and 2nd Last Bag (2nd most recently completed)
+  RiceBag? get lastCompletedRiceBag {
+    try {
+      final completed = _riceBags.where((bag) => bag.status == "Completed").toList();
+      if (completed.isNotEmpty) {
+        return completed.first;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  RiceBag? get secondLastCompletedRiceBag {
+    try {
+      final completed = _riceBags.where((bag) => bag.status == "Completed").toList();
+      if (completed.length >= 2) {
+        return completed[1];
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  double get lastCompletedBagRevenue {
+    final bag = lastCompletedRiceBag;
+    if (bag == null) return 0.0;
+    return getBagRevenue(bag);
+  }
+
+  double get secondLastCompletedBagRevenue {
+    final bag = secondLastCompletedRiceBag;
+    if (bag == null) return 0.0;
+    return getBagRevenue(bag);
+  }
+
   Future<void> _completeBag(RiceBag bag, String endDate, Map<String, dynamic> additionalUpdates) async {
     final revenue = _deliveryLogs
         .where((log) => !log.isPayment && log.associatedBagId == bag.bagId)
@@ -975,7 +1020,7 @@ class LedgerState extends ChangeNotifier {
     int? bagNum = bag.bagNumber;
     if (bagNum == null) {
       final sortedBags = List<RiceBag>.from(_riceBags)
-        ..sort((a, b) => a.startDate.compareTo(b.startDate));
+        ..sort((a, b) => _parseBagDate(a.startDate).compareTo(_parseBagDate(b.startDate)));
       final idx = sortedBags.indexWhere((b) => b.bagId == bag.bagId);
       bagNum = idx != -1 ? idx + 1 : 1;
     }
@@ -1088,7 +1133,7 @@ class LedgerState extends ChangeNotifier {
   int getBagNumber(RiceBag bag) {
     if (bag.bagNumber != null) return bag.bagNumber!;
     final sortedBags = List<RiceBag>.from(_riceBags)
-      ..sort((a, b) => a.startDate.compareTo(b.startDate));
+      ..sort((a, b) => _parseBagDate(a.startDate).compareTo(_parseBagDate(b.startDate)));
     final idx = sortedBags.indexWhere((b) => b.bagId == bag.bagId);
     return idx != -1 ? idx + 1 : 1;
   }

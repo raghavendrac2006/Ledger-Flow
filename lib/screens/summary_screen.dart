@@ -184,7 +184,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "CURRENT BAG EARNINGS",
+                                "LAST BAG REVENUE",
                                 style: AppTheme.labelSm.copyWith(
                                   fontSize: 8.5,
                                   color: AppTheme.onSurfaceVariant,
@@ -193,7 +193,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                               ),
                               const SizedBox(height: 8.0),
                               Text(
-                                "₹${NumberFormat('#,##,###.00').format(state.currentBagEarnings)}",
+                                "₹${NumberFormat('#,##,###.00').format(state.lastCompletedBagRevenue)}",
                                 style: AppTheme.headlineMd.copyWith(
                                   fontSize: 18.0,
                                   color: AppTheme.primary,
@@ -202,9 +202,9 @@ class _SummaryScreenState extends State<SummaryScreen> {
                               ),
                               const SizedBox(height: 4.0),
                               Text(
-                                state.activeRiceBag != null 
-                                    ? "Remaining: ${state.activeRiceBag!.remainingKg.toStringAsFixed(1)} KG"
-                                    : "No Active Bag",
+                                state.lastCompletedRiceBag != null 
+                                    ? "Size: ${state.lastCompletedRiceBag!.totalKg.toStringAsFixed(0)} KG (Bag #${state.getBagNumber(state.lastCompletedRiceBag!)})"
+                                    : "No Last Bag",
                                 style: AppTheme.labelSm.copyWith(fontSize: 9.5),
                               ),
                             ],
@@ -221,7 +221,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "PREVIOUS BAG EARNINGS",
+                                "2ND LAST BAG REVENUE",
                                 style: AppTheme.labelSm.copyWith(
                                   fontSize: 8.5,
                                   color: AppTheme.onSurfaceVariant,
@@ -230,7 +230,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                               ),
                               const SizedBox(height: 8.0),
                               Text(
-                                "₹${NumberFormat('#,##,###.00').format(state.previousBagEarnings)}",
+                                "₹${NumberFormat('#,##,###.00').format(state.secondLastCompletedBagRevenue)}",
                                 style: AppTheme.headlineMd.copyWith(
                                   fontSize: 18.0,
                                   color: Colors.black,
@@ -239,9 +239,9 @@ class _SummaryScreenState extends State<SummaryScreen> {
                               ),
                               const SizedBox(height: 4.0),
                               Text(
-                                state.previousCompletedRiceBag != null 
-                                    ? "Size: ${state.previousCompletedRiceBag!.totalKg.toStringAsFixed(0)} KG"
-                                    : "No Prev Bag",
+                                state.secondLastCompletedRiceBag != null 
+                                    ? "Size: ${state.secondLastCompletedRiceBag!.totalKg.toStringAsFixed(0)} KG (Bag #${state.getBagNumber(state.secondLastCompletedRiceBag!)})"
+                                    : "No 2nd Last Bag",
                                 style: AppTheme.labelSm.copyWith(fontSize: 9.5),
                               ),
                             ],
