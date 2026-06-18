@@ -54,7 +54,7 @@ class LedgerState extends ChangeNotifier {
     _initFirestore();
     // runSentenceCaseMigration(); // Disabled to prevent heavy Firestore scans on every app startup
     // Safety timer to prevent getting stuck in loading state forever
-    Timer(const Duration(seconds: 4), () {
+    _loadingSafetyTimer = Timer(const Duration(seconds: 4), () {
       if (_isLoading) {
         _isLoading = false;
         notifyListeners();
@@ -510,8 +510,11 @@ class LedgerState extends ChangeNotifier {
     }
   }
 
+  Timer? _loadingSafetyTimer;
+
   @override
   void dispose() {
+    _loadingSafetyTimer?.cancel();
     _customersSub?.cancel();
     _logsSub?.cancel();
     _expensesSub?.cancel();
@@ -740,13 +743,32 @@ class LedgerState extends ChangeNotifier {
         );
         
         if (match.logId != null) {
+          // 1. Mark original delivery log as paid
           await deliveryLogRepository.updateDeliveryLog(match.logId!, {
             'isPaid': true,
           });
+
+          // 2. Add cash collected log under today's date for bookkeeping
+          final date = DateTime.now();
+          final dateStr = "${date.day} ${_getMonthName(date.month)} ${date.year}";
+          
+          await deliveryLogRepository.addDeliveryLog(DeliveryLog(
+            serialNo: _serialNumber,
+            date: dateStr,
+            dateTime: date,
+            itemName: "Cash Collected",
+            customerName: toSentenceCase(customerName),
+            amount: tx.amount,
+            isPaid: true,
+            associatedBagId: null,
+            isPayment: true,
+          ));
+          _serialNumber++;
         }
 
         // Reduce outstanding balance
         await customerRepository.updateCustomerOutstanding(customerName, -tx.amount);
+        notifyListeners();
       }
     }
   }
@@ -791,6 +813,7 @@ class LedgerState extends ChangeNotifier {
     final cleanCustomer = toSentenceCase(customerName);
     final dateStr = "${date.day} ${_getMonthName(date.month)} ${date.year}";
 
+    // 1. Add single "Cash Collected" transaction log
     await deliveryLogRepository.addDeliveryLog(DeliveryLog(
       serialNo: _serialNumber,
       date: dateStr,
@@ -802,11 +825,38 @@ class LedgerState extends ChangeNotifier {
       associatedBagId: null,
       isPayment: true,
     ));
+    _serialNumber++;
 
-    // Reduce customer outstanding balance
+    // 2. Reduce customer outstanding balance
     await customerRepository.updateCustomerOutstanding(cleanCustomer, -amount);
 
-    _serialNumber++;
+    // 3. Automatically go back and mark old unpaid deliveries as paid up to the amount collected
+    try {
+      final logsList = await deliveryLogRepository.getLogsForCustomer(cleanCustomer);
+      // Filter to only get unpaid delivery logs (non-payments, isPaid == false)
+      final unpaidLogs = logsList.where((log) => !log.isPayment && !log.isPaid).toList();
+      
+      // Sort oldest first (ascending order of dateTime)
+      unpaidLogs.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+
+      double remainingPayment = amount;
+      for (var log in unpaidLogs) {
+        if (remainingPayment >= log.amount) {
+          if (log.logId != null) {
+            await deliveryLogRepository.updateDeliveryLog(log.logId!, {
+              'isPaid': true,
+            });
+          }
+          remainingPayment -= log.amount;
+        } else {
+          // Not enough to cover this transaction fully, stop clearing
+          break;
+        }
+      }
+    } catch (e) {
+      debugPrint("Error auto-clearing old unpaid transactions: $e");
+    }
+
     notifyListeners();
   }
 

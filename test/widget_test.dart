@@ -6,7 +6,7 @@ import 'package:ledgerflow/screens/sales_entry_screen.dart';
 
 void main() {
   testWidgets('App loads and renders Route Initialization setup screen', (WidgetTester tester) async {
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(const MyApp(isMockMode: true));
     expect(find.text('ROUTE INITIALIZATION'), findsOneWidget);
     expect(find.descendant(of: find.byType(SetupScreen), matching: find.text('Daily Setup')), findsOneWidget);
   });
@@ -20,11 +20,11 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(const MyApp(isMockMode: true));
 
     // 1. In SetupScreen, select at least one item and click start rounds
     // Toggle the first item selection
-    await tester.tap(find.text('2 ₹ Chakli'));
+    await tester.tap(find.text('1 ₹ Chakli'));
     await tester.pumpAndSettle();
 
     // Tap "START ROUNDS"

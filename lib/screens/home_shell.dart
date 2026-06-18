@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -47,6 +48,7 @@ class _HomeShellState extends State<HomeShell> {
 
   void _requestNotificationPermission() async {
     if (kIsWeb) return;
+    if (Platform.environment.containsKey('FLUTTER_TEST')) return;
     final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
         FlutterLocalNotificationsPlugin();
     await flutterLocalNotificationsPlugin

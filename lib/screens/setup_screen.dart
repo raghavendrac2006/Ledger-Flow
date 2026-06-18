@@ -388,14 +388,17 @@ class _SetupScreenState extends State<SetupScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              "ACTIVE BAG STATUS (LONG PRESS FOR LOGS)",
-                              style: AppTheme.labelSm.copyWith(
-                                color: AppTheme.onSurfaceVariant,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 9.5,
+                            Expanded(
+                              child: Text(
+                                "ACTIVE BAG STATUS (LONG PRESS FOR LOGS)",
+                                style: AppTheme.labelSm.copyWith(
+                                  color: AppTheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 9.5,
+                                ),
                               ),
                             ),
+                            const SizedBox(width: 8.0),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
                               decoration: BoxDecoration(

@@ -13,6 +13,17 @@ import 'package:ledgerflow/core/repositories/rice_bag_repository.dart';
 import 'package:ledgerflow/core/repositories/settings_repository.dart';
 import 'package:ledgerflow/core/repositories/owner_finance_repository.dart';
 
+Stream<T> _createMockStream<T>(StreamController<T> controller, T Function() getValue) {
+  controller.onListen = () {
+    Future.microtask(() {
+      if (!controller.isClosed) {
+        controller.add(getValue());
+      }
+    });
+  };
+  return controller.stream;
+}
+
 class MockDb {
   static final Map<String, List<Customer>> _customersMap = {
     'business_1': [
@@ -39,6 +50,14 @@ class MockDb {
         area: "Station Road",
         icon: Icons.store,
         location: "Station Road",
+      ),
+      Customer(
+        name: "Milk",
+        outstanding: 0.0,
+        type: "RETAIL",
+        area: "Dairy Circle",
+        icon: Icons.local_cafe,
+        location: "Dairy Circle, 2nd Cross",
       ),
     ],
     'business_2': [
@@ -286,14 +305,7 @@ class MockCustomerRepository implements CustomerRepository {
 
   @override
   Stream<List<Customer>> getCustomersStream(IconData Function(String?) getIcon) {
-    Timer.periodic(const Duration(milliseconds: 200), (timer) {
-      if (!_controller.isClosed) {
-        _controller.add(List.from(MockDb.getCustomers(businessId)));
-      } else {
-        timer.cancel();
-      }
-    });
-    return _controller.stream;
+    return _createMockStream(_controller, () => List.from(MockDb.getCustomers(businessId)));
   }
 
   @override
@@ -347,14 +359,7 @@ class MockDeliveryLogRepository implements DeliveryLogRepository {
 
   @override
   Stream<List<DeliveryLog>> getDeliveryLogsStream() {
-    Timer.periodic(const Duration(milliseconds: 200), (timer) {
-      if (!_controller.isClosed) {
-        _controller.add(List.from(MockDb.getDeliveryLogs(businessId)));
-      } else {
-        timer.cancel();
-      }
-    });
-    return _controller.stream;
+    return _createMockStream(_controller, () => List.from(MockDb.getDeliveryLogs(businessId)));
   }
 
   @override
@@ -458,14 +463,7 @@ class MockExpenseRepository implements ExpenseRepository {
 
   @override
   Stream<List<ExpenseLog>> getExpensesStream() {
-    Timer.periodic(const Duration(milliseconds: 200), (timer) {
-      if (!_controller.isClosed) {
-        _controller.add(List.from(MockDb.getExpenses(businessId)));
-      } else {
-        timer.cancel();
-      }
-    });
-    return _controller.stream;
+    return _createMockStream(_controller, () => List.from(MockDb.getExpenses(businessId)));
   }
 
   @override
@@ -516,26 +514,12 @@ class MockRiceBagRepository implements RiceBagRepository {
 
   @override
   Stream<List<RiceBag>> getRiceBagsStream() {
-    Timer.periodic(const Duration(milliseconds: 200), (timer) {
-      if (!_bagsController.isClosed) {
-        _bagsController.add(List.from(MockDb.getRiceBags(businessId)));
-      } else {
-        timer.cancel();
-      }
-    });
-    return _bagsController.stream;
+    return _createMockStream(_bagsController, () => List.from(MockDb.getRiceBags(businessId)));
   }
 
   @override
   Stream<List<DailyUsage>> getDailyUsagesStream() {
-    Timer.periodic(const Duration(milliseconds: 200), (timer) {
-      if (!_usagesController.isClosed) {
-        _usagesController.add(List.from(MockDb.getDailyUsages(businessId)));
-      } else {
-        timer.cancel();
-      }
-    });
-    return _usagesController.stream;
+    return _createMockStream(_usagesController, () => List.from(MockDb.getDailyUsages(businessId)));
   }
 
   @override
@@ -592,14 +576,7 @@ class MockSettingsRepository implements SettingsRepository {
 
   @override
   Stream<String> getGoogleSheetsUrlStream() {
-    Timer.periodic(const Duration(milliseconds: 200), (timer) {
-      if (!_urlController.isClosed) {
-        _urlController.add(MockDb.getGoogleSheetsUrl(businessId));
-      } else {
-        timer.cancel();
-      }
-    });
-    return _urlController.stream;
+    return _createMockStream(_urlController, () => MockDb.getGoogleSheetsUrl(businessId));
   }
 
   @override
@@ -610,14 +587,7 @@ class MockSettingsRepository implements SettingsRepository {
 
   @override
   Stream<List<String>> getExpenseSuggestionsStream() {
-    Timer.periodic(const Duration(milliseconds: 200), (timer) {
-      if (!_suggestionsController.isClosed) {
-        _suggestionsController.add(List.from(MockDb.getExpenseSuggestions(businessId)));
-      } else {
-        timer.cancel();
-      }
-    });
-    return _suggestionsController.stream;
+    return _createMockStream(_suggestionsController, () => List.from(MockDb.getExpenseSuggestions(businessId)));
   }
 
   @override
@@ -642,14 +612,7 @@ class MockOwnerFinanceRepository implements OwnerFinanceRepository {
 
   @override
   Stream<OwnerLoanConfig?> getActiveLoanStream() {
-    Timer.periodic(const Duration(milliseconds: 200), (timer) {
-      if (!_loanController.isClosed) {
-        _loanController.add(MockDb.getLoanConfig(businessId));
-      } else {
-        timer.cancel();
-      }
-    });
-    return _loanController.stream;
+    return _createMockStream(_loanController, () => MockDb.getLoanConfig(businessId));
   }
 
   @override
@@ -701,14 +664,7 @@ class MockOwnerFinanceRepository implements OwnerFinanceRepository {
 
   @override
   Stream<List<RepaymentLog>> getRepaymentsStream(String loanId) {
-    Timer.periodic(const Duration(milliseconds: 200), (timer) {
-      if (!_repaymentsController.isClosed) {
-        _repaymentsController.add(List.from(MockDb.getRepayments(businessId)));
-      } else {
-        timer.cancel();
-      }
-    });
-    return _repaymentsController.stream;
+    return _createMockStream(_repaymentsController, () => List.from(MockDb.getRepayments(businessId)));
   }
 
   @override
@@ -728,14 +684,7 @@ class MockOwnerFinanceRepository implements OwnerFinanceRepository {
 
   @override
   Stream<List<SavingsLog>> getSavingsLogsStream() {
-    Timer.periodic(const Duration(milliseconds: 200), (timer) {
-      if (!_savingsLogsController.isClosed) {
-        _savingsLogsController.add(List.from(MockDb.getSavingsLogs(businessId)));
-      } else {
-        timer.cancel();
-      }
-    });
-    return _savingsLogsController.stream;
+    return _createMockStream(_savingsLogsController, () => List.from(MockDb.getSavingsLogs(businessId)));
   }
 
   @override
@@ -746,23 +695,14 @@ class MockOwnerFinanceRepository implements OwnerFinanceRepository {
 
   @override
   Stream<SavingsRecommendation?> getPendingSavingsRecommendationStream(String date) {
-    Timer.periodic(const Duration(milliseconds: 200), (timer) {
-      if (!_recsController.isClosed) {
-        final list = MockDb.getSavingsRecommendations(businessId);
-        final rec = list.firstWhere(
-          (r) => r.date == date && r.status == 'pending',
-          orElse: () => SavingsRecommendation(date: date, suggestedSavings: 0, conversationalReason: "", status: "skipped"),
-        );
-        if (rec.status == 'pending') {
-          _recsController.add(rec);
-        } else {
-          _recsController.add(null);
-        }
-      } else {
-        timer.cancel();
-      }
+    return _createMockStream(_recsController, () {
+      final list = MockDb.getSavingsRecommendations(businessId);
+      final rec = list.firstWhere(
+        (r) => r.date == date && r.status == 'pending',
+        orElse: () => SavingsRecommendation(date: date, suggestedSavings: 0, conversationalReason: "", status: "skipped"),
+      );
+      return rec.status == 'pending' ? rec : null;
     });
-    return _recsController.stream;
   }
 
   @override
