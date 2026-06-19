@@ -403,39 +403,68 @@ class _SummaryScreenState extends State<SummaryScreen> {
                                 index: index,
                                 child: ListTile(
                                   dense: true,
-                                  onTap: () {
-                                    _showEditDeleteBottomSheet(context, state, log);
-                                  },
+                                  onTap: log.isPayment
+                                      ? null
+                                      : () {
+                                          _showEditDeleteBottomSheet(context, state, log);
+                                        },
+                                  leading: CircleAvatar(
+                                    backgroundColor: log.isPayment
+                                        ? AppTheme.successContainer
+                                        : (log.isPaid
+                                            ? AppTheme.successContainer
+                                            : AppTheme.errorContainer),
+                                    child: Icon(
+                                      log.isPayment
+                                          ? Icons.payments_outlined
+                                          : Icons.local_shipping_outlined,
+                                      color: log.isPayment
+                                          ? AppTheme.onSuccessContainer
+                                          : (log.isPaid
+                                              ? AppTheme.onSuccessContainer
+                                              : AppTheme.onErrorContainer),
+                                      size: 16,
+                                    ),
+                                  ),
                                   title: Row(
                                     children: [
                                       Text(
-                                        "#${log.serialNo} • ${log.customerName}",
-                                        style: AppTheme.labelBold,
+                                        log.isPayment
+                                            ? "Money Received • ${log.customerName}"
+                                            : "#${log.serialNo} • ${log.customerName}",
+                                        style: AppTheme.labelBold.copyWith(
+                                          color: log.isPayment ? AppTheme.success : null,
+                                        ),
                                       ),
                                       const Spacer(),
                                       Text(
                                         "₹${log.amount.toStringAsFixed(2)}",
-                                        style: AppTheme.dataTabular.copyWith(fontWeight: FontWeight.bold),
+                                        style: AppTheme.dataTabular.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: log.isPayment ? AppTheme.success : null,
+                                        ),
                                       ),
                                     ],
                                   ),
                                   subtitle: Row(
                                     children: [
                                       Text(
-                                        "${log.itemName} • ${log.date}",
+                                        log.isPayment
+                                            ? "Payment • ${log.date}"
+                                            : "${log.itemName} • ${log.date}",
                                         style: AppTheme.labelSm,
                                       ),
                                       const Spacer(),
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
                                         decoration: BoxDecoration(
-                                          color: log.isPaid ? AppTheme.successContainer : AppTheme.errorContainer,
+                                          color: log.isPaid || log.isPayment ? AppTheme.successContainer : AppTheme.errorContainer,
                                           borderRadius: BorderRadius.circular(100.0),
                                         ),
                                         child: Text(
-                                          log.isPaid ? "PAID" : "UNPAID",
+                                          log.isPaid || log.isPayment ? "PAID" : "UNPAID",
                                           style: AppTheme.labelBold.copyWith(
-                                            color: log.isPaid ? AppTheme.onSuccessContainer : AppTheme.onErrorContainer,
+                                            color: log.isPaid || log.isPayment ? AppTheme.onSuccessContainer : AppTheme.onErrorContainer,
                                             fontSize: 10.0,
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -631,6 +660,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                                 productName: _selectedExportItem,
                                 dateRange: _selectedDateRange,
                                 allLogs: state.deliveryLogs,
+                                allExpenses: state.expenses,
                               );
 
                               if (mounted) {

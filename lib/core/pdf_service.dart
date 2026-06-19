@@ -10,6 +10,7 @@ class PdfService {
     required String productName,
     required DateTimeRange dateRange,
     required List<DeliveryLog> allLogs,
+    List<ExpenseLog> allExpenses = const [],
   }) async {
     final isAll = productName.toLowerCase() == 'all';
     // 1. Filter Logs by Product and Date Range (Inclusive of boundaries)
@@ -27,6 +28,29 @@ class PdfService {
 
     // Sort chronologically (oldest first for the report rows)
     filteredLogs.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+
+    // Filter Expenses by Date Range
+    final filteredExpenses = allExpenses.where((expense) {
+      DateTime expenseDateTime;
+      try {
+        expenseDateTime = DateTime.parse(expense.date);
+      } catch (_) {
+        return false;
+      }
+      final logDate = DateTime(expenseDateTime.year, expenseDateTime.month, expenseDateTime.day);
+      final startDate = DateTime(dateRange.start.year, dateRange.start.month, dateRange.start.day);
+      final endDate = DateTime(dateRange.end.year, dateRange.end.month, dateRange.end.day);
+      return !logDate.isBefore(startDate) && !logDate.isAfter(endDate);
+    }).toList();
+
+    // Sort Expenses chronologically
+    filteredExpenses.sort((a, b) {
+      final aDate = DateTime.tryParse(a.date) ?? DateTime.now();
+      final bDate = DateTime.tryParse(b.date) ?? DateTime.now();
+      return aDate.compareTo(bDate);
+    });
+
+    double totalExpensesValue = filteredExpenses.fold(0.0, (sum, exp) => sum + exp.amount);
 
     // 2. Calculate Report Statistics
     int totalSalesCount = filteredLogs.length;
@@ -361,6 +385,208 @@ class PdfService {
                 ],
               ),
             ),
+            if (isAll) ...[
+              pw.SizedBox(height: 32.0),
+              pw.Container(height: 2.0, color: borderColor),
+              pw.SizedBox(height: 24.0),
+
+              // E. EXPENSES SECTION HEADER
+              pw.Container(
+                decoration: pw.BoxDecoration(
+                  color: primaryColor,
+                  border: pw.Border.all(color: borderColor, width: 2.0),
+                ),
+                padding: const pw.EdgeInsets.symmetric(horizontal: 20.0, vertical: 14.0),
+                child: pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text(
+                      "OPERATING EXPENSES LEDGER",
+                      style: pw.TextStyle(
+                        fontSize: 14.0,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.white,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    pw.Text(
+                      "EXPENSES REPORT",
+                      style: pw.TextStyle(
+                        fontSize: 8.0,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.grey300,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              pw.SizedBox(height: 16.0),
+
+              // F. EXPENSES METRICS
+              pw.Row(
+                children: [
+                  pw.Expanded(
+                    child: pw.Container(
+                      decoration: pw.BoxDecoration(
+                        border: pw.Border.all(color: borderColor, width: 1.5),
+                      ),
+                      padding: const pw.EdgeInsets.all(16.0),
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text("TOTAL EXPENSE ENTRIES", style: pw.TextStyle(fontSize: 8.0, color: PdfColors.grey700, fontWeight: pw.FontWeight.bold)),
+                          pw.SizedBox(height: 4.0),
+                          pw.Text("${filteredExpenses.length}", style: pw.TextStyle(fontSize: 16.0, fontWeight: pw.FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  pw.SizedBox(width: 16.0),
+                  pw.Expanded(
+                    child: pw.Container(
+                      decoration: pw.BoxDecoration(
+                        border: pw.Border.all(color: borderColor, width: 1.5),
+                      ),
+                      padding: const pw.EdgeInsets.all(16.0),
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text("TOTAL EXPENSES VALUE", style: pw.TextStyle(fontSize: 8.0, color: PdfColors.grey700, fontWeight: pw.FontWeight.bold)),
+                          pw.SizedBox(height: 4.0),
+                          pw.Text("INR ${totalExpensesValue.toStringAsFixed(2)}", style: pw.TextStyle(fontSize: 14.0, fontWeight: pw.FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 20.0),
+
+              // G. ITEMIZED EXPENSES TABLE
+              pw.Text(
+                "ITEMIZED RECORD OF EXPENSES",
+                style: pw.TextStyle(fontSize: 9.0, fontWeight: pw.FontWeight.bold, letterSpacing: 1.0),
+              ),
+              pw.SizedBox(height: 8.0),
+
+              filteredExpenses.isEmpty
+                  ? pw.Container(
+                      width: double.infinity,
+                      padding: const pw.EdgeInsets.symmetric(vertical: 36.0),
+                      decoration: pw.BoxDecoration(
+                        border: pw.Border.all(color: borderColor, width: 1.5),
+                      ),
+                      child: pw.Center(
+                        child: pw.Text(
+                          "No recorded expenses found for this date range.",
+                          style: pw.TextStyle(fontSize: 10.0, color: PdfColors.grey600, fontStyle: pw.FontStyle.italic),
+                        ),
+                      ),
+                    )
+                  : pw.Table(
+                      border: pw.TableBorder.all(color: borderColor, width: 1.5),
+                      columnWidths: {
+                        0: const pw.FlexColumnWidth(1.8), // Date
+                        1: const pw.FlexColumnWidth(3.2), // Expense Name
+                        2: const pw.FlexColumnWidth(2.5), // Category
+                        3: const pw.FlexColumnWidth(2.0), // Amount
+                      },
+                      children: [
+                        // Header Row
+                        pw.TableRow(
+                          decoration: const pw.BoxDecoration(color: primaryColor),
+                          children: [
+                            tableCell("DATE", isHeader: true),
+                            tableCell("EXPENSE NAME", isHeader: true),
+                            tableCell("CATEGORY", isHeader: true),
+                            tableCell("AMOUNT", isHeader: true, isRight: true),
+                          ],
+                        ),
+                        // Data Rows
+                        ...filteredExpenses.map((exp) {
+                          String displayDate = exp.date;
+                          try {
+                            displayDate = DateFormat('dd MMM yyyy').format(DateTime.parse(exp.date));
+                          } catch (_) {}
+                          return pw.TableRow(
+                            children: [
+                              tableCell(displayDate),
+                              tableCell(exp.itemName),
+                              tableCell(exp.category),
+                              tableCell("INR ${exp.amount.toStringAsFixed(2)}", isRight: true),
+                            ],
+                          );
+                        }),
+                      ],
+                    ),
+              pw.SizedBox(height: 32.0),
+
+              // H. CONSOLIDATED PROFIT & LOSS / MARGIN ANALYSIS
+              pw.Container(
+                decoration: pw.BoxDecoration(
+                  color: accentGrey,
+                  border: pw.Border.all(color: borderColor, width: 1.5),
+                ),
+                padding: const pw.EdgeInsets.all(16.0),
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      "CONSOLIDATED BUSINESS PROFITABILITY SUMMARY",
+                      style: pw.TextStyle(fontSize: 8.5, fontWeight: pw.FontWeight.bold, letterSpacing: 0.5),
+                    ),
+                    pw.SizedBox(height: 16.0),
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text("Total Sales Revenue (A):", style: const pw.TextStyle(fontSize: 9.0)),
+                        pw.Text("INR ${totalSalesValue.toStringAsFixed(2)}", style: pw.TextStyle(fontSize: 9.0, fontWeight: pw.FontWeight.bold)),
+                      ],
+                    ),
+                    pw.SizedBox(height: 6.0),
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text("Total Operating Expenses (B):", style: const pw.TextStyle(fontSize: 9.0)),
+                        pw.Text("INR ${totalExpensesValue.toStringAsFixed(2)}", style: pw.TextStyle(fontSize: 9.0, fontWeight: pw.FontWeight.bold, color: PdfColors.red900)),
+                      ],
+                    ),
+                    pw.SizedBox(height: 8.0),
+                    pw.Container(height: 1.0, color: PdfColors.grey400),
+                    pw.SizedBox(height: 8.0),
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text("Net Profit (A - B):", style: pw.TextStyle(fontSize: 9.5, fontWeight: pw.FontWeight.bold)),
+                        pw.Text(
+                          "INR ${(totalSalesValue - totalExpensesValue).toStringAsFixed(2)}",
+                          style: pw.TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: pw.FontWeight.bold,
+                            color: (totalSalesValue - totalExpensesValue) >= 0 ? PdfColors.green900 : PdfColors.red900,
+                          ),
+                        ),
+                      ],
+                    ),
+                    pw.SizedBox(height: 6.0),
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text("Operating Margin Percentage:", style: const pw.TextStyle(fontSize: 9.0)),
+                        pw.Text(
+                          "${totalSalesValue > 0 ? (((totalSalesValue - totalExpensesValue) / totalSalesValue) * 100).toStringAsFixed(1) : '0.0'}%",
+                          style: pw.TextStyle(
+                            fontSize: 9.0,
+                            fontWeight: pw.FontWeight.bold,
+                            color: (totalSalesValue - totalExpensesValue) >= 0 ? PdfColors.green900 : PdfColors.red900,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ];
         },
       ),

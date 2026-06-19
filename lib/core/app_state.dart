@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' hide Transaction;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'models/customer.dart';
 import 'models/transaction.dart';
@@ -52,6 +53,7 @@ class LedgerState extends ChangeNotifier {
     this.isMockMode = false,
   }) {
     _initFirestore();
+    _loadLocalPayments();
     // runSentenceCaseMigration(); // Disabled to prevent heavy Firestore scans on every app startup
     // Safety timer to prevent getting stuck in loading state forever
     _loadingSafetyTimer = Timer(const Duration(seconds: 4), () {
@@ -483,11 +485,39 @@ class LedgerState extends ChangeNotifier {
   }
 
   List<DeliveryLog> get filteredDeliveryLogsForSummary {
-    final activeDates = lastThreeActiveDates;
-    return _deliveryLogs.where((log) {
+    final now = DateTime.now();
+    final todayStr = DateFormat('yyyy-MM-dd').format(now);
+    final yesterdayStr = DateFormat('yyyy-MM-dd').format(now.subtract(const Duration(days: 1)));
+    final dayBeforeStr = DateFormat('yyyy-MM-dd').format(now.subtract(const Duration(days: 2)));
+    final allowedDates = {todayStr, yesterdayStr, dayBeforeStr};
+
+    final List<DeliveryLog> logs = _deliveryLogs.where((log) {
       final dateStr = DateFormat('yyyy-MM-dd').format(log.dateTime);
-      return activeDates.contains(dateStr);
+      return allowedDates.contains(dateStr);
     }).toList();
+
+    for (var payment in _localPayments) {
+      final String pDateStr = payment['date'] ?? '';
+      if (allowedDates.contains(pDateStr)) {
+        final DateTime pTime = DateTime.tryParse(payment['timestamp'] ?? '') ?? DateTime.now();
+        final amount = (payment['amount'] as num?)?.toDouble() ?? 0.0;
+        final customer = payment['customerName'] ?? '';
+        
+        logs.add(DeliveryLog(
+          serialNo: 0,
+          date: DateFormat('dd MMM yyyy').format(pTime),
+          dateTime: pTime,
+          itemName: "Money Received",
+          customerName: customer,
+          amount: amount,
+          isPaid: true,
+          isPayment: true,
+        ));
+      }
+    }
+
+    logs.sort((a, b) => b.dateTime.compareTo(a.dateTime));
+    return logs;
   }
 
   // Helper method to assign proper category icons
@@ -528,6 +558,58 @@ class LedgerState extends ChangeNotifier {
     _savingsLogsSub?.cancel();
     _savingsRecommendationSub?.cancel();
     super.dispose();
+  }
+
+  // Local payments storage (held in memory and persisted in SharedPreferences)
+  final List<Map<String, dynamic>> _localPayments = [];
+  List<Map<String, dynamic>> get localPayments => _localPayments;
+
+  Future<void> _loadLocalPayments() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? paymentsJson = prefs.getString('local_payments');
+      if (paymentsJson != null) {
+        final list = jsonDecode(paymentsJson) as List<dynamic>;
+        _localPayments.clear();
+        _localPayments.addAll(list.map((item) => Map<String, dynamic>.from(item)));
+        
+        // Prune logs older than 7 days to keep SharedPreferences clean
+        final pruneLimit = DateTime.now().subtract(const Duration(days: 7));
+        _localPayments.removeWhere((p) {
+          final pTime = DateTime.tryParse(p['timestamp'] ?? '') ?? DateTime.now();
+          return pTime.isBefore(pruneLimit);
+        });
+        
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint("Error loading local payments: $e");
+    }
+  }
+
+  Future<void> _saveLocalPayment(String customerName, double amount) async {
+    try {
+      final cleanCustomer = toSentenceCase(customerName);
+      final date = DateTime.now();
+      final dateStr = DateFormat('yyyy-MM-dd').format(date);
+      final timestamp = date.toIso8601String();
+      
+      final newPayment = {
+        'date': dateStr,
+        'customerName': cleanCustomer,
+        'amount': amount,
+        'timestamp': timestamp,
+      };
+      
+      _localPayments.add(newPayment);
+      
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('local_payments', jsonEncode(_localPayments));
+      debugPrint("Logged payment locally: $cleanCustomer, ₹$amount");
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error saving local payment: $e");
+    }
   }
 
   // 1. Setup State
@@ -732,43 +814,53 @@ class LedgerState extends ChangeNotifier {
   }
 
   Future<void> markTransactionAsPaid(String customerName, int index) async {
-    final list = _customerTransactions[customerName];
+    final cleanCustomer = toSentenceCase(customerName);
+    final list = _customerTransactions[customerName] ?? _customerTransactions[cleanCustomer];
     if (list != null && index < list.length) {
       final tx = list[index];
       if (!tx.isPaid) {
-        final logsList = await deliveryLogRepository.getLogsForCustomer(customerName);
-        final match = logsList.firstWhere(
-          (log) => log.amount == tx.amount && !log.isPaid,
-          orElse: () => throw Exception("Log not found"),
-        );
-        
-        if (match.logId != null) {
-          // 1. Mark original delivery log as paid
-          await deliveryLogRepository.updateDeliveryLog(match.logId!, {
-            'isPaid': true,
-          });
+        // Optimistic UI updates
+        final updatedTx = tx.copyWith(isPaid: true);
+        list[index] = updatedTx;
 
-          // 2. Add cash collected log under today's date for bookkeeping
-          final date = DateTime.now();
-          final dateStr = "${date.day} ${_getMonthName(date.month)} ${date.year}";
-          
-          await deliveryLogRepository.addDeliveryLog(DeliveryLog(
-            serialNo: _serialNumber,
-            date: dateStr,
-            dateTime: date,
-            itemName: "Cash Collected",
-            customerName: toSentenceCase(customerName),
-            amount: tx.amount,
-            isPaid: true,
-            associatedBagId: null,
-            isPayment: true,
-          ));
-          _serialNumber++;
+        final custIdx = _customers.indexWhere((c) => c.name.toLowerCase() == cleanCustomer.toLowerCase());
+        if (custIdx != -1) {
+          _customers[custIdx] = _customers[custIdx].copyWith(
+            outstanding: (_customers[custIdx].outstanding - tx.amount).clamp(0.0, double.infinity),
+          );
         }
-
-        // Reduce outstanding balance
-        await customerRepository.updateCustomerOutstanding(customerName, -tx.amount);
         notifyListeners();
+
+        try {
+          final logsList = await deliveryLogRepository.getLogsForCustomer(cleanCustomer);
+          final match = logsList.firstWhere(
+            (log) => log.amount == tx.amount && !log.isPaid,
+            orElse: () => throw Exception("Log not found"),
+          );
+          
+          if (match.logId != null) {
+            // 1. Mark original delivery log as paid in Firestore
+            await deliveryLogRepository.updateDeliveryLog(match.logId!, {
+              'isPaid': true,
+            });
+
+            // 2. Save payment log locally in SharedPreferences
+            await _saveLocalPayment(cleanCustomer, tx.amount);
+          }
+
+          // 3. Reduce outstanding balance in Firestore
+          await customerRepository.updateCustomerOutstanding(cleanCustomer, -tx.amount);
+        } catch (e) {
+          debugPrint("Error in markTransactionAsPaid: $e");
+          // Revert optimistic update if Firestore failed
+          list[index] = tx;
+          if (custIdx != -1) {
+            _customers[custIdx] = _customers[custIdx].copyWith(
+              outstanding: _customers[custIdx].outstanding + tx.amount,
+            );
+          }
+          notifyListeners();
+        }
       }
     }
   }
@@ -811,29 +903,16 @@ class LedgerState extends ChangeNotifier {
     required DateTime date,
   }) async {
     final cleanCustomer = toSentenceCase(customerName);
-    final dateStr = "${date.day} ${_getMonthName(date.month)} ${date.year}";
 
-    // 1. Add single "Cash Collected" transaction log
-    await deliveryLogRepository.addDeliveryLog(DeliveryLog(
-      serialNo: _serialNumber,
-      date: dateStr,
-      dateTime: date,
-      itemName: "Cash Collected",
-      customerName: cleanCustomer,
-      amount: amount,
-      isPaid: true,
-      associatedBagId: null,
-      isPayment: true,
-    ));
-    _serialNumber++;
+    // 1. Save payment locally in SharedPreferences
+    await _saveLocalPayment(cleanCustomer, amount);
 
-    // 2. Reduce customer outstanding balance
+    // 2. Reduce customer outstanding balance in Firestore
     await customerRepository.updateCustomerOutstanding(cleanCustomer, -amount);
 
     // 3. Automatically go back and mark old unpaid deliveries as paid up to the amount collected
     try {
       final logsList = await deliveryLogRepository.getLogsForCustomer(cleanCustomer);
-      // Filter to only get unpaid delivery logs (non-payments, isPaid == false)
       final unpaidLogs = logsList.where((log) => !log.isPayment && !log.isPaid).toList();
       
       // Sort oldest first (ascending order of dateTime)
@@ -841,6 +920,8 @@ class LedgerState extends ChangeNotifier {
 
       double remainingPayment = amount;
       for (var log in unpaidLogs) {
+        if (remainingPayment <= 0) break;
+
         if (remainingPayment >= log.amount) {
           if (log.logId != null) {
             await deliveryLogRepository.updateDeliveryLog(log.logId!, {
@@ -849,7 +930,30 @@ class LedgerState extends ChangeNotifier {
           }
           remainingPayment -= log.amount;
         } else {
-          // Not enough to cover this transaction fully, stop clearing
+          // Partial cover: split the delivery log
+          if (log.logId != null) {
+            // Update original log to the paid portion
+            await deliveryLogRepository.updateDeliveryLog(log.logId!, {
+              'amount': remainingPayment,
+              'isPaid': true,
+            });
+
+            // Create a new unpaid log for the remaining portion
+            final remainingUnpaid = log.amount - remainingPayment;
+            await deliveryLogRepository.addDeliveryLog(DeliveryLog(
+              serialNo: _serialNumber,
+              date: log.date,
+              dateTime: log.dateTime,
+              itemName: log.itemName,
+              customerName: log.customerName,
+              amount: remainingUnpaid,
+              isPaid: false,
+              associatedBagId: log.associatedBagId,
+              isPayment: false,
+            ));
+            _serialNumber++;
+          }
+          remainingPayment = 0;
           break;
         }
       }
