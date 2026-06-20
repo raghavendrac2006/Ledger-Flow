@@ -145,8 +145,29 @@ void callbackDispatcher() {
 
       final payload = buffer.toString();
 
-      // 4. Send payload to Gemini model endpoint
-      const String key = String.fromEnvironment('GEMINI_API_KEY');
+      // 4. Fetch dynamic settings and API key from Firestore
+      int minSavingsPct = 2;
+      int maxSavingsPct = 7;
+      String? remoteApiKey;
+      try {
+        final settingsDoc = await FirebaseFirestore.instance
+            .collection(getCollectionPath('settings'))
+            .doc('financeSettings')
+            .get();
+        if (settingsDoc.exists && settingsDoc.data() != null) {
+          final data = settingsDoc.data()!;
+          minSavingsPct = (data['min_savings_pct'] as num?)?.toInt() ?? 2;
+          maxSavingsPct = (data['max_savings_pct'] as num?)?.toInt() ?? 7;
+          remoteApiKey = data['gemini_api_key'] as String?;
+        }
+      } catch (e) {
+        debugPrint("Could not fetch remote settings in background: $e");
+      }
+
+      String key = const String.fromEnvironment('GEMINI_API_KEY');
+      if (key.isEmpty) {
+        key = remoteApiKey ?? '';
+      }
       if (key.isEmpty) {
         debugPrint("Background Auditor Error: GEMINI_API_KEY is empty.");
         return false;
@@ -208,23 +229,6 @@ void callbackDispatcher() {
       }
 
       double netLiquidMargin = actualCashInHand - actualExpenses;
-
-      // Fetch dynamic settings from Firestore
-      int minSavingsPct = 2;
-      int maxSavingsPct = 7;
-      try {
-        final settingsDoc = await FirebaseFirestore.instance
-            .collection(getCollectionPath('settings'))
-            .doc('financeSettings')
-            .get();
-        if (settingsDoc.exists && settingsDoc.data() != null) {
-          final data = settingsDoc.data()!;
-          minSavingsPct = (data['min_savings_pct'] as num?)?.toInt() ?? 2;
-          maxSavingsPct = (data['max_savings_pct'] as num?)?.toInt() ?? 7;
-        }
-      } catch (e) {
-        debugPrint("Could not fetch remote finance settings in background: $e. Using default 2% to 7%.");
-      }
 
       final savingsPrompt = Content.text(
         "You are an on-the-ground cash flow analyst for a local distribution market. Analyze yesterday's true physical cash flow.\n\n"
@@ -429,6 +433,7 @@ class _MyAppState extends State<MyApp> {
         ),
         ChangeNotifierProvider(
           create: (_) => AIAnalystController(
+            businessId: _selectedBusinessId,
             customerRepository: customerRepo,
             deliveryLogRepository: deliveryLogRepo,
             expenseRepository: expenseRepo,

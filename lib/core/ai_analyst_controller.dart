@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'repositories/customer_repository.dart';
 import 'repositories/delivery_log_repository.dart';
 import 'repositories/expense_repository.dart';
@@ -20,6 +21,7 @@ class ChatMessage {
 }
 
 class AIAnalystController extends ChangeNotifier {
+  final String businessId;
   final CustomerRepository customerRepository;
   final DeliveryLogRepository deliveryLogRepository;
   final ExpenseRepository expenseRepository;
@@ -27,12 +29,15 @@ class AIAnalystController extends ChangeNotifier {
   final OwnerFinanceRepository ownerFinanceRepository;
 
   AIAnalystController({
+    required this.businessId,
     required this.customerRepository,
     required this.deliveryLogRepository,
     required this.expenseRepository,
     required this.riceBagRepository,
     required this.ownerFinanceRepository,
-  });
+  }) {
+    loadRemoteApiKey();
+  }
 
   final List<ChatMessage> _messages = [];
   List<ChatMessage> get messages => List.unmodifiable(_messages);
@@ -40,11 +45,33 @@ class AIAnalystController extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
+  String? _remoteApiKey;
+
   String get apiKey {
-    return const String.fromEnvironment('GEMINI_API_KEY');
+    final compileTimeKey = const String.fromEnvironment('GEMINI_API_KEY');
+    if (compileTimeKey.isNotEmpty) return compileTimeKey;
+    return _remoteApiKey ?? '';
   }
 
   bool get isConfigured => apiKey.isNotEmpty;
+
+  Future<void> loadRemoteApiKey() async {
+    try {
+      final String collectionPath = businessId == 'business_1'
+          ? 'settings'
+          : 'businesses/$businessId/settings';
+      final settingsDoc = await FirebaseFirestore.instance
+          .collection(collectionPath)
+          .doc('financeSettings')
+          .get();
+      if (settingsDoc.exists && settingsDoc.data() != null) {
+        _remoteApiKey = settingsDoc.data()!['gemini_api_key'] as String?;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint("Failed to fetch remote API key: $e");
+    }
+  }
 
   void clearChat() {
     _messages.clear();

@@ -346,6 +346,16 @@ class LedgerState extends ChangeNotifier {
             "Vehicle Repair",
             "Delivery Box Roll",
             "Thread pack",
+            "Labour vegetables",
+            "Oil",
+            "Nuvvulu",
+            "Electricity bill",
+            "Owm ajvain",
+            "Travel",
+            "Machine cooli",
+            "Kadale pappu",
+            "Chilli",
+            "Labour home",
           ];
           try {
             await settingsRepository.updateExpenseSuggestions(defaultItems);
@@ -1040,6 +1050,8 @@ class LedgerState extends ChangeNotifier {
       date: date,
       associatedBagId: activeBag?.bagId,
     ));
+
+    await addExpenseSuggestion(cleanItemName);
   }
 
   Future<void> updateExpense({
@@ -1050,6 +1062,7 @@ class LedgerState extends ChangeNotifier {
     final casedName = toSentenceCase(newItemName);
     try {
       await expenseRepository.updateExpense(expenseId, casedName, newAmount);
+      await addExpenseSuggestion(casedName);
       notifyListeners();
     } catch (e) {
       debugPrint("Error updating expense: $e");
@@ -1908,6 +1921,7 @@ class LedgerState extends ChangeNotifier {
       // Fetch dynamic settings from Firestore
       int minSavingsPct = 2;
       int maxSavingsPct = 7;
+      String? remoteApiKey;
       try {
         final settingsDoc = await FirebaseFirestore.instance
             .collection(_getCollectionPath('settings'))
@@ -1917,13 +1931,17 @@ class LedgerState extends ChangeNotifier {
           final data = settingsDoc.data()!;
           minSavingsPct = (data['min_savings_pct'] as num?)?.toInt() ?? 2;
           maxSavingsPct = (data['max_savings_pct'] as num?)?.toInt() ?? 7;
+          remoteApiKey = data['gemini_api_key'] as String?;
         }
       } catch (e) {
         debugPrint("Could not fetch remote finance settings in foreground: $e. Using default 2% to 7%.");
       }
 
       // 4. Generate with Gemini
-      const String key = String.fromEnvironment('GEMINI_API_KEY');
+      String key = const String.fromEnvironment('GEMINI_API_KEY');
+      if (key.isEmpty) {
+        key = remoteApiKey ?? '';
+      }
       if (key.isEmpty) {
         debugPrint("Foreground Advisor Error: GEMINI_API_KEY is empty.");
         return;
