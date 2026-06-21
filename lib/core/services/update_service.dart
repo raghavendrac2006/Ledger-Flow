@@ -93,12 +93,12 @@ class UpdateService {
                       color: AppTheme.primary,
                       borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                     ),
-                    child: TextButton(
+                     child: TextButton(
                       onPressed: () {
                         setModalState(() {
                           isDownloading = true;
                         });
-                        _startOtaUpdate(downloadUrl, (progress) {
+                        _startOtaUpdate(downloadUrl, version, (progress) {
                           setModalState(() {
                             downloadProgress = progress;
                           });
@@ -119,11 +119,12 @@ class UpdateService {
     );
   }
 
-  static void _startOtaUpdate(String url, Function(double) onProgress) {
+  static void _startOtaUpdate(String url, String version, Function(double) onProgress) {
     try {
+      final safeVersion = version.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
       OtaUpdate().execute(
         url,
-        destinationFilename: 'app-release.apk',
+        destinationFilename: 'app-release_$safeVersion.apk',
       ).listen(
         (OtaEvent event) {
           if (event.status == OtaStatus.DOWNLOADING) {
