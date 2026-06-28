@@ -1,6 +1,6 @@
 {
-    "latest_version": "1.1.4",
-    "build_number": 16,
-    "apk_url": "https://github.com/raghavendrac2006/Ledger-Flow/releases/download/v1.1.4/app-release.apk",
-    "release_notes": "Added Firestore database Gemini API key fallback for morning savings recommendations and daily financial ledger consistency audits. Fixed auto-saving of newly created expense items to suggestions master list. Enhanced OTA download reliability."
+    "latest_version": "1.1.5",
+    "build_number": 17,
+    "apk_url": "https://github.com/raghavendrac2006/Ledger-Flow/releases/download/v1.1.5/app-release.apk",
+    "release_notes": "Database reset for a fresh monthly start. Added cloud transaction payments synchronization to Firestore. Resolved desynchronization and casing mismatches for deleted and edited logs. Cleared local activity caches."
 }

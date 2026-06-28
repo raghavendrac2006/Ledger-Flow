@@ -4,6 +4,7 @@ class Transaction {
   final double amount;
   final bool isPaid;
   final bool isPayment;
+  final String? logId;
 
   Transaction({
     required this.date,
@@ -11,6 +12,7 @@ class Transaction {
     required this.amount,
     required this.isPaid,
     this.isPayment = false,
+    this.logId,
   });
 
   Transaction copyWith({
@@ -19,6 +21,7 @@ class Transaction {
     double? amount,
     bool? isPaid,
     bool? isPayment,
+    String? logId,
   }) {
     return Transaction(
       date: date ?? this.date,
@@ -26,6 +29,7 @@ class Transaction {
       amount: amount ?? this.amount,
       isPaid: isPaid ?? this.isPaid,
       isPayment: isPayment ?? this.isPayment,
+      logId: logId ?? this.logId,
     );
   }
 
@@ -36,6 +40,7 @@ class Transaction {
       amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
       isPaid: json['isPaid'] ?? false,
       isPayment: json['isPayment'] ?? false,
+      logId: json['logId'],
     );
   }
 
@@ -46,6 +51,7 @@ class Transaction {
       "amount": amount,
       "isPaid": isPaid,
       "isPayment": isPayment,
+      "logId": logId,
     };
   }
 }

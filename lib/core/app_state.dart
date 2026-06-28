@@ -237,6 +237,7 @@ class LedgerState extends ChangeNotifier {
             amount: log.amount,
             isPaid: log.isPaid,
             isPayment: log.isPayment,
+            logId: log.logId,
           ));
         }
 
@@ -577,6 +578,15 @@ class LedgerState extends ChangeNotifier {
   Future<void> _loadLocalPayments() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      
+      // Force clear cache once for v1.1.5 restart
+      final cacheCleared = prefs.getBool('cache_cleared_v1.1.5') ?? false;
+      if (!cacheCleared) {
+        await prefs.remove('local_payments');
+        await prefs.setBool('cache_cleared_v1.1.5', true);
+        debugPrint("Cleared local payments cache for v1.1.5 fresh start.");
+      }
+
       final String? paymentsJson = prefs.getString('local_payments');
       if (paymentsJson != null) {
         final list = jsonDecode(paymentsJson) as List<dynamic>;
@@ -756,28 +766,32 @@ class LedgerState extends ChangeNotifier {
   }
 
   Future<void> deleteTransaction(String customerName, int index) async {
-    if (_customerTransactions.containsKey(customerName)) {
-      final list = _customerTransactions[customerName];
+    final cleanCustomer = toSentenceCase(customerName);
+    if (_customerTransactions.containsKey(cleanCustomer)) {
+      final list = _customerTransactions[cleanCustomer];
       if (list != null && index < list.length) {
         final tx = list[index];
         
-        final logsList = await deliveryLogRepository.getLogsForCustomer(customerName);
-        final match = logsList.firstWhere(
-          (log) => log.amount == tx.amount && 
-                   log.isPaid == tx.isPaid && 
-                   log.isPayment == tx.isPayment,
-          orElse: () => throw Exception("Log not found"),
-        );
-        
-        if (match.logId != null) {
-          await deliveryLogRepository.deleteDeliveryLog(match.logId!);
+        if (tx.logId != null) {
+          await deliveryLogRepository.deleteDeliveryLog(tx.logId!);
+        } else {
+          final logsList = await deliveryLogRepository.getLogsForCustomer(cleanCustomer);
+          final match = logsList.firstWhere(
+            (log) => log.amount == tx.amount && 
+                     log.isPaid == tx.isPaid && 
+                     log.isPayment == tx.isPayment,
+            orElse: () => throw Exception("Log not found"),
+          );
+          if (match.logId != null) {
+            await deliveryLogRepository.deleteDeliveryLog(match.logId!);
+          }
         }
 
         // Adjust outstanding balance
         if (tx.isPayment) {
-          await customerRepository.updateCustomerOutstanding(customerName, tx.amount);
+          await customerRepository.updateCustomerOutstanding(cleanCustomer, tx.amount);
         } else if (!tx.isPaid) {
-          await customerRepository.updateCustomerOutstanding(customerName, -tx.amount);
+          await customerRepository.updateCustomerOutstanding(cleanCustomer, -tx.amount);
         }
       }
     }
@@ -789,35 +803,42 @@ class LedgerState extends ChangeNotifier {
     required String newDetails,
     required double newAmount,
   }) async {
-    if (_customerTransactions.containsKey(customerName)) {
-      final list = _customerTransactions[customerName];
+    final cleanCustomer = toSentenceCase(customerName);
+    if (_customerTransactions.containsKey(cleanCustomer)) {
+      final list = _customerTransactions[cleanCustomer];
       if (list != null && index < list.length) {
         final tx = list[index];
         final oldAmount = tx.amount;
         final wasPaid = tx.isPaid;
         
-        final logsList = await deliveryLogRepository.getLogsForCustomer(customerName);
-        final match = logsList.firstWhere(
-          (log) => log.amount == oldAmount && 
-                   log.isPaid == wasPaid && 
-                   log.isPayment == tx.isPayment,
-          orElse: () => throw Exception("Log not found"),
-        );
-
-        if (match.logId != null) {
-          await deliveryLogRepository.updateDeliveryLog(match.logId!, {
+        if (tx.logId != null) {
+          await deliveryLogRepository.updateDeliveryLog(tx.logId!, {
             'itemName': tx.isPayment ? newDetails : newDetails.replaceAll("1x ", ""),
             'amount': newAmount,
           });
+        } else {
+          final logsList = await deliveryLogRepository.getLogsForCustomer(cleanCustomer);
+          final match = logsList.firstWhere(
+            (log) => log.amount == oldAmount && 
+                     log.isPaid == wasPaid && 
+                     log.isPayment == tx.isPayment,
+            orElse: () => throw Exception("Log not found"),
+          );
+          if (match.logId != null) {
+            await deliveryLogRepository.updateDeliveryLog(match.logId!, {
+              'itemName': tx.isPayment ? newDetails : newDetails.replaceAll("1x ", ""),
+              'amount': newAmount,
+            });
+          }
         }
 
         // Recalculate outstanding balance difference
         if (tx.isPayment) {
           final diff = oldAmount - newAmount;
-          await customerRepository.updateCustomerOutstanding(customerName, diff);
+          await customerRepository.updateCustomerOutstanding(cleanCustomer, diff);
         } else if (!wasPaid) {
           final diff = newAmount - oldAmount;
-          await customerRepository.updateCustomerOutstanding(customerName, diff);
+          await customerRepository.updateCustomerOutstanding(cleanCustomer, diff);
         }
       }
     }
@@ -854,11 +875,27 @@ class LedgerState extends ChangeNotifier {
               'isPaid': true,
             });
 
-            // 2. Save payment log locally in SharedPreferences
+            // 2. Add cash collected log under today's date for bookkeeping in Firestore
+            final date = DateTime.now();
+            final dateStr = "${date.day} ${_getMonthName(date.month)} ${date.year}";
+            await deliveryLogRepository.addDeliveryLog(DeliveryLog(
+              serialNo: _serialNumber,
+              date: dateStr,
+              dateTime: date,
+              itemName: "Cash Collected",
+              customerName: cleanCustomer,
+              amount: tx.amount,
+              isPaid: true,
+              associatedBagId: null,
+              isPayment: true,
+            ));
+            _serialNumber++;
+
+            // 3. Save payment log locally in SharedPreferences
             await _saveLocalPayment(cleanCustomer, tx.amount);
           }
 
-          // 3. Reduce outstanding balance in Firestore
+          // 4. Reduce outstanding balance in Firestore
           await customerRepository.updateCustomerOutstanding(cleanCustomer, -tx.amount);
         } catch (e) {
           debugPrint("Error in markTransactionAsPaid: $e");
@@ -917,7 +954,22 @@ class LedgerState extends ChangeNotifier {
     // 1. Save payment locally in SharedPreferences
     await _saveLocalPayment(cleanCustomer, amount);
 
-    // 2. Reduce customer outstanding balance in Firestore
+    // 2. Save payment in Firestore
+    final dateStr = "${date.day} ${_getMonthName(date.month)} ${date.year}";
+    await deliveryLogRepository.addDeliveryLog(DeliveryLog(
+      serialNo: _serialNumber,
+      date: dateStr,
+      dateTime: date,
+      itemName: "Cash Collected",
+      customerName: cleanCustomer,
+      amount: amount,
+      isPaid: true,
+      associatedBagId: null,
+      isPayment: true,
+    ));
+    _serialNumber++;
+
+    // 3. Reduce customer outstanding balance in Firestore
     await customerRepository.updateCustomerOutstanding(cleanCustomer, -amount);
 
     // 3. Automatically go back and mark old unpaid deliveries as paid up to the amount collected
