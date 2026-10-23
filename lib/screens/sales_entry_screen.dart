@@ -6,6 +6,7 @@ import '../widgets/bento_card.dart';
 import '../widgets/custom_toast.dart';
 import '../widgets/skeleton_card.dart';
 import '../widgets/animated_list_item.dart';
+import '../core/services/audit_service.dart';
 
 class SalesEntryScreen extends StatefulWidget {
   const SalesEntryScreen({super.key});
@@ -191,6 +192,14 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
           itemName: state.currentLoggingItem,
           amount: amount,
           isPaid: _isPaid,
+        );
+
+        final audit = Provider.of<AuditService>(context, listen: false);
+        audit.log(
+          action: 'sale_added',
+          details: 'Logged ₹${amount.toStringAsFixed(0)} for $customer (${_isPaid ? "PAID" : "UNPAID"})',
+          targetType: 'customer',
+          targetId: customer,
         );
 
         CustomToast.showSuccess(

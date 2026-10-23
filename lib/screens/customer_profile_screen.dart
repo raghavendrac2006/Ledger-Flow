@@ -7,6 +7,8 @@ import '../widgets/bento_card.dart';
 import '../widgets/custom_toast.dart';
 import '../widgets/animated_list_item.dart';
 import '../widgets/empty_state_widget.dart';
+import '../core/services/auth_service.dart';
+import '../core/services/audit_service.dart';
 
 class CustomerProfileScreen extends StatelessWidget {
   final String customerName;
@@ -615,6 +617,11 @@ class CustomerProfileScreen extends StatelessWidget {
                   Expanded(
                     child: InkWell(
                       onTap: () async {
+                        final auth = Provider.of<AuthService>(context, listen: false);
+                        if (!auth.isAdmin) {
+                          CustomToast.showError(context, "ADMIN ONLY: Workers cannot delete transactions");
+                          return;
+                        }
                         final confirm = await CustomToast.showDestructiveConfirmation(
                           context,
                           title: "DELETE TRANSACTION?",
@@ -623,7 +630,14 @@ class CustomerProfileScreen extends StatelessWidget {
                         );
                         if (confirm && context.mounted) {
                           Navigator.pop(context);
+                          final audit = Provider.of<AuditService>(context, listen: false);
                           await state.deleteTransaction(customerName, index);
+                          await audit.log(
+                            action: 'transaction_deleted',
+                            details: 'Deleted transaction for $customerName: ₹${tx.amount.toStringAsFixed(0)} (${tx.details})',
+                            targetType: 'customer',
+                            targetId: customerName,
+                          );
                           if (context.mounted) {
                             CustomToast.showSuccess(context, "DELETED TRANSACTION");
                           }
@@ -653,17 +667,29 @@ class CustomerProfileScreen extends StatelessWidget {
                   Expanded(
                     child: InkWell(
                       onTap: () async {
+                        final auth = Provider.of<AuthService>(context, listen: false);
+                        if (!auth.isAdmin) {
+                          CustomToast.showError(context, "ADMIN ONLY: Workers cannot edit transactions");
+                          return;
+                        }
                         final details = detailsCont.text.trim();
                         final amount = double.tryParse(amountCont.text.trim());
                         if (details.isNotEmpty && amount != null && amount >= 0) {
                           if (context.mounted) {
                             Navigator.pop(context);
                           }
+                          final audit = Provider.of<AuditService>(context, listen: false);
                           await state.editTransaction(
                             customerName: customerName,
                             index: index,
                             newDetails: details,
                             newAmount: amount,
+                          );
+                          await audit.log(
+                            action: 'transaction_edited',
+                            details: 'Edited transaction for $customerName: $details (₹${amount.toStringAsFixed(0)})',
+                            targetType: 'customer',
+                            targetId: customerName,
                           );
                           if (context.mounted) {
                             CustomToast.showSuccess(context, "UPDATED TRANSACTION");

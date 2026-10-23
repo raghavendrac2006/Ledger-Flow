@@ -13,6 +13,8 @@ import '../widgets/batch_history_widget.dart';
 import '../widgets/skeleton_card.dart';
 import '../widgets/animated_list_item.dart';
 import '../widgets/empty_state_widget.dart';
+import '../core/services/auth_service.dart';
+import '../core/services/audit_service.dart';
 
 class SummaryScreen extends StatefulWidget {
   const SummaryScreen({super.key});
@@ -107,49 +109,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // BACKUP & RESET BUTTONS
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            CustomToast.showSuccess(context, "Preparing Backup...");
-                            await state.exportBackupData(context);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black,
-                            foregroundColor: Colors.white,
-                            minimumSize: const Size(0, 48),
-                          ),
-                          child: const Text("BACKUP DATA", style: TextStyle(fontSize: 12.0)),
-                        ),
-                      ),
-                      const SizedBox(width: 12.0),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            final confirm = await CustomToast.showDestructiveConfirmation(
-                              context,
-                              title: "WIPE ALL DATA?",
-                              message: "Are you sure you want to delete ALL customer, sales, and expense records? This will reset the app completely to 0 and cannot be undone.",
-                              confirmLabel: "RESET TO 0",
-                            );
-                            if (confirm && context.mounted) {
-                              CustomToast.showSuccess(context, "Wiping database...");
-                              await state.wipeAllData(context);
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.error,
-                            foregroundColor: Colors.white,
-                            minimumSize: const Size(0, 48),
-                          ),
-                          child: const Text("RESET TO 0", style: TextStyle(fontSize: 12.0)),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24.0),
+
 
                   // SECTION 1: CURRENT BAG PERFORMANCE
                   Text(
@@ -200,7 +160,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                   ),
                   const SizedBox(height: 16.0),
                   BatchHistoryWidget(
-                    completedBags: state.riceBags.where((b) => b.status == "Completed").toList(),
+                    completedBags: state.riceBags.where((b) => b.status == "Completed").take(4).toList(),
                     getBagNumber: state.getBagNumber,
                     getBagProfit: state.getBagProfit,
                     onBagTap: (bag, bagNum) {
@@ -1045,6 +1005,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
 
   void _showNewBagModal(BuildContext context, LedgerState state) {
     final kgCont = TextEditingController();
+    final lpgCont = TextEditingController();
     String selectedFlourType = "₹1 Rice Flour";
     final customTypeCont = TextEditingController();
     bool isCustomType = false;
@@ -1076,7 +1037,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      "Select the type of rice flour and enter the bag capacity in KG.",
+                      "Select the flour type, new bag capacity, and optionally record LPG cylinder gas used for the last bag.",
                       style: TextStyle(fontSize: 13.0, color: AppTheme.onSurfaceVariant),
                     ),
                     const SizedBox(height: 16.0),
@@ -1138,6 +1099,37 @@ class _SummaryScreenState extends State<SummaryScreen> {
                       ),
                       style: AppTheme.bodyLg,
                     ),
+                    const SizedBox(height: 16.0),
+                    const Divider(color: AppTheme.outlineVariant),
+                    const SizedBox(height: 12.0),
+                    Row(
+                      children: [
+                        const Icon(Icons.propane_tank, color: AppTheme.secondary, size: 18.0),
+                        const SizedBox(width: 6.0),
+                        Expanded(
+                          child: Text(
+                            "LPG CYLINDER GAS USED FOR LAST BAG (KG)",
+                            style: AppTheme.labelBold.copyWith(fontSize: 9.5, color: AppTheme.onSurfaceVariant),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6.0),
+                    TextField(
+                      controller: lpgCont,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(
+                        hintText: "e.g., 14.2 (Optional - leave empty to skip)",
+                        suffixText: "KG",
+                        suffixStyle: AppTheme.labelBold.copyWith(color: AppTheme.onSurface),
+                        filled: true,
+                        fillColor: AppTheme.surfaceContainerHighest,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                          borderSide: const BorderSide(color: AppTheme.outlineVariant),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -1145,7 +1137,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                 TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: Text(
-                    "CANCEL",
+                    "CANCEL / SKIP",
                     style: AppTheme.labelBold.copyWith(color: AppTheme.outline),
                   ),
                 ),
@@ -1157,12 +1149,18 @@ class _SummaryScreenState extends State<SummaryScreen> {
                   child: TextButton(
                     onPressed: () {
                       final kg = double.tryParse(kgCont.text.trim());
+                      final lpgKg = double.tryParse(lpgCont.text.trim());
                       final type = isCustomType
                           ? customTypeCont.text.trim()
                           : selectedFlourType;
                       if (kg != null && kg > 0.0 && type.isNotEmpty) {
                         final dateStr = DateFormat('dd MMMM yyyy').format(DateTime.now());
-                        state.closeAndStartNewBag(totalKg: kg, date: dateStr, flourType: type);
+                        state.closeAndStartNewBag(
+                          totalKg: kg,
+                          date: dateStr,
+                          flourType: type,
+                          lpgCylinderKg: lpgKg,
+                        );
                         Navigator.pop(context);
                         CustomToast.showSuccess(context, "STARTED $kg KG BAG FOR $type");
                       }
@@ -1273,6 +1271,11 @@ class _SummaryScreenState extends State<SummaryScreen> {
                   Expanded(
                     child: InkWell(
                       onTap: () async {
+                        final auth = Provider.of<AuthService>(context, listen: false);
+                        if (!auth.isAdmin) {
+                          CustomToast.showError(context, "ADMIN ONLY: Workers cannot delete transactions");
+                          return;
+                        }
                         final confirm = await CustomToast.showDestructiveConfirmation(
                           context,
                           title: "DELETE TRANSACTION?",
@@ -1281,7 +1284,14 @@ class _SummaryScreenState extends State<SummaryScreen> {
                         );
                         if (confirm && context.mounted) {
                           Navigator.pop(context);
-                          state.deleteTransactionBySerialNo(log.serialNo);
+                          final audit = Provider.of<AuditService>(context, listen: false);
+                          await state.deleteTransactionBySerialNo(log.serialNo);
+                          await audit.log(
+                            action: 'transaction_deleted',
+                            details: 'Deleted transaction #${log.serialNo} for ${log.customerName} (₹${log.amount.toStringAsFixed(0)})',
+                            targetType: 'customer',
+                            targetId: log.customerName,
+                          );
                           if (context.mounted) {
                             CustomToast.showSuccess(context, "TRANSACTION #${log.serialNo} DELETED");
                           }
@@ -1309,11 +1319,25 @@ class _SummaryScreenState extends State<SummaryScreen> {
 
                   Expanded(
                     child: InkWell(
-                      onTap: () {
+                      onTap: () async {
+                        final auth = Provider.of<AuthService>(context, listen: false);
+                        if (!auth.isAdmin) {
+                          CustomToast.showError(context, "ADMIN ONLY: Workers cannot edit transactions");
+                          return;
+                        }
                         final newAmt = double.tryParse(amountCont.text.trim()) ?? log.amount;
                         Navigator.pop(context);
-                        state.editTransactionBySerialNo(log.serialNo, detailsCont.text.trim(), newAmt);
-                        CustomToast.showSuccess(context, "TRANSACTION #${log.serialNo} UPDATED");
+                        final audit = Provider.of<AuditService>(context, listen: false);
+                        await state.editTransactionBySerialNo(log.serialNo, detailsCont.text.trim(), newAmt);
+                        await audit.log(
+                          action: 'transaction_edited',
+                          details: 'Edited transaction #${log.serialNo} for ${log.customerName}: ${detailsCont.text.trim()} (₹${newAmt.toStringAsFixed(0)})',
+                          targetType: 'customer',
+                          targetId: log.customerName,
+                        );
+                        if (context.mounted) {
+                          CustomToast.showSuccess(context, "TRANSACTION #${log.serialNo} UPDATED");
+                        }
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 14.0),

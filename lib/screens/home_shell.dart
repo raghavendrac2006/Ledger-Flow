@@ -15,6 +15,10 @@ import 'client_list_screen.dart';
 import 'summary_screen.dart';
 import 'owner_finance_screen.dart';
 import 'ai_analyst_screen.dart';
+import 'history_screen.dart';
+import 'admin_panel_screen.dart';
+import '../core/services/auth_service.dart';
+import '../core/services/audit_service.dart';
 import 'package:app_links/app_links.dart';
 import 'dart:async';
 
@@ -43,6 +47,8 @@ class _HomeShellState extends State<HomeShell> {
       const SummaryScreen(),
       const OwnerFinanceScreen(),
       const AIAnalystScreen(),
+      const HistoryScreen(),
+      const AdminPanelScreen(),
     ];
     _requestNotificationPermission();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -149,6 +155,8 @@ class _HomeShellState extends State<HomeShell> {
       });
     }
 
+    final auth = Provider.of<AuthService>(context);
+
     Widget buildDrawer() {
       return Drawer(
         backgroundColor: const Color(0xFF0F172A),
@@ -160,21 +168,128 @@ class _HomeShellState extends State<HomeShell> {
                 color: AppTheme.primary,
                 border: Border(bottom: BorderSide(color: Colors.white10, width: 1.0)),
               ),
-              child: Center(
-                child: Text(
-                  "LedgerFlow".toUpperCase(),
-                  style: AppTheme.headlineLg.copyWith(color: Colors.white, letterSpacing: 1.5),
-                ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.white24,
+                        child: Text(
+                          auth.currentUserName.isNotEmpty
+                              ? auth.currentUserName[0].toUpperCase()
+                              : '?',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              auth.currentUserName,
+                              style: AppTheme.headlineMd.copyWith(
+                                color: Colors.white,
+                                fontSize: 16,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              auth.currentUser?.email ?? '',
+                              style: const TextStyle(
+                                  color: Colors.white70, fontSize: 11),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: auth.isAdmin ? Colors.amber : Colors.blueGrey,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          auth.isAdminMode
+                              ? "PIN ADMIN"
+                              : (auth.isAdmin ? "ADMIN" : "WORKER"),
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (auth.isAdminMode) ...[
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: () {
+                        auth.exitAdminMode();
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.redAccent.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: Colors.redAccent, width: 0.8),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.lock, size: 12, color: Colors.redAccent),
+                            SizedBox(width: 4),
+                            Text(
+                              "Lock (Return to Worker)",
+                              style: TextStyle(
+                                  color: Colors.redAccent, fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
-            _buildDrawerTile(0, "Daily Setup", Icons.edit_calendar),
-            _buildDrawerTile(1, "Sales Entry", Icons.add_shopping_cart),
-            _buildDrawerTile(2, "Expenses", Icons.payments),
-            _buildDrawerTile(3, "Customer List", Icons.groups),
-            _buildDrawerTile(4, "Daily Summary", Icons.cloud_upload),
-            _buildDrawerTile(5, "Owner Finance", Icons.account_balance),
-            _buildDrawerTile(6, "AI Analyst", Icons.psychology),
-            const Spacer(),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  _buildDrawerTile(0, "Daily Setup", Icons.edit_calendar),
+                  _buildDrawerTile(1, "Sales Entry", Icons.add_shopping_cart),
+                  _buildDrawerTile(2, "Expenses", Icons.payments),
+                  _buildDrawerTile(3, "Customer List", Icons.groups),
+                  _buildDrawerTile(4, "Daily Summary", Icons.cloud_upload),
+                  _buildDrawerTile(5, "Owner Finance", Icons.account_balance),
+                  _buildDrawerTile(6, "AI Analyst", Icons.psychology),
+                  _buildDrawerTile(7, "History", Icons.history),
+                  if (auth.isAdmin)
+                    _buildDrawerTile(8, "Admin Panel", Icons.admin_panel_settings),
+                  if (auth.isWorker)
+                    _buildDrawerTile(
+                      -1,
+                      "Unlock Admin (PIN)",
+                      Icons.lock_open,
+                      onTap: () {
+                        Navigator.pop(context);
+                        _showPinSwitchDialog(context);
+                      },
+                    ),
+                ],
+              ),
+            ),
             const Divider(color: Colors.white10),
             PopupMenuButton<String>(
               offset: const Offset(20, -100),
@@ -205,6 +320,20 @@ class _HomeShellState extends State<HomeShell> {
                 ),
               ),
             ),
+            _buildDrawerTile(
+              -3,
+              "Logout",
+              Icons.logout,
+              onTap: () async {
+                Navigator.pop(context);
+                final audit = Provider.of<AuditService>(context, listen: false);
+                await audit.log(
+                  action: 'logout',
+                  details: '${auth.currentUserName} logged out',
+                );
+                await auth.logout();
+              },
+            ),
             const SizedBox(height: 16.0),
           ],
         ),
@@ -226,6 +355,19 @@ class _HomeShellState extends State<HomeShell> {
                 ],
               ),
               actions: [
+                if (auth.isAdminMode)
+                  TextButton.icon(
+                    style: TextButton.styleFrom(foregroundColor: Colors.amber),
+                    icon: const Icon(Icons.lock, size: 16),
+                    label: const Text("LOCK", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    onPressed: () => auth.exitAdminMode(),
+                  )
+                else if (auth.isWorker)
+                  IconButton(
+                    icon: const Icon(Icons.lock_outline, color: AppTheme.onSurfaceVariant),
+                    tooltip: "Admin Unlock (PIN)",
+                    onPressed: () => _showPinSwitchDialog(context),
+                  ),
                 IconButton(
                   icon: const Icon(Icons.sync, color: AppTheme.primary),
                   onPressed: () {
@@ -274,6 +416,16 @@ class _HomeShellState extends State<HomeShell> {
                       _buildSidebarItem(4, "Daily Summary", Icons.cloud_upload),
                       _buildSidebarItem(5, "Owner Finance", Icons.account_balance),
                       _buildSidebarItem(6, "AI Analyst", Icons.psychology),
+                      _buildSidebarItem(7, "History", Icons.history),
+                      if (auth.isAdmin)
+                        _buildSidebarItem(8, "Admin Panel", Icons.admin_panel_settings),
+                      if (auth.isWorker)
+                        _buildSidebarItem(
+                          -1,
+                          "Unlock Admin (PIN)",
+                          Icons.lock_open,
+                          onTap: () => _showPinSwitchDialog(context),
+                        ),
                     ]),
                   ),
                   SliverFillRemaining(
@@ -282,6 +434,19 @@ class _HomeShellState extends State<HomeShell> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         const Divider(color: Colors.white10),
+                        _buildSidebarItem(
+                          -3,
+                          "Logout (${auth.currentUserName})",
+                          Icons.logout,
+                          onTap: () async {
+                            final audit = Provider.of<AuditService>(context, listen: false);
+                            await audit.log(
+                              action: 'logout',
+                              details: '${auth.currentUserName} logged out',
+                            );
+                            await auth.logout();
+                          },
+                        ),
                         PopupMenuButton<String>(
                           offset: const Offset(20, -100),
                           color: const Color(0xFF1E293B),
@@ -371,6 +536,81 @@ class _HomeShellState extends State<HomeShell> {
     );
   }
 
+  void _showPinSwitchDialog(BuildContext context) {
+    final pinC = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg)),
+        title: Text("Enter Admin PIN",
+            style: AppTheme.headlineMd.copyWith(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              "Enter the 4-digit admin PIN to temporarily unlock administrative controls.",
+              style: AppTheme.bodyMd.copyWith(color: Colors.white70),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: pinC,
+              keyboardType: TextInputType.number,
+              maxLength: 4,
+              obscureText: true,
+              textAlign: TextAlign.center,
+              style: AppTheme.headlineMd
+                  .copyWith(color: Colors.white, letterSpacing: 8),
+              decoration: InputDecoration(
+                counterText: '',
+                filled: true,
+                fillColor: const Color(0xFF0F172A),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("CANCEL", style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
+            onPressed: () async {
+              final auth = Provider.of<AuthService>(context, listen: false);
+              final audit = Provider.of<AuditService>(context, listen: false);
+              final success = await auth.switchToAdminWithPin(pinC.text.trim());
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (success) {
+                await audit.log(
+                  action: 'pin_unlock',
+                  details: '${auth.currentUserName} unlocked admin mode via PIN',
+                );
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Admin mode unlocked!")),
+                  );
+                }
+              } else {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text("Invalid PIN or PIN not configured")),
+                  );
+                }
+              }
+            },
+            child: const Text("UNLOCK", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _getScreenTitle(int index) {
     switch (index) {
       case 0:
@@ -387,6 +627,10 @@ class _HomeShellState extends State<HomeShell> {
         return "Owner Finance";
       case 6:
         return "AI Analyst";
+      case 7:
+        return "History";
+      case 8:
+        return "Admin Panel";
       default:
         return "LedgerFlow";
     }

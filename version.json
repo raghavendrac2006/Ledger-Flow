@@ -1,6 +1,6 @@
 {
-    "latest_version": "1.3.0",
-    "build_number": 23,
-    "apk_url": "https://github.com/raghavendrac2006/Ledger-Flow/releases/download/v1.3.0/app-release.apk",
-    "release_notes": "Multi-type rice flour tracking (1rs vs 5rs chakli flours) and in-app admin customer & expense deletion controls."
+    "latest_version": "1.4.0",
+    "build_number": 24,
+    "apk_url": "https://github.com/raghavendrac2006/Ledger-Flow/releases/download/v1.4.0/app-release.apk",
+    "release_notes": "Added Role-Based Authentication (Admin & Worker login), Admin Panel with worker account management, audit logs, date-range data deletion, and quick-switch PIN."
 }

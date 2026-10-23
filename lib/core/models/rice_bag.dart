@@ -13,6 +13,7 @@ class RiceBag {
   final double? expenses;
   final double? profit;
   final double? profitMargin;
+  final double? lpgCylinderKg;
 
   RiceBag({
     required this.bagId,
@@ -29,6 +30,7 @@ class RiceBag {
     this.expenses,
     this.profit,
     this.profitMargin,
+    this.lpgCylinderKg,
   });
 
   RiceBag copyWith({
@@ -46,6 +48,7 @@ class RiceBag {
     double? expenses,
     double? profit,
     double? profitMargin,
+    double? lpgCylinderKg,
   }) {
     return RiceBag(
       bagId: bagId ?? this.bagId,
@@ -62,6 +65,7 @@ class RiceBag {
       expenses: expenses ?? this.expenses,
       profit: profit ?? this.profit,
       profitMargin: profitMargin ?? this.profitMargin,
+      lpgCylinderKg: lpgCylinderKg ?? this.lpgCylinderKg,
     );
   }
 
@@ -81,6 +85,7 @@ class RiceBag {
       expenses: (json['expenses'] as num?)?.toDouble(),
       profit: (json['profit'] as num?)?.toDouble(),
       profitMargin: (json['profitMargin'] as num?)?.toDouble(),
+      lpgCylinderKg: (json['lpgCylinderKg'] as num?)?.toDouble(),
     );
   }
 
@@ -100,6 +105,7 @@ class RiceBag {
       "expenses": expenses,
       "profit": profit,
       "profitMargin": profitMargin,
+      "lpgCylinderKg": lpgCylinderKg,
     };
   }
 }

@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../core/app_theme.dart';
 import '../core/app_state.dart';
 import '../widgets/bento_card.dart';
+import '../core/services/audit_service.dart';
 
 class SetupScreen extends StatefulWidget {
   final VoidCallback? onRoundsStarted;
@@ -933,6 +934,12 @@ class _SetupScreenState extends State<SetupScreen> {
     if (usageKg > 0.0) {
       final formattedDate = DateFormat('dd MMMM yyyy').format(state.deliveryDate);
       state.addDailyUsage(usedKg: usageKg, date: formattedDate, flourType: _selectedFlourType);
+      final audit = Provider.of<AuditService>(context, listen: false);
+      audit.log(
+        action: 'flour_usage_recorded',
+        details: 'Recorded ${usageKg.toStringAsFixed(1)} kg $_selectedFlourType',
+        targetType: 'riceBag',
+      );
     }
 
     Future.delayed(const Duration(milliseconds: 600), () {

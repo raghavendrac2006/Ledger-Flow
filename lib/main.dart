@@ -19,6 +19,9 @@ import 'package:ledgerflow/core/repositories/firestore/firestore_settings_reposi
 import 'package:ledgerflow/core/repositories/firestore/firestore_owner_finance_repository.dart';
 import 'package:ledgerflow/core/repositories/mock_repositories.dart';
 import 'package:ledgerflow/screens/home_shell.dart';
+import 'package:ledgerflow/core/services/auth_service.dart';
+import 'package:ledgerflow/core/services/audit_service.dart';
+import 'package:ledgerflow/screens/login_screen.dart';
 
 import 'package:ledgerflow/firebase_options.dart';
 
@@ -419,6 +422,15 @@ class _MyAppState extends State<MyApp> {
       key: ValueKey(_selectedBusinessId),
       providers: [
         ChangeNotifierProvider(
+          create: (_) => AuthService(businessId: _selectedBusinessId),
+        ),
+        ProxyProvider<AuthService, AuditService>(
+          update: (context, auth, previous) => AuditService(
+            businessId: _selectedBusinessId,
+            authService: auth,
+          ),
+        ),
+        ChangeNotifierProvider(
           create: (_) => LedgerState(
             businessId: _selectedBusinessId,
             onBusinessChanged: _updateBusiness,
@@ -446,8 +458,42 @@ class _MyAppState extends State<MyApp> {
         title: 'LedgerFlow',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        home: const HomeShell(),
+        home: const AuthGate(),
       ),
     );
+  }
+}
+
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = Provider.of<AuthService>(context);
+
+    if (auth.isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF0B0F17),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: AppTheme.primary),
+              SizedBox(height: 16),
+              Text(
+                "Loading LedgerFlow...",
+                style: TextStyle(color: Colors.white70, fontSize: 14),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (!auth.isLoggedIn) {
+      return const LoginScreen();
+    }
+
+    return const HomeShell();
   }
 }

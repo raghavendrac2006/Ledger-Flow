@@ -10,6 +10,8 @@ import '../widgets/recent_expenditures_list_widget.dart';
 import '../widgets/total_expenditure_stats_widget.dart';
 import '../widgets/skeleton_card.dart';
 import '../widgets/empty_state_widget.dart';
+import '../core/services/auth_service.dart';
+import '../core/services/audit_service.dart';
 
 class ExpensesScreen extends StatefulWidget {
   const ExpensesScreen({super.key});
@@ -21,6 +23,7 @@ class ExpensesScreen extends StatefulWidget {
 class _ExpensesScreenState extends State<ExpensesScreen> {
   final TextEditingController _itemController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
+  final TextEditingController _oilLitersController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
 
   bool _isSaving = false;
@@ -90,6 +93,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   void dispose() {
     _itemController.dispose();
     _amountController.dispose();
+    _oilLitersController.dispose();
     _itemFocusNode.dispose();
     _amountFocusNode.dispose();
     super.dispose();
@@ -227,6 +231,13 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           date: dateStr,
         );
 
+        final audit = Provider.of<AuditService>(context, listen: false);
+        audit.log(
+          action: 'expense_added',
+          details: 'Added expense: $item (₹${amount.toStringAsFixed(0)})',
+          targetType: 'expense',
+        );
+
         CustomToast.showSuccess(
           context,
           "EXPENSE SAVED: ₹${amount.toStringAsFixed(0)}",
@@ -342,6 +353,11 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   Expanded(
                     child: InkWell(
                       onTap: () async {
+                        final auth = Provider.of<AuthService>(context, listen: false);
+                        if (!auth.isAdmin) {
+                          CustomToast.showError(context, "ADMIN ONLY: Workers cannot delete expenses");
+                          return;
+                        }
                         final confirm = await CustomToast.showDestructiveConfirmation(
                           context,
                           title: "DELETE EXPENSE?",
@@ -350,7 +366,14 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                         );
                         if (confirm && context.mounted) {
                           Navigator.pop(context); // Close sheet
+                          final audit = Provider.of<AuditService>(context, listen: false);
                           await state.deleteExpense(expenseId);
+                          await audit.log(
+                            action: 'expense_deleted',
+                            details: 'Deleted expense: ${expense.itemName} (₹${expense.amount.toStringAsFixed(0)})',
+                            targetType: 'expense',
+                            targetId: expenseId,
+                          );
                           if (context.mounted) {
                             CustomToast.showSuccess(
                               context,
@@ -610,9 +633,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 children: [
                   SingleChildScrollView(
                     padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                   // 1. RECORD NEW EXPENDITURE TITLE & FORM
                   Text(
                     "RECORD NEW EXPENDITURE",
@@ -779,7 +802,105 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 28.0),
 
+                  // DAILY OIL CONSUMPTION TRACKER
+                  Text(
+                    "DAILY OIL CONSUMPTION TRACKER",
+                    style: AppTheme.labelBold.copyWith(
+                      fontSize: 11.0,
+                      color: AppTheme.onSurfaceVariant,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 12.0),
+                  BentoCard(
+                    padding: const EdgeInsets.all(18.0),
+                    backgroundColor: AppTheme.surface,
+                    shadowStyle: ShadowStyle.light,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.water_drop, color: AppTheme.tertiary, size: 20.0),
+                                const SizedBox(width: 8.0),
+                                Text(
+                                  "TOTAL OIL CONSUMED:",
+                                  style: AppTheme.labelSm.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Text(
+                              "${state.totalOilLitersUsed.toStringAsFixed(1)} Liters",
+                              style: AppTheme.headlineMd.copyWith(
+                                fontSize: 16.0,
+                                color: AppTheme.tertiary,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12.0),
+                        const Divider(color: AppTheme.outlineVariant, height: 1),
+                        const SizedBox(height: 12.0),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _oilLitersController,
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                decoration: InputDecoration(
+                                  labelText: "OIL USED TODAY (LITERS)",
+                                  labelStyle: AppTheme.labelBold.copyWith(fontSize: 10, color: AppTheme.outline),
+                                  hintText: "e.g., 2.5",
+                                  suffixText: "Liters",
+                                  filled: true,
+                                  fillColor: AppTheme.surfaceContainerHighest,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                                    borderSide: const BorderSide(color: AppTheme.outlineVariant),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12.0),
+                            ElevatedButton(
+                              onPressed: () async {
+                                final liters = double.tryParse(_oilLitersController.text.trim());
+                                if (liters != null && liters > 0) {
+                                  final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+                                  await state.addOilUsage(liters: liters, date: dateStr);
+                                  _oilLitersController.clear();
+                                  if (context.mounted) {
+                                    CustomToast.showSuccess(context, "LOGGED $liters L OF OIL USAGE");
+                                  }
+                                } else {
+                                  CustomToast.showError(context, "Enter valid oil liters");
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.tertiary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                                ),
+                              ),
+                              child: const Text("LOG OIL", style: TextStyle(fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 28.0),
 
                   // 3. RECENT EXPENDITURES
                   Row(

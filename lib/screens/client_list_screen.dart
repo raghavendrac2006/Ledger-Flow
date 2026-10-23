@@ -8,6 +8,8 @@ import 'customer_profile_screen.dart';
 import '../widgets/animated_list_item.dart';
 import '../widgets/empty_state_widget.dart';
 import '../widgets/custom_toast.dart';
+import '../core/services/auth_service.dart';
+import '../core/services/audit_service.dart';
 
 class ClientListScreen extends StatefulWidget {
   const ClientListScreen({super.key});
@@ -434,6 +436,11 @@ class _ClientListScreenState extends State<ClientListScreen> {
                                       );
                                     },
                                     onLongPress: () {
+                                      final auth = Provider.of<AuthService>(context, listen: false);
+                                      if (!auth.isAdmin) {
+                                        CustomToast.showError(context, "ADMIN ONLY: Workers cannot delete customers");
+                                        return;
+                                      }
                                       showDialog(
                                         context: context,
                                         builder: (dialogCtx) => AlertDialog(
@@ -465,7 +472,14 @@ class _ClientListScreenState extends State<ClientListScreen> {
                                               ),
                                               onPressed: () async {
                                                 Navigator.pop(dialogCtx);
+                                                final audit = Provider.of<AuditService>(context, listen: false);
                                                 await state.deleteCustomer(customer.name);
+                                                await audit.log(
+                                                  action: 'customer_deleted',
+                                                  details: 'Permanently deleted customer: ${customer.name}',
+                                                  targetType: 'customer',
+                                                  targetId: customer.name,
+                                                );
                                                 if (context.mounted) {
                                                   CustomToast.showSuccess(context, "CUSTOMER DELETED");
                                                 }

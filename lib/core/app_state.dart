@@ -8,7 +8,6 @@ import 'package:intl/intl.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' hide Transaction;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'models/customer.dart';
@@ -17,6 +16,7 @@ import 'models/delivery_log.dart';
 import 'models/expense_log.dart';
 import 'models/rice_bag.dart';
 import 'models/daily_usage.dart';
+import 'models/oil_usage.dart';
 
 import 'repositories/customer_repository.dart';
 import 'repositories/delivery_log_repository.dart';
@@ -83,7 +83,7 @@ class LedgerState extends ChangeNotifier {
   Future<void> exportBackupData(BuildContext context) async {
     try {
       final Map<String, dynamic> backupData = {};
-      final collections = ['customers', 'deliveryLogs', 'expenses', 'riceBags', 'dailyUsages'];
+      final collections = ['customers', 'deliveryLogs', 'expenses', 'riceBags', 'dailyUsages', 'oil_usages'];
       final firestore = FirebaseFirestore.instance;
 
       for (final col in collections) {
@@ -144,11 +144,76 @@ class LedgerState extends ChangeNotifier {
     }
   }
 
-  Future<void> wipeAllData(BuildContext context) async {
+  // Master Lists - These are NEVER deleted during wipe!
+  static const List<Map<String, String>> masterCustomerList = [
+    {"name": "Amma", "type": "RETAIL", "area": "Custom Area", "location": "Added via Sales"},
+    {"name": "Anji", "type": "RETAIL", "area": "Custom Area", "location": "Added via Sales"},
+    {"name": "Anwar Store", "type": "WHOLESALE", "area": "Main Bazaar", "location": "Main Bazaar Road"},
+    {"name": "Avr", "type": "RETAIL", "area": "Custom Area", "location": "Added via Sales"},
+    {"name": "Bakery pes", "type": "RETAIL", "area": "PES Area", "location": "Bakery Shop"},
+    {"name": "Balana newpet", "type": "RETAIL", "area": "Newpet", "location": "Added via Sales"},
+    {"name": "Balu", "type": "RETAIL", "area": "Market Street", "location": "Market St, 1st Cross"},
+    {"name": "Balu pes", "type": "RETAIL", "area": "PES Area", "location": "Added via Sales"},
+    {"name": "Bava", "type": "RETAIL", "area": "Custom Area", "location": ""},
+    {"name": "Cg kumar", "type": "RETAIL", "area": "Custom Area", "location": "Added via Sales"},
+    {"name": "Divya", "type": "RETAIL", "area": "Custom Area", "location": "Added via Sales"},
+    {"name": "Down shop pes", "type": "RETAIL", "area": "PES Area", "location": "Down Shop"},
+    {"name": "Factory", "type": "WHOLESALE", "area": "Industrial Area", "location": "Factory Gate"},
+    {"name": "Ganesh Kirana", "type": "RETAIL", "area": "Station Road", "location": "Station Road"},
+    {"name": "Harika", "type": "RETAIL", "area": "Custom Area", "location": "Added via Sales"},
+    {"name": "Lachy", "type": "RETAIL", "area": "Custom Area", "location": ""},
+    {"name": "Lakshmi puram", "type": "RETAIL", "area": "Lakshmipuram", "location": ""},
+    {"name": "Milk", "type": "RETAIL", "area": "Dairy Circle", "location": "Dairy Circle, 2nd Cross"},
+    {"name": "Mohan", "type": "RETAIL", "area": "Custom Area", "location": "Added via Sales"},
+    {"name": "Murali pes", "type": "RETAIL", "area": "PES Area", "location": ""},
+    {"name": "Muslim", "type": "RETAIL", "area": "Downtown Market", "location": "Downtown Market"},
+    {"name": "Others", "type": "RETAIL", "area": "Custom Area", "location": "Added via Sales"},
+    {"name": "Ramchandra", "type": "RETAIL", "area": "Custom Area", "location": ""},
+    {"name": "Santosh", "type": "RETAIL", "area": "Custom Area", "location": ""},
+    {"name": "Showkath", "type": "RETAIL", "area": "Custom Area", "location": ""},
+    {"name": "Somu", "type": "RETAIL", "area": "Custom Area", "location": "Added via Sales"},
+    {"name": "Supermarket pes", "type": "RETAIL", "area": "PES Area", "location": ""},
+    {"name": "Venkatesh", "type": "RETAIL", "area": "Custom Area", "location": "Added via Sales"},
+  ];
+
+  static const List<String> masterExpenseItems = [
+    "Oil",
+    "Gas Cylinder Commercial",
+    "Gas Cylinder Domestic",
+    "Petrol for Scooter",
+    "Diesel for Auto",
+    "Rice",
+    "Salt bag",
+    "Chilli",
+    "Kadale pappu",
+    "Udina balle",
+    "Machine cooli",
+    "Travel",
+    "Labour home",
+    "Labour milk",
+    "Labour vegetables",
+    "Labour petrol",
+    "Labour coffice powder",
+    "Electricity bill",
+    "Cover",
+    "Cover 6/10",
+    "Delivery Box Roll",
+    "Thread pack",
+    "Groundnut",
+    "Karve pakku",
+    "Eligaram",
+    "Nuvvulu",
+    "Owm ajvain",
+    "Vehicle Repair",
+    "Savings",
+  ];
+
+  Future<void> wipeAllData([BuildContext? context]) async {
     try {
       final firestore = FirebaseFirestore.instance;
+      // CRITICAL: 'customers', 'settings', and 'users' are NEVER deleted!
+      // Master customer profiles and expense items are permanently preserved.
       final collections = [
-        'customers',
         'deliveryLogs',
         'expenses',
         'riceBags',
@@ -157,7 +222,7 @@ class LedgerState extends ChangeNotifier {
         'owner_loans',
         'savings_logs',
         'savings_recommendations',
-        'settings'
+        'oil_usages'
       ];
 
       for (final col in collections) {
@@ -186,29 +251,126 @@ class LedgerState extends ChangeNotifier {
         }
       }
 
-      // Clear local SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
+      // Reset all customer balances to 0 without deleting customer accounts
+      final rootCustSnap = await firestore.collection('customers').get();
+      for (final doc in rootCustSnap.docs) {
+        await doc.reference.update({'outstanding': 0.0});
+      }
+      final b1CustSnap = await firestore.collection('businesses/business_1/customers').get();
+      for (final doc in b1CustSnap.docs) {
+        await doc.reference.update({'outstanding': 0.0});
+      }
 
-      // Reset in-memory state
-      _customers.clear();
+      // If customer collection was empty (e.g. wiped before this fix), restore master customers
+      if (rootCustSnap.docs.isEmpty && b1CustSnap.docs.isEmpty) {
+        await _seedDefaultCustomers();
+      }
+
+      // Clear local payment cache only (never clear auth session or system settings)
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('local_payments');
+      _localPayments.clear();
+
+      // Reset in-memory state while keeping customer list & expense suggestions intact
+      for (int i = 0; i < _customers.length; i++) {
+        _customers[i] = _customers[i].copyWith(outstanding: 0.0);
+      }
       _deliveryLogs.clear();
       _expenses.clear();
       _riceBags.clear();
       _dailyUsages.clear();
+      _oilUsages.clear();
       _customerTransactions.clear();
       _serialNumber = 1;
 
       notifyListeners();
 
-      if (context.mounted) {
-        CustomToast.showSuccess(context, "ALL DATA WIPED! STARTED FRESH FROM 0.");
+      if (context != null && context.mounted) {
+        CustomToast.showSuccess(context, "DATA WIPED TO 0! CUSTOMERS & EXPENSES PRESERVED.");
       }
     } catch (e) {
       debugPrint("Error wiping data: $e");
-      if (context.mounted) {
+      if (context != null && context.mounted) {
         CustomToast.showError(context, "Failed to wipe data: $e");
       }
+    }
+  }
+
+  Future<void> clearAllDataToZero([BuildContext? context]) async {
+    await wipeAllData(context);
+  }
+
+  Future<void> deleteDataByDateRange(DateTime start, DateTime end) async {
+    try {
+      final startOfRange = DateTime(start.year, start.month, start.day, 0, 0, 0);
+      final endOfRange = DateTime(end.year, end.month, end.day, 23, 59, 59, 999);
+
+      // 1. Delete delivery logs in range
+      final logsToDelete = _deliveryLogs.where((l) {
+        return l.dateTime.isAfter(startOfRange.subtract(const Duration(milliseconds: 1))) &&
+               l.dateTime.isBefore(endOfRange.add(const Duration(milliseconds: 1)));
+      }).toList();
+
+      for (final log in logsToDelete) {
+        if (log.logId != null) {
+          await deliveryLogRepository.deleteDeliveryLog(log.logId!);
+        } else {
+          await deliveryLogRepository.deleteLogBySerialNo(log.serialNo);
+        }
+        if (log.isPayment) {
+          await customerRepository.updateCustomerOutstanding(log.customerName, log.amount);
+        } else if (!log.isPaid) {
+          await customerRepository.updateCustomerOutstanding(log.customerName, -log.amount);
+        }
+      }
+
+      // 2. Delete expenses in range
+      final expensesToDelete = _expenses.where((e) {
+        DateTime? expDate;
+        try {
+          expDate = DateTime.parse(e.date);
+        } catch (_) {
+          try {
+            expDate = DateFormat('dd/MM/yyyy').parse(e.date);
+          } catch (_) {}
+        }
+        if (expDate == null) return false;
+        return expDate.isAfter(startOfRange.subtract(const Duration(milliseconds: 1))) &&
+               expDate.isBefore(endOfRange.add(const Duration(milliseconds: 1)));
+      }).toList();
+
+      for (final exp in expensesToDelete) {
+        if (exp.expenseId != null) {
+          await expenseRepository.deleteExpense(exp.expenseId!);
+        }
+      }
+
+      // 3. Delete oil usages in range
+      final oilToDelete = _oilUsages.where((o) {
+        DateTime? oDate;
+        try {
+          oDate = DateTime.parse(o.date);
+        } catch (_) {
+          try {
+            oDate = DateFormat('dd/MM/yyyy').parse(o.date);
+          } catch (_) {}
+        }
+        if (oDate == null) return false;
+        return oDate.isAfter(startOfRange.subtract(const Duration(milliseconds: 1))) &&
+               oDate.isBefore(endOfRange.add(const Duration(milliseconds: 1)));
+      }).toList();
+
+      for (final o in oilToDelete) {
+        if (o.usageId != null) {
+          await FirebaseFirestore.instance.collection('oil_usages').doc(o.usageId).delete();
+          await FirebaseFirestore.instance.collection(_getCollectionPath('oil_usages')).doc(o.usageId).delete();
+        }
+      }
+      _oilUsages.removeWhere((o) => oilToDelete.contains(o));
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error deleting data by date range: $e");
     }
   }
 
@@ -228,6 +390,7 @@ class LedgerState extends ChangeNotifier {
   StreamSubscription? _expensesSub;
   StreamSubscription? _bagsSub;
   StreamSubscription? _usagesSub;
+  StreamSubscription? _oilUsagesSub;
   StreamSubscription? _statsSub;
   StreamSubscription? _settingsSub;
   StreamSubscription? _expenseSuggestionsSub;
@@ -434,6 +597,23 @@ class LedgerState extends ChangeNotifier {
       }
     );
 
+    _oilUsagesSub = FirebaseFirestore.instance
+        .collection(_getCollectionPath('oil_usages'))
+        .snapshots()
+        .listen(
+      (snapshot) {
+        _oilUsages.clear();
+        for (var doc in snapshot.docs) {
+          _oilUsages.add(OilUsage.fromJson(doc.data(), id: doc.id));
+        }
+        _oilUsages.sort((a, b) => b.date.compareTo(a.date));
+        notifyListeners();
+      },
+      onError: (error) {
+        debugPrint("Firestore oil_usages stream error: $error");
+      },
+    );
+
     // 8. Listen to Historical Monthly Sales aggregates
     _statsSub = deliveryLogRepository.getMonthlyStatsStream().listen(
       (snapshot) {
@@ -507,35 +687,69 @@ class LedgerState extends ChangeNotifier {
     );
   }
 
-  // Clean default seeding data to avoid empty screens initially
+  // Master Customer Seeding - seeds full 28 master customers if database is ever empty
   Future<void> _seedDefaultCustomers() async {
     final list = await customerRepository.getAllCustomers(_getCustomerIcon);
     if (list.isEmpty) {
-      debugPrint("Database empty. Seeding default customers...");
-      final defaultList = [
-        {"name": "Ramchandra", "type": "", "area": "", "outstanding": 0.0, "location": ""},
-        {"name": "Lachy", "type": "", "area": "", "outstanding": 0.0, "location": ""},
-        {"name": "Bava", "type": "", "area": "", "outstanding": 0.0, "location": ""},
-        {"name": "Santosh", "type": "", "area": "", "outstanding": 0.0, "location": ""},
-        {"name": "Murali pes", "type": "", "area": "", "outstanding": 0.0, "location": ""},
-        {"name": "Supermarket pes", "type": "", "area": "", "outstanding": 0.0, "location": ""},
-        {"name": "Bakery pes", "type": "", "area": "", "outstanding": 0.0, "location": ""},
-        {"name": "Down shop pes", "type": "", "area": "", "outstanding": 0.0, "location": ""},
-        {"name": "Milk", "type": "", "area": "", "outstanding": 0.0, "location": ""},
-        {"name": "Lakshmi puram", "type": "", "area": "", "outstanding": 0.0, "location": ""},
-        {"name": "showkath", "type": "", "area": "", "outstanding": 0.0, "location": ""},
-        {"name": "Factory", "type": "", "area": "", "outstanding": 0.0, "location": ""},
-      ];
-
-      for (var c in defaultList) {
+      debugPrint("Customer database empty. Seeding all 28 master customers...");
+      for (var c in masterCustomerList) {
         await customerRepository.addCustomer(Customer(
-          name: c['name'] as String,
-          type: c['type'] as String,
-          area: c['area'] as String,
-          outstanding: c['outstanding'] as double,
-          icon: _getCustomerIcon(c['type'] as String),
-          location: c['location'] as String,
+          name: c['name']!,
+          type: c['type'] ?? 'RETAIL',
+          area: c['area'] ?? '',
+          outstanding: 0.0,
+          icon: _getCustomerIcon(c['type']),
+          location: c['location'] ?? '',
         ));
+      }
+    }
+  }
+
+  /// Manually restores/verifies that all 28 master customers and 29 master expense suggestion items exist in Firestore
+  Future<void> restoreMasterCustomersAndExpenses([BuildContext? context]) async {
+    try {
+      // 1. Restore all master customers if missing
+      final existingCusts = await customerRepository.getAllCustomers(_getCustomerIcon);
+      final existingNames = existingCusts.map((c) => c.name.toLowerCase().trim()).toSet();
+
+      for (var c in masterCustomerList) {
+        final name = c['name']!;
+        if (!existingNames.contains(name.toLowerCase().trim())) {
+          await customerRepository.addCustomer(Customer(
+            name: name,
+            type: c['type'] ?? 'RETAIL',
+            area: c['area'] ?? '',
+            outstanding: 0.0,
+            icon: _getCustomerIcon(c['type']),
+            location: c['location'] ?? '',
+          ));
+        }
+      }
+
+      // 2. Restore all master expense suggestions if missing
+      final currentList = List<String>.from(_expenseSuggestions);
+      final currentLower = currentList.map((e) => e.toLowerCase().trim()).toSet();
+      bool addedAnyExpense = false;
+      for (var item in masterExpenseItems) {
+        if (!currentLower.contains(item.toLowerCase().trim())) {
+          currentList.add(item);
+          addedAnyExpense = true;
+        }
+      }
+      if (addedAnyExpense || currentList.isEmpty) {
+        _expenseSuggestions = currentList.map((e) => toSentenceCase(e)).toSet().toList();
+        await settingsRepository.updateExpenseSuggestions(_expenseSuggestions);
+      }
+
+      notifyListeners();
+
+      if (context != null && context.mounted) {
+        CustomToast.showSuccess(context, "MASTER CUSTOMERS & EXPENSES RESTORED!");
+      }
+    } catch (e) {
+      debugPrint("Error restoring master data: $e");
+      if (context != null && context.mounted) {
+        CustomToast.showError(context, "Failed to restore master data: $e");
       }
     }
   }
@@ -697,6 +911,7 @@ class LedgerState extends ChangeNotifier {
     _expensesSub?.cancel();
     _bagsSub?.cancel();
     _usagesSub?.cancel();
+    _oilUsagesSub?.cancel();
     _statsSub?.cancel();
     _settingsSub?.cancel();
     _expenseSuggestionsSub?.cancel();
@@ -1384,6 +1599,77 @@ class LedgerState extends ChangeNotifier {
   bool _syncSuccessful = false;
   bool get syncSuccessful => _syncSuccessful;
 
+  // Oil Usage Tracking State
+  final List<OilUsage> _oilUsages = [];
+  List<OilUsage> get oilUsages => _oilUsages;
+
+  double get totalOilLitersUsed {
+    final activeBag = activeRiceBag;
+    if (activeBag == null) return 0.0;
+
+    final activeBagIds = _riceBags
+        .where((bag) => bag.status == "Active")
+        .map((bag) => bag.bagId)
+        .toSet();
+
+    if (activeBagIds.isEmpty) return 0.0;
+
+    return _oilUsages.where((u) {
+      if (u.associatedBagId != null) {
+        return activeBagIds.contains(u.associatedBagId);
+      }
+      // For older unassociated entries, only count if on or after active bag start date
+      try {
+        DateTime bagStart;
+        try {
+          bagStart = DateFormat('dd MMMM yyyy').parse(activeBag.startDate);
+        } catch (_) {
+          bagStart = DateTime.parse(activeBag.startDate);
+        }
+        final usageDate = DateTime.parse(u.date);
+        return !usageDate.isBefore(DateTime(bagStart.year, bagStart.month, bagStart.day));
+      } catch (_) {
+        return false;
+      }
+    }).fold(0.0, (accumulated, u) => accumulated + u.liters);
+  }
+
+  Future<void> addOilUsage({
+    required double liters,
+    required String date,
+    String? notes,
+    String? associatedBagId,
+  }) async {
+    final activeBag = activeRiceBag;
+    final bagId = associatedBagId ?? activeBag?.bagId;
+    final usageId = "OIL_${DateTime.now().millisecondsSinceEpoch}";
+    final usage = OilUsage(
+      usageId: usageId,
+      liters: liters,
+      date: date,
+      notes: notes,
+      associatedBagId: bagId,
+    );
+    _oilUsages.insert(0, usage);
+    notifyListeners();
+
+    try {
+      await FirebaseFirestore.instance
+          .collection(_getCollectionPath('oil_usages'))
+          .doc(usageId)
+          .set(usage.toJson());
+      // Also sync to root for backward compatibility
+      if (businessId != 'business_1') {
+        await FirebaseFirestore.instance
+            .collection('oil_usages')
+            .doc(usageId)
+            .set(usage.toJson());
+      }
+    } catch (e) {
+      debugPrint("Error saving oil usage to Firestore: $e");
+    }
+  }
+
   String _googleSheetsUrl = "https://script.google.com/macros/s/AKfycbxvY0IoblgOGgVXTssxC7aYnTN0q5_W7-hkjtgLPI7595Ro5Ur0dmCEMQIb7DAqL9ZMYg/exec";
   String get googleSheetsUrl => _googleSheetsUrl;
 
@@ -1540,6 +1826,7 @@ class LedgerState extends ChangeNotifier {
       bagNumber: bagNum,
       usedKg: additionalUpdates['usedKg'],
       remainingKg: additionalUpdates['remainingKg'],
+      lpgCylinderKg: additionalUpdates['lpgCylinderKg'] as double?,
     );
     await riceBagRepository.saveRiceBag(updatedBag);
   }
@@ -1611,11 +1898,14 @@ class LedgerState extends ChangeNotifier {
     required double totalKg,
     required String date,
     String flourType = "₹1 Rice Flour",
+    double? lpgCylinderKg,
   }) async {
     // Complete active bag for this flour type
     final activeBag = activeRiceBagForType(flourType) ?? activeRiceBag;
     if (activeBag != null) {
-      await _completeBag(activeBag, date, {});
+      await _completeBag(activeBag, date, {
+        if (lpgCylinderKg != null) 'lpgCylinderKg': lpgCylinderKg,
+      });
     }
 
     // Determine bag number
