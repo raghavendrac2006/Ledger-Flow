@@ -178,10 +178,6 @@ class LedgerState extends ChangeNotifier {
 
   static const List<String> masterExpenseItems = [
     "Oil",
-    "Gas Cylinder Commercial",
-    "Gas Cylinder Domestic",
-    "Petrol for Scooter",
-    "Diesel for Auto",
     "Rice",
     "Salt bag",
     "Chilli",
@@ -196,7 +192,6 @@ class LedgerState extends ChangeNotifier {
     "Labour coffice powder",
     "Electricity bill",
     "Cover",
-    "Cover 6/10",
     "Delivery Box Roll",
     "Thread pack",
     "Groundnut",
@@ -649,33 +644,26 @@ class LedgerState extends ChangeNotifier {
     // 10. Listen to Expense Suggestions list document
     _expenseSuggestionsSub = settingsRepository.getExpenseSuggestionsStream().listen(
       (list) async {
-        if (list.isNotEmpty) {
-          _expenseSuggestions = list;
+        const excludedItems = {
+          "gas cylinder commercial",
+          "gas cylinder domestic",
+          "petrol for scooter",
+          "diesel for auto",
+          "cover 6/10",
+        };
+        final cleanedList = list.where((e) => !excludedItems.contains(e.toLowerCase().trim())).toList();
+        if (cleanedList.isNotEmpty) {
+          _expenseSuggestions = cleanedList;
           notifyListeners();
+          if (cleanedList.length != list.length) {
+            try {
+              await settingsRepository.updateExpenseSuggestions(cleanedList);
+            } catch (_) {}
+          }
         } else {
-          // Document does not exist yet. Seed it with the default items list.
-          final defaultItems = [
-            "Gas Cylinder Commercial",
-            "Gas Cylinder Domestic",
-            "Petrol for Scooter",
-            "Diesel for Auto",
-            "Salt bag",
-            "Vehicle Repair",
-            "Delivery Box Roll",
-            "Thread pack",
-            "Labour vegetables",
-            "Oil",
-            "Nuvvulu",
-            "Electricity bill",
-            "Owm ajvain",
-            "Travel",
-            "Machine cooli",
-            "Kadale pappu",
-            "Chilli",
-            "Labour home",
-          ];
+          // Document does not exist yet. Seed it with master items list.
           try {
-            await settingsRepository.updateExpenseSuggestions(defaultItems);
+            await settingsRepository.updateExpenseSuggestions(masterExpenseItems);
           } catch (e) {
             debugPrint("Failed to seed default expense items: $e");
           }
@@ -727,7 +715,15 @@ class LedgerState extends ChangeNotifier {
       }
 
       // 2. Restore all master expense suggestions if missing
+      const excludedItems = {
+        "gas cylinder commercial",
+        "gas cylinder domestic",
+        "petrol for scooter",
+        "diesel for auto",
+        "cover 6/10",
+      };
       final currentList = List<String>.from(_expenseSuggestions);
+      currentList.removeWhere((item) => excludedItems.contains(item.toLowerCase().trim()));
       final currentLower = currentList.map((e) => e.toLowerCase().trim()).toSet();
       bool addedAnyExpense = false;
       for (var item in masterExpenseItems) {
@@ -736,7 +732,7 @@ class LedgerState extends ChangeNotifier {
           addedAnyExpense = true;
         }
       }
-      if (addedAnyExpense || currentList.isEmpty) {
+      if (addedAnyExpense || currentList.isEmpty || currentList.length != _expenseSuggestions.length) {
         _expenseSuggestions = currentList.map((e) => toSentenceCase(e)).toSet().toList();
         await settingsRepository.updateExpenseSuggestions(_expenseSuggestions);
       }

@@ -899,7 +899,7 @@ class _AdminToolsTab extends StatelessWidget {
           _ToolCard(
             icon: Icons.restore_page,
             title: "Restore Master Customers & Expenses",
-            subtitle: "Verify & restore all 28 master customers and 29 expense items",
+            subtitle: "Verify & restore all 28 master customers and 24 expense items",
             actionLabel: "RESTORE",
             onAction: () async {
               final state = Provider.of<LedgerState>(context, listen: false);
