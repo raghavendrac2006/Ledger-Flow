@@ -10,6 +10,7 @@ import '../models/user_account.dart';
 /// Session state is persisted via SharedPreferences.
 class AuthService extends ChangeNotifier {
   final String businessId;
+  final bool isMockMode;
 
   UserAccount? _currentUser;
   bool _isLoading = true;
@@ -25,8 +26,21 @@ class AuthService extends ChangeNotifier {
   String get currentUserName => _currentUser?.name ?? 'Unknown';
   String get currentUserRole => isAdmin ? 'admin' : 'worker';
 
-  AuthService({required this.businessId}) {
-    _restoreSession();
+  AuthService({required this.businessId, this.isMockMode = false}) {
+    if (isMockMode) {
+      _currentUser = UserAccount(
+        id: 'mock_admin',
+        name: 'Mock Admin',
+        email: 'admin@ledgerflow.com',
+        passwordHash: '',
+        role: UserRole.admin,
+        isActive: true,
+        createdAt: DateTime.now(),
+      );
+      _isLoading = false;
+    } else {
+      _restoreSession();
+    }
   }
 
   String _getCollectionPath(String collectionName) {

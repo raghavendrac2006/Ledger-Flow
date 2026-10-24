@@ -422,7 +422,10 @@ class _MyAppState extends State<MyApp> {
       key: ValueKey(_selectedBusinessId),
       providers: [
         ChangeNotifierProvider(
-          create: (_) => AuthService(businessId: _selectedBusinessId),
+          create: (_) => AuthService(
+            businessId: _selectedBusinessId,
+            isMockMode: widget.isMockMode,
+          ),
         ),
         ProxyProvider<AuthService, AuditService>(
           update: (context, auth, previous) => AuditService(

@@ -592,22 +592,24 @@ class LedgerState extends ChangeNotifier {
       }
     );
 
-    _oilUsagesSub = FirebaseFirestore.instance
-        .collection(_getCollectionPath('oil_usages'))
-        .snapshots()
-        .listen(
-      (snapshot) {
-        _oilUsages.clear();
-        for (var doc in snapshot.docs) {
-          _oilUsages.add(OilUsage.fromJson(doc.data(), id: doc.id));
-        }
-        _oilUsages.sort((a, b) => b.date.compareTo(a.date));
-        notifyListeners();
-      },
-      onError: (error) {
-        debugPrint("Firestore oil_usages stream error: $error");
-      },
-    );
+    if (!isMockMode) {
+      _oilUsagesSub = FirebaseFirestore.instance
+          .collection(_getCollectionPath('oil_usages'))
+          .snapshots()
+          .listen(
+        (snapshot) {
+          _oilUsages.clear();
+          for (var doc in snapshot.docs) {
+            _oilUsages.add(OilUsage.fromJson(doc.data(), id: doc.id));
+          }
+          _oilUsages.sort((a, b) => b.date.compareTo(a.date));
+          notifyListeners();
+        },
+        onError: (error) {
+          debugPrint("Firestore oil_usages stream error: $error");
+        },
+      );
+    }
 
     // 8. Listen to Historical Monthly Sales aggregates
     _statsSub = deliveryLogRepository.getMonthlyStatsStream().listen(
@@ -1900,7 +1902,7 @@ class LedgerState extends ChangeNotifier {
     final activeBag = activeRiceBagForType(flourType) ?? activeRiceBag;
     if (activeBag != null) {
       await _completeBag(activeBag, date, {
-        if (lpgCylinderKg != null) 'lpgCylinderKg': lpgCylinderKg,
+        'lpgCylinderKg': ?lpgCylinderKg,
       });
     }
 
