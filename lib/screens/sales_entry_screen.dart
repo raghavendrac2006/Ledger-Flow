@@ -7,6 +7,7 @@ import '../widgets/custom_toast.dart';
 import '../widgets/skeleton_card.dart';
 import '../widgets/animated_list_item.dart';
 import '../core/services/audit_service.dart';
+import 'whatsapp_message_review_screen.dart';
 
 class SalesEntryScreen extends StatefulWidget {
   const SalesEntryScreen({super.key});
@@ -757,6 +758,52 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
                         ),
                       ),
                     ],
+
+                    const SizedBox(height: 24.0),
+                    // WhatsApp message review and sending button
+                    InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const WhatsAppMessageReviewScreen(),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF25D366),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                          border: Border.all(color: Colors.black, width: 1.5),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black,
+                              offset: Offset(2, 2),
+                              blurRadius: 0,
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.chat, color: Colors.white, size: 20),
+                            const SizedBox(width: 10),
+                            Text(
+                              "WHATSAPP UPDATES & REMINDERS",
+                              style: AppTheme.labelBold.copyWith(
+                                color: Colors.white,
+                                fontSize: 13.0,
+                                letterSpacing: 0.8,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 32.0),
                   ],
                 ),
 

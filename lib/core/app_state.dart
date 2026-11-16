@@ -58,6 +58,7 @@ class LedgerState extends ChangeNotifier {
   }) {
     _initFirestore();
     _loadLocalPayments();
+    _loadCustomerPhoneNumbers();
     // runSentenceCaseMigration(); // Disabled to prevent heavy Firestore scans on every app startup
     // Safety timer to prevent getting stuck in loading state forever
     _loadingSafetyTimer = Timer(const Duration(seconds: 4), () {
@@ -978,6 +979,50 @@ class LedgerState extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint("Error saving local payment: $e");
+    }
+  }
+
+  // Master Customer Phone Numbers (Map of customerName -> phoneNumber)
+  final Map<String, String> _customerPhoneNumbers = {};
+  Map<String, String> get customerPhoneNumbers => Map.unmodifiable(_customerPhoneNumbers);
+
+  String? getCustomerPhoneNumber(String customerName) {
+    final clean = toSentenceCase(customerName).trim().toLowerCase();
+    for (final entry in _customerPhoneNumbers.entries) {
+      if (entry.key.trim().toLowerCase() == clean) {
+        return entry.value;
+      }
+    }
+    return null;
+  }
+
+  Future<void> updateCustomerPhoneNumber(String customerName, String phone) async {
+    final clean = toSentenceCase(customerName).trim();
+    _customerPhoneNumbers[clean] = phone.trim();
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('customer_phone_numbers', jsonEncode(_customerPhoneNumbers));
+      debugPrint("Saved customer phone number for $clean: $phone");
+    } catch (e) {
+      debugPrint("Error saving customer phone number: $e");
+    }
+  }
+
+  Future<void> _loadCustomerPhoneNumbers() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? jsonStr = prefs.getString('customer_phone_numbers');
+      if (jsonStr != null) {
+        final map = jsonDecode(jsonStr) as Map<String, dynamic>;
+        _customerPhoneNumbers.clear();
+        map.forEach((k, v) {
+          if (v != null) _customerPhoneNumbers[k] = v.toString();
+        });
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint("Error loading customer phone numbers: $e");
     }
   }
 

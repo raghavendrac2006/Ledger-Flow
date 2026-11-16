@@ -6,4 +6,5 @@ export 'rice_bag.dart';
 export 'daily_usage.dart';
 export 'owner_finance_model.dart';
 export 'oil_usage.dart';
+export 'whatsapp_message_model.dart';
 
