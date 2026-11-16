@@ -1,6 +1,6 @@
 {
-    "latest_version": "1.4.0",
-    "build_number": 24,
-    "apk_url": "https://github.com/raghavendrac2006/Ledger-Flow/releases/download/v1.4.0/app-release.apk",
-    "release_notes": "Added Role-Based Authentication (Admin & Worker login), Admin Panel with worker account management, audit logs, date-range data deletion, and quick-switch PIN."
+    "latest_version": "1.5.0",
+    "build_number": 25,
+    "apk_url": "https://github.com/raghavendrac2006/Ledger-Flow/releases/download/v1.5.0/app-release.apk",
+    "release_notes": "Added WhatsApp delivery updates and payment reminders: review daily deliveries, select customers, preview and customize messages, and sequentially open WhatsApp chats."
 }
